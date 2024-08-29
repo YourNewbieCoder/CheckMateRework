@@ -6,10 +6,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.checkmaterework.R
+import com.example.checkmaterework.models.AnswerSheet
 
-data class CreatedSheet (val text: String)
-
-class CreatedSheetsAdapter(private val createdSheets: List<CreatedSheet>): RecyclerView.Adapter<CreatedSheetsAdapter.CreatedSheetViewHolder>() {
+class CreatedSheetsAdapter(private var createdSheets: MutableList<AnswerSheet>): RecyclerView.Adapter<CreatedSheetsAdapter.CreatedSheetViewHolder>() {
     class CreatedSheetViewHolder(createdSheetView: View): RecyclerView.ViewHolder(createdSheetView) {
         val createdSheetName: TextView = createdSheetView.findViewById(R.id.createdSheetName)
     }
@@ -25,6 +24,12 @@ class CreatedSheetsAdapter(private val createdSheets: List<CreatedSheet>): Recyc
 
     override fun onBindViewHolder(holder: CreatedSheetViewHolder, position: Int) {
         val createdSheets = createdSheets[position]
-        holder.createdSheetName.text =createdSheets.text
+        holder.createdSheetName.text = createdSheets.name
+    }
+
+    fun updateSheetList(newSheets: MutableList<AnswerSheet>) {
+        createdSheets.clear()
+        createdSheets.addAll(newSheets)
+        notifyDataSetChanged()
     }
 }

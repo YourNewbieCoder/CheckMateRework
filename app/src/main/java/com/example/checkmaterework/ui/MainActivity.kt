@@ -10,7 +10,6 @@ import com.example.checkmaterework.ui.fragments.CheckFragment
 import com.example.checkmaterework.ui.fragments.HomeFragment
 import com.example.checkmaterework.ui.fragments.KeyFragment
 import com.example.checkmaterework.ui.fragments.RecordsFragment
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
