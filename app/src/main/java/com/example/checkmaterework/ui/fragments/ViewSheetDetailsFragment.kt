@@ -33,7 +33,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         viewSheetDetailsBinding.textViewNumberOfItems.text = "Total Items: ${answerSheet.items}"
 
         // Display included exam types
-        val examTypeDetails = answerSheet.examTypesList.joinToString("\n") {
+        val examTypeDetails = answerSheet.examTypesList.joinToString("\n\n") {
             "${it.first}: ${it.second} items"
         }
         viewSheetDetailsBinding.textViewExamTypeDetails.text = examTypeDetails

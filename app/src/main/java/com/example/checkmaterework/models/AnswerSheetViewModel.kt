@@ -18,4 +18,20 @@ class AnswerSheetViewModel: ViewModel() {
         currentSheets.add(sheet)
         _createdSheetList.value = currentSheets
     }
+
+    fun updateSheet(updatedSheet: AnswerSheet) {
+        val currentSheets = _createdSheetList.value ?: mutableListOf()
+        val index = currentSheets.indexOfFirst { it.name == updatedSheet.name } // Use name or unique ID for comparison
+
+        if (index != 1) {
+            currentSheets[index] = updatedSheet
+            _createdSheetList.value = currentSheets
+        }
+    }
+
+    fun deleteSheet(sheet: AnswerSheet) {
+        val currentSheets = _createdSheetList.value ?: mutableListOf()
+        currentSheets.remove(sheet)
+        _createdSheetList.value = currentSheets
+    }
 }

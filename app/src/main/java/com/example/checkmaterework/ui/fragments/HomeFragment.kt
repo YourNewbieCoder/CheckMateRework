@@ -33,9 +33,12 @@ class HomeFragment : Fragment() {
         homeBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
 
         // Pass the click listener to the adapter
-        createdSheetsAdapter = CreatedSheetsAdapter(mutableListOf()) { sheet ->
-            showViewSheetDetailsFragment(sheet) // Function to show details fragment
-        }
+        createdSheetsAdapter = CreatedSheetsAdapter(
+            mutableListOf(),
+            onItemClick = { sheet -> showViewSheetDetailsFragment(sheet)},
+            onEditClick = { sheet -> showEditSheetDetailsFragment(sheet)}, // Pass edit logic
+            onDeleteClick = { sheet -> deleteSheet(sheet)} // Pass delete logic
+            )
 
         homeBinding.recyclerViewCreatedSheets.adapter = createdSheetsAdapter
 
@@ -49,14 +52,36 @@ class HomeFragment : Fragment() {
     }
 
     private fun showCreateSheetFragment() {
-        val createSheetFragment = CreateSheetFragment { sheet ->
-            answerSheetViewModel.createSheet(sheet)
-        }
+        val createSheetFragment = CreateSheetFragment(
+            onNewSheetAdded = { sheet ->
+                answerSheetViewModel.createSheet(sheet)
+            },
+            onSheetUpdated = { updatedSheet ->
+                answerSheetViewModel.updateSheet(updatedSheet)
+            }
+        )
         createSheetFragment.show(parentFragmentManager, createSheetFragment.tag)
     }
 
     private fun showViewSheetDetailsFragment(sheet: AnswerSheet) {
         val viewSheetDetailsFragment = ViewSheetDetailsFragment(sheet)
         viewSheetDetailsFragment.show(parentFragmentManager, viewSheetDetailsFragment.tag)
+    }
+
+    private fun showEditSheetDetailsFragment(sheet: AnswerSheet) {
+        val editSheetFragment = CreateSheetFragment(
+            existingSheet = sheet, // Pass the existing sheet for editing
+            onNewSheetAdded = { newSheet ->
+                answerSheetViewModel.createSheet(newSheet)
+            },
+            onSheetUpdated = { updatedSheet ->
+                answerSheetViewModel.updateSheet(updatedSheet) // Update ViewModel with edited sheet
+            }
+        )
+        editSheetFragment.show(parentFragmentManager, editSheetFragment.tag)
+    }
+
+    private fun deleteSheet(sheet: AnswerSheet) {
+        answerSheetViewModel.deleteSheet(sheet) // Call ViewModel method to delete sheet
     }
 }

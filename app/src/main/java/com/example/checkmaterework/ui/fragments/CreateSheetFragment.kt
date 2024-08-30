@@ -15,7 +15,11 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 
-class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : BottomSheetDialogFragment() {
+class CreateSheetFragment(
+    private val existingSheet: AnswerSheet? = null, // Optional parameter for editing
+    private val onNewSheetAdded: (AnswerSheet) -> Unit,
+    private val onSheetUpdated: (AnswerSheet) -> Unit // Callback for updating a sheet
+) : BottomSheetDialogFragment() {
 
     private lateinit var createSheetBinding: FragmentCreateSheetBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
@@ -32,6 +36,13 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
         val activity = requireActivity()
         answerSheetViewModel = ViewModelProvider(activity)[AnswerSheetViewModel::class.java]
 
+        // Populate fields if editing an existing sheet
+        existingSheet?.let { sheet ->
+            createSheetBinding.textInputSheetName.setText(sheet.name)
+            createSheetBinding.textInputNumberOfItems.setText(sheet.items.toString())
+            sheet.examTypesList.forEach { addExamTypeView(it.first, it.second) }
+        }
+
         createSheetBinding.buttonSave.setOnClickListener {
             saveSheetData()
         }
@@ -41,7 +52,7 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
         }
     }
 
-    private fun addExamTypeView() {
+    private fun addExamTypeView(examType: String = "", itemsCount: Int = 0) {
         // Inflate the exam type item layout
         val examTypeView = LayoutInflater.from(requireContext()).inflate(
             R.layout.layout_exam_types, createSheetBinding.examTypesContainer, false
@@ -54,6 +65,9 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
         // Set up ArrayAdapter for dropdown selection of exam types
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, examTypeOptions)
         textInputExamType.setAdapter(adapter)
+
+        textInputExamType.setText(examType)
+        textInputItemsCount.setText(if (itemsCount > 0) itemsCount.toString() else "")
 
         textInputExamType.setOnClickListener {
             textInputExamType.showDropDown() // Show dropdown when clicked
@@ -86,11 +100,13 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
         // Validation to ensure the data meets the total items specified
         val totalItems = examTypesList.sumOf { it.second }
         if (sheetName.isNotEmpty() && totalItems == numberOfItems) {
-            // Create a new AnswerSheet object
             val newSheet = AnswerSheet(sheetName, numberOfItems, examTypesList)
 
-            // Call the callback to inform the parent fragment
-            onNewSheetAdded(newSheet)
+            if (existingSheet == null) {
+                onNewSheetAdded(newSheet) // Creating new sheet
+            } else {
+                onSheetUpdated(newSheet) // Updating existing sheet
+            }
 
             // Clear input fields and dismiss the dialog
             createSheetBinding.textInputSheetName.setText("")
