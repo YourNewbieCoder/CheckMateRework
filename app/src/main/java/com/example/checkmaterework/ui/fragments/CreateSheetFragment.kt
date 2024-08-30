@@ -36,12 +36,7 @@ class CreateSheetFragment(
         val activity = requireActivity()
         answerSheetViewModel = ViewModelProvider(activity)[AnswerSheetViewModel::class.java]
 
-        // Populate fields if editing an existing sheet
-        existingSheet?.let { sheet ->
-            createSheetBinding.textInputSheetName.setText(sheet.name)
-            createSheetBinding.textInputNumberOfItems.setText(sheet.items.toString())
-            sheet.examTypesList.forEach { addExamTypeView(it.first, it.second) }
-        }
+        setupUI()
 
         createSheetBinding.buttonSave.setOnClickListener {
             saveSheetData()
@@ -49,6 +44,20 @@ class CreateSheetFragment(
 
         createSheetBinding.buttonAddExamType.setOnClickListener {
             addExamTypeView()
+        }
+    }
+
+    private fun setupUI() {
+        // Populate fields if editing an existing sheet
+        existingSheet?.let { sheet ->
+            createSheetBinding.textInputSheetName.setText(sheet.name)
+            createSheetBinding.textInputNumberOfItems.setText(sheet.items.toString())
+
+            // Disable editing of sheet name when editing an existing sheet
+            createSheetBinding.textInputSheetName.isEnabled = false
+
+            // Populate exam types
+            sheet.examTypesList.forEach { addExamTypeView(it.first, it.second) }
         }
     }
 
@@ -80,7 +89,6 @@ class CreateSheetFragment(
         createSheetBinding.examTypesContainer.addView(examTypeView) // Add the view to the container
     }
 
-
     private fun saveSheetData() {
         val sheetName = createSheetBinding.textInputSheetName.text.toString()
         val numberOfItems = createSheetBinding.textInputNumberOfItems.text.toString().toIntOrNull() ?: 0
@@ -97,26 +105,30 @@ class CreateSheetFragment(
             }
         }
 
-        // Validation to ensure the data meets the total items specified
+        // Validate data to ensure the total items specified matches the sum of exam types' items
         val totalItems = examTypesList.sumOf { it.second }
-        if (sheetName.isNotEmpty() && totalItems == numberOfItems) {
-            val newSheet = AnswerSheet(sheetName, numberOfItems, examTypesList)
-
-            if (existingSheet == null) {
-                onNewSheetAdded(newSheet) // Creating new sheet
-            } else {
-                onSheetUpdated(newSheet) // Updating existing sheet
-            }
-
-            // Clear input fields and dismiss the dialog
-            createSheetBinding.textInputSheetName.setText("")
-            createSheetBinding.textInputNumberOfItems.setText("")
-            createSheetBinding.examTypesContainer.removeAllViews()
-            dismiss()
-        } else {
-            // Show error if total items don't match or other fields are invalid
+        if (sheetName.isEmpty()) {
             createSheetBinding.textInputSheetName.error = "Please specify the name for the created sheet!"
-            createSheetBinding.textInputNumberOfItems.error = "Total items don't match the specified count!"
+            return
         }
+        if (totalItems != numberOfItems) {
+            createSheetBinding.textInputNumberOfItems.error = "Total items don't match the specified count!"
+            return
+        }
+
+        val newSheet = AnswerSheet(sheetName, numberOfItems, examTypesList)
+
+        if (existingSheet == null) {
+            onNewSheetAdded(newSheet) // Creating new sheet
+        } else {
+            onSheetUpdated(newSheet) // Updating existing sheet
+        }
+
+        // Clear input fields and dismiss the dialog
+        createSheetBinding.textInputSheetName.setText("")
+        createSheetBinding.textInputNumberOfItems.setText("")
+        createSheetBinding.examTypesContainer.removeAllViews()
+        dismiss()
+
     }
 }
