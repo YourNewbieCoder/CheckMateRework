@@ -4,6 +4,6 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="get_started">Get started by clicking Create Sheet to generate a answer sheet</string>
-    
+
     <string name="exam_and_count">Select Exam Types and Set Item Count</string>
 </resources>

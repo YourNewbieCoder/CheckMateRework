@@ -19,7 +19,7 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
 
     private lateinit var createSheetBinding: FragmentCreateSheetBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
-    private val examTypeOptions = listOf("Multiple Choice", "Identtification", "Word Problem")
+    private val examTypeOptions = listOf("Multiple Choice", "Identification", "Word Problem")
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         createSheetBinding = FragmentCreateSheetBinding.inflate(inflater, container, false)
@@ -30,7 +30,7 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
         super.onViewCreated(view, savedInstanceState)
 
         val activity = requireActivity()
-        answerSheetViewModel = ViewModelProvider(activity).get(AnswerSheetViewModel::class.java)
+        answerSheetViewModel = ViewModelProvider(activity)[AnswerSheetViewModel::class.java]
 
         createSheetBinding.buttonSave.setOnClickListener {
             saveSheetData()
@@ -89,9 +89,6 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
             // Create a new AnswerSheet object
             val newSheet = AnswerSheet(sheetName, numberOfItems, examTypesList)
 
-//            // Update the ViewModel with the new sheet
-//            answerSheetViewModel.createSheet(newSheet)
-
             // Call the callback to inform the parent fragment
             onNewSheetAdded(newSheet)
 
@@ -102,7 +99,7 @@ class CreateSheetFragment(private val onNewSheetAdded: (AnswerSheet) -> Unit) : 
             dismiss()
         } else {
             // Show error if total items don't match or other fields are invalid
-            createSheetBinding.textInputSheetName.error = "Please soecify the name for the created sheet!"
+            createSheetBinding.textInputSheetName.error = "Please specify the name for the created sheet!"
             createSheetBinding.textInputNumberOfItems.error = "Total items don't match the specified count!"
         }
     }

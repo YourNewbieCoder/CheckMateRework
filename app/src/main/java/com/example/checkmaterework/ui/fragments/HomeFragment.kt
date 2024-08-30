@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 
 import com.example.checkmaterework.databinding.FragmentHomeBinding
+import com.example.checkmaterework.models.AnswerSheet
 import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.ui.adapters.CreatedSheetsAdapter
 
@@ -30,7 +31,12 @@ class HomeFragment : Fragment() {
         answerSheetViewModel = ViewModelProvider(activity).get(AnswerSheetViewModel::class.java)
 
         homeBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
-        createdSheetsAdapter = CreatedSheetsAdapter(mutableListOf())
+
+        // Pass the click listener to the adapter
+        createdSheetsAdapter = CreatedSheetsAdapter(mutableListOf()) { sheet ->
+            showViewSheetDetailsFragment(sheet) // Function to show details fragment
+        }
+
         homeBinding.recyclerViewCreatedSheets.adapter = createdSheetsAdapter
 
         answerSheetViewModel.createdSheetList.observe(viewLifecycleOwner) { sheets ->
@@ -47,5 +53,10 @@ class HomeFragment : Fragment() {
             answerSheetViewModel.createSheet(sheet)
         }
         createSheetFragment.show(parentFragmentManager, createSheetFragment.tag)
+    }
+
+    private fun showViewSheetDetailsFragment(sheet: AnswerSheet) {
+        val viewSheetDetailsFragment = ViewSheetDetailsFragment(sheet)
+        viewSheetDetailsFragment.show(parentFragmentManager, viewSheetDetailsFragment.tag)
     }
 }

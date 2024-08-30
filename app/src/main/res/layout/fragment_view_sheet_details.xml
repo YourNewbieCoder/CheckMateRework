@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    tools:context=".ui.fragments.ViewSheetDetailsFragment">
+    
+    <TextView
+        android:id="@+id/textViewSheetName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:padding="5dp"
+        android:text="Answer Sheet Name"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+    
+    <TextView
+        android:id="@+id/textViewNumberOfItems"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:padding="5dp"
+        android:text="Number of Items"
+        android:textSize="20sp" />
+    
+    <TextView
+        android:id="@+id/textViewExamTypeDetails"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:text="Included Types of Exam"
+        android:textSize="20sp" />
+
+</LinearLayout>

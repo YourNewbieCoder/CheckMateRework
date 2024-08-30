@@ -8,13 +8,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.checkmaterework.R
 import com.example.checkmaterework.models.AnswerSheet
 
-class CreatedSheetsAdapter(private var createdSheets: MutableList<AnswerSheet>): RecyclerView.Adapter<CreatedSheetsAdapter.CreatedSheetViewHolder>() {
+class CreatedSheetsAdapter(
+    private var createdSheets: MutableList<AnswerSheet>,
+    private val onItemClick: (AnswerSheet) -> Unit // Add click listener parameter
+): RecyclerView.Adapter<CreatedSheetsAdapter.CreatedSheetViewHolder>() {
+
     class CreatedSheetViewHolder(createdSheetView: View): RecyclerView.ViewHolder(createdSheetView) {
         val createdSheetName: TextView = createdSheetView.findViewById(R.id.createdSheetName)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CreatedSheetViewHolder {
-        val createdSheetView = LayoutInflater.from(parent.context).inflate(R.layout.layout_created_sheets, parent, false)
+        val createdSheetView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.layout_created_sheets, parent, false)
         return CreatedSheetViewHolder(createdSheetView)
     }
 
@@ -25,6 +30,11 @@ class CreatedSheetsAdapter(private var createdSheets: MutableList<AnswerSheet>):
     override fun onBindViewHolder(holder: CreatedSheetViewHolder, position: Int) {
         val createdSheets = createdSheets[position]
         holder.createdSheetName.text = createdSheets.name
+
+        // Set click listener on item
+        holder.itemView.setOnClickListener {
+            onItemClick(createdSheets)
+        }
     }
 
     fun updateSheetList(newSheets: MutableList<AnswerSheet>) {
