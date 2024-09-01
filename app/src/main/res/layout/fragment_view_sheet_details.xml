@@ -34,5 +34,13 @@
         android:padding="5dp"
         android:text="Included Types of Exam"
         android:textSize="20sp" />
+    
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonDownload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginTop="10dp"
+        android:text="Download"/>
 
 </LinearLayout>
