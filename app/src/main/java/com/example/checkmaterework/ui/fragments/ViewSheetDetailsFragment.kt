@@ -2,6 +2,7 @@ package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.Environment
@@ -80,31 +81,74 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
     private fun downloadSheetAsPDF() {
         // Create a new PDF document
         val document = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(300, 600, 1).create()
-        val page = document.startPage(pageInfo)
 
-        // Draw content on the PDF
-        val canvas = page.canvas
-        val paint = android.graphics.Paint()
-        var yPosition = 50
+        // Set up PDF page dimensions
+        val pageWidth = 595 // A4 width in points (8.27 inches)
+        val pageHeight = 842 // A4 height in points (11.69 inches)
+        val margin = 40 // Margin for content within the page
+        val lineSpacing = 20 // Line spacing between answer fields
 
-        paint.textSize = 16f
-        canvas.drawText(answerSheet.name, 10f, yPosition.toFloat(), paint)
-        yPosition += 30
-        canvas.drawText("Total Items: ${answerSheet.items}", 10f, yPosition.toFloat(), paint)
-        yPosition += 30
+        // Create the first page for the PDF
+        var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
+        var page = document.startPage(pageInfo)
+        var canvas = page.canvas
+        val paint = Paint()
 
-        // Draw the "Included Types of Exam" header
-        canvas.drawText("Included Types of Exam:", 10f, yPosition.toFloat(), paint)
-        yPosition += 30
+        // Draw Header Information
+        paint.textSize = 24f
+        paint.textAlign = Paint.Align.CENTER
+        canvas.drawText(answerSheet.name, (pageWidth / 2).toFloat(), 60f, paint) // Title centered
 
-        // Iterate through the exam types list and draw each one on the canvas
-        answerSheet.examTypesList.forEach { examType ->
-            canvas.drawText("${examType.first}: ${examType.second} items", 10f, yPosition.toFloat(), paint)
-            yPosition += 30  // Increment yPosition to avoid overlapping text
+        // Draw fields for Name, Teacher, Class/Section, Date
+        paint.textSize = 14f
+        paint.textAlign = Paint.Align.LEFT
+        canvas.drawText("Name: _______________________________", margin.toFloat(), 100f, paint)
+        canvas.drawText("Teacher: ____________________________", pageWidth / 2 + 10f, 100f, paint)
+
+        canvas.drawText("Class/Section: _______________________", margin.toFloat(), 130f, paint)
+        canvas.drawText("Date: _______________________________", pageWidth / 2 + 10f, 130f, paint)
+
+        // Draw Answer Fields Dynamically
+        var yPosition = 180f // Starting position for answers below the header and fields
+        var itemNumber = 1
+
+        for (i in 1..answerSheet.items) {
+            // Draw item number and an answer line
+            canvas.drawText("$itemNumber.", margin.toFloat(), yPosition, paint)
+            canvas.drawLine(70f, yPosition - 10f, pageWidth - margin.toFloat(), yPosition - 10f, paint)
+
+            // Update yPosition for the next answer field
+            yPosition += lineSpacing
+
+            // Check if we need to create a new page
+            if (yPosition + lineSpacing > pageHeight - margin) {
+                document.finishPage(page) // Finish the current page
+
+                // Start a new page
+                pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.pages.size + 1).create()
+                page = document.startPage(pageInfo)
+                canvas = page.canvas // Update the canvas for the new page
+
+                // Redraw the header for the new page
+                paint.textSize = 24f
+                paint.textAlign = Paint.Align.CENTER
+                canvas.drawText(answerSheet.name, (pageWidth / 2).toFloat(), 60f, paint)
+
+                paint.textSize = 14f
+                paint.textAlign = Paint.Align.LEFT
+                canvas.drawText("Name: __________________________", margin.toFloat(), 100f, paint)
+                canvas.drawText("Teacher: _______________________", pageWidth / 2 + 10f, 100f, paint)
+
+                canvas.drawText("Class/Section: __________________", margin.toFloat(), 130f, paint)
+                canvas.drawText("Date: __________________________", pageWidth / 2 + 10f, 130f, paint)
+
+                yPosition = 180f // Reset yPosition for the new page
+            }
+
+            itemNumber ++
         }
 
-
+        // Finish the last page
         document.finishPage(page)
 
         // Save the PDF to a file
