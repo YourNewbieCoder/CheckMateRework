@@ -75,12 +75,25 @@ class CreateSheetFragment(
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, examTypeOptions)
         textInputExamType.setAdapter(adapter)
 
+//        // Set the initial hint for textInputItemsCount
+//        textInputItemsCount.hint = if (examType == "Word Problem") "Enter number of Word Problems (Each = 5 items)" else "Enter number of items"
+
+        // Set existing values if provided
         textInputExamType.setText(examType)
         textInputItemsCount.setText(if (itemsCount > 0) itemsCount.toString() else "")
 
         textInputExamType.setOnClickListener {
             textInputExamType.showDropDown() // Show dropdown when clicked
         }
+//
+//        // Change hint dynamically based on selected exam type
+//        textInputExamType.setOnItemClickListener { _, _, position, _ ->
+//            if (examTypeOptions[position] == "Word Problem") {
+//                textInputItemsCount.hint = "Enter number of Word Problems (Each = 5 items)"
+//            } else {
+//                textInputItemsCount.hint = "Enter number of Items"
+//            }
+//        }
 
         buttonRemoveExamType.setOnClickListener {
             createSheetBinding.examTypesContainer.removeView(examTypeView) // Remove this view from the container
@@ -101,6 +114,7 @@ class CreateSheetFragment(
             val itemsCount = examTypeView.findViewById<TextInputEditText>(R.id.textInputItemsCount).text.toString().toIntOrNull() ?:0
 
             if (examType.isNotEmpty() && itemsCount > 0) {
+//                val adjustedCount = if (examType == "Word Problem") itemsCount * 5 else itemsCount
                 examTypesList.add(Pair(examType, itemsCount))
             }
         }

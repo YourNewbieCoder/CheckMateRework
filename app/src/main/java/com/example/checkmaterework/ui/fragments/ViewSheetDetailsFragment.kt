@@ -86,7 +86,10 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         val pageWidth = 595 // A4 width in points (8.27 inches)
         val pageHeight = 842 // A4 height in points (11.69 inches)
         val margin = 40 // Margin for content within the page
-        val lineSpacing = 20 // Line spacing between answer fields
+        val lineSpacing = 40 // Line spacing between answer fields
+        val boxSpacing = 60 // Spacing for Identification boxes
+        val largeBoxHeight = boxSpacing * 3 // Height for the Solution/Answer box in Word Problems
+        val halfPageWidth = pageWidth / 2 // Half width for Identification answer boxes
 
         // Create the first page for the PDF
         var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
@@ -112,40 +115,139 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         var yPosition = 180f // Starting position for answers below the header and fields
         var itemNumber = 1
 
-        for (i in 1..answerSheet.items) {
-            // Draw item number and an answer line
-            canvas.drawText("$itemNumber.", margin.toFloat(), yPosition, paint)
-            canvas.drawLine(70f, yPosition - 10f, pageWidth - margin.toFloat(), yPosition - 10f, paint)
+        // Loop through the exam types and draw fields accordingly
+        for (examType in answerSheet.examTypesList) {
+            val (type, itemCount) = examType
 
-            // Update yPosition for the next answer field
-            yPosition += lineSpacing
+            // Draw section header
+            paint.textSize = 18f
+            paint.textAlign = Paint.Align.LEFT
+            canvas.drawText("$type Questions:", margin.toFloat(), yPosition, paint)
+            yPosition += 30f
 
-            // Check if we need to create a new page
-            if (yPosition + lineSpacing > pageHeight - margin) {
-                document.finishPage(page) // Finish the current page
+            // Draw fields based on the type
+            when (type) {
+                "Multiple Choice" -> {
+                    // Draw Multiple Choice Fields
+                    paint.textSize = 14f
+                    paint.style = Paint.Style.STROKE
 
-                // Start a new page
-                pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.pages.size + 1).create()
-                page = document.startPage(pageInfo)
-                canvas = page.canvas // Update the canvas for the new page
+                    for (i in 1..itemCount) {
+                        // Draw item number
+                        canvas.drawText("$itemNumber.", margin.toFloat(), yPosition, paint)
 
-                // Redraw the header for the new page
-                paint.textSize = 24f
-                paint.textAlign = Paint.Align.CENTER
-                canvas.drawText(answerSheet.name, (pageWidth / 2).toFloat(), 60f, paint)
+                        // Draw circles for A, B, C, D
+                        val startX = margin + 30f
+                        val bubbleRadius = 10f
+                        val gapBetweenBubbles = 50f
 
-                paint.textSize = 14f
-                paint.textAlign = Paint.Align.LEFT
-                canvas.drawText("Name: __________________________", margin.toFloat(), 100f, paint)
-                canvas.drawText("Teacher: _______________________", pageWidth / 2 + 10f, 100f, paint)
+                        for (j in 0 until 4) {
+                            val bubblesCenterX = startX + j *gapBetweenBubbles
+                            canvas.drawCircle(bubblesCenterX, yPosition - 8f, bubbleRadius, paint)
 
-                canvas.drawText("Class/Section: __________________", margin.toFloat(), 130f, paint)
-                canvas.drawText("Date: __________________________", pageWidth / 2 + 10f, 130f, paint)
+                            // Draw letter inside the circle (adjusted to be centered)
+                            paint.style = Paint.Style.FILL // Switch to fill for text
+                            paint.textAlign = Paint.Align.CENTER
+                            canvas.drawText(('A' + j).toString(), bubblesCenterX, yPosition - 4f, paint)
+                            paint.style = Paint.Style.STROKE // Switch back to stroke for circles
+                        }
 
-                yPosition = 180f // Reset yPosition for the new page
+                        yPosition += lineSpacing
+
+                        // Check if we need to create a new page
+                        if (yPosition + lineSpacing > pageHeight - margin) {
+                            document.finishPage(page) // Finish the current page
+                            page = createNewPage(document, pageWidth, pageHeight) // Create a new page
+                            canvas = page.canvas
+                            yPosition = 180f // Reset yPosition for the new page
+                        }
+
+                        itemNumber ++
+
+                    }
+                }
+
+                "Identification" -> {
+                    // Draw Identification Fields
+                    paint.textSize = 14f
+                    paint.style = Paint.Style.STROKE
+
+                    for (i in 1..itemCount) {
+                        // Draw item number
+                        canvas.drawText("$itemNumber.", margin.toFloat(), yPosition, paint)
+
+                        // Draw box for answer (adjusted width to half the page)
+                        canvas.drawRect(margin + 30f, yPosition - 20f,
+                            margin + 30f + halfPageWidth, yPosition + 20f, paint)
+
+                        yPosition += boxSpacing
+
+                        // Check if we need to create a new page
+                        if (yPosition + boxSpacing > pageHeight - margin) {
+                            document.finishPage(page) // Finish the current page
+                            page = createNewPage(document, pageWidth, pageHeight) // Create a new page
+                            canvas = page.canvas
+                            yPosition = 180f // Reset yPosition for the new page
+                        }
+
+                        itemNumber ++
+
+                    }
+                }
+
+                "Word Problem" -> {
+                    // Draw Word Problem Fields
+                    paint.textSize = 14f
+                    paint.style = Paint.Style.STROKE
+
+                    // Calculate the number of word problems
+                    val numberOfWordProblems = itemCount / 5
+
+                    for (i in 1..numberOfWordProblems) {
+                        // Draw item number range (e.g., 1-5, 6-10)
+                        val startRange = itemNumber
+                        val endRange = startRange + 4
+                        canvas.drawText("$startRange - $endRange.", margin.toFloat(), yPosition, paint)
+
+                        // Labels and boxes for each Word Problem part
+                        val labels = listOf("A", "G", "O", "N", "A")
+                        val labelFullText = listOf("Asked", "Given", "Operation", "Number Sentence", "Solution/Answer")
+                        val boxHeights = listOf(boxSpacing, boxSpacing, boxSpacing, boxSpacing, largeBoxHeight)
+
+                        for (j in labels.indices) {
+                            val label = labels[j]
+                            val fullText = labelFullText[j]
+                            val boxHeight = boxHeights[j]
+
+                            // Draw label above the box to avoid overlap
+                            paint.textAlign = Paint.Align.LEFT
+                            paint.style = Paint.Style.FILL
+                            canvas.drawText("$fullText ($label):", margin + 30f, yPosition, paint)
+                            paint.style = Paint.Style.STROKE
+
+                            // Draw box for answer (half page width)
+                            val boxTopY = yPosition + 10f
+                            val boxBottomY = boxTopY + (boxHeight - 40f)
+                            canvas.drawRect(
+                                (margin + 30f), boxTopY,
+                                (margin + 30f + halfPageWidth), boxBottomY, paint
+                            )
+
+                            yPosition += boxHeight // Move down by box height
+                        }
+
+                        // Check if we need to create a new page
+                        if (yPosition + largeBoxHeight > pageWidth - margin) {
+                            document.finishPage(page) // Finish the current page
+                            page = createNewPage(document, pageWidth, pageHeight) // Create a new page
+                            canvas = page.canvas
+                            yPosition = 180f // Reset yPosition for the new page
+                        }
+
+                        itemNumber += 5 // Increment item number by 5 for next word problem
+                    }
+                }
             }
-
-            itemNumber ++
         }
 
         // Finish the last page
@@ -165,5 +267,10 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         } finally {
             document.close()
         }
+    }
+
+    private fun createNewPage(document: PdfDocument, pageWidth: Int, pageHeight: Int): PdfDocument.Page {
+        val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.pages.size + 1).create()
+        return document.startPage(pageInfo)
     }
 }
