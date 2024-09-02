@@ -1,16 +1,19 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.checkmaterework.databinding.FragmentViewSheetDetailsBinding
 import com.example.checkmaterework.models.AnswerSheet
@@ -22,9 +25,16 @@ import java.io.IOException
 class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomSheetDialogFragment() {
 
     private lateinit var viewSheetDetailsBinding: FragmentViewSheetDetailsBinding
-    private val STORAGE_PERMISSION_CODE = 1
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            downloadSheetAsPDF()
+        } else {
+            Toast.makeText(context, "Permission denied to write to storage", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         viewSheetDetailsBinding = FragmentViewSheetDetailsBinding.inflate(inflater, container, false)
         return viewSheetDetailsBinding.root
     }
@@ -49,31 +59,19 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
     }
 
     private fun checkStoragePermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-            ) {
-            // Request permission
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                STORAGE_PERMISSION_CODE
-            )
-        } else {
-            downloadSheetAsPDF()
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                // No need for permission for Android 10+
                 downloadSheetAsPDF()
-            } else {
-                Toast.makeText(context, "Permission denied to write to storage", Toast.LENGTH_SHORT).show()
+            }
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED -> {
+                // Permission already granted
+                downloadSheetAsPDF()
+            }
+            else -> {
+                // Request permission
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
     }
@@ -208,6 +206,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         val startRange = itemNumber
                         val endRange = startRange + 4
                         canvas.drawText("$startRange - $endRange.", margin.toFloat(), yPosition, paint)
+                        yPosition += 30f // Adjust yPosition to avoid overlap with the next label
 
                         // Labels and boxes for each Word Problem part
                         val labels = listOf("A", "G", "O", "N", "A")
@@ -227,7 +226,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                             // Draw box for answer (half page width)
                             val boxTopY = yPosition + 10f
-                            val boxBottomY = boxTopY + (boxHeight - 40f)
+                            val boxBottomY = boxTopY + (boxHeight - 20f)
                             canvas.drawRect(
                                 (margin + 30f), boxTopY,
                                 (margin + 30f + halfPageWidth), boxBottomY, paint
@@ -254,23 +253,55 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         document.finishPage(page)
 
         // Save the PDF to a file
-        val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val filePath = File(directory, "${answerSheet.name}_AnswerSheet.pdf")
-
-        try {
-            FileOutputStream(filePath).use { out ->
-                document.writeTo(out)
-                Toast.makeText(context, "PDF downloaded to ${filePath.absolutePath}", Toast.LENGTH_LONG).show()
-            }
-        } catch (e: IOException) {
-            Toast.makeText(context, "Error downloading PDF: ${e.message}", Toast.LENGTH_SHORT).show()
-        } finally {
-            document.close()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            savePDFUsingMediaStore(document, answerSheet.name)
+        } else {
+            savePDFUsingFile(document, answerSheet.name)
         }
+        document.close()
     }
 
     private fun createNewPage(document: PdfDocument, pageWidth: Int, pageHeight: Int): PdfDocument.Page {
         val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, document.pages.size + 1).create()
         return document.startPage(pageInfo)
+    }
+
+    private fun savePDFUsingMediaStore(document: PdfDocument, sheetName: String) {
+        try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "${sheetName}_AnswerSheet.pdf")
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
+            }
+
+            val resolver = requireContext().contentResolver
+            val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+
+            uri?.let {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    document.writeTo(outputStream)
+                }
+            }
+            Toast.makeText(requireContext(), "PDF saved to Documents", Toast.LENGTH_SHORT).show()
+        } catch (e: IOException) {
+            Toast.makeText(requireContext(), "Error saving PDF: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun savePDFUsingFile(document: PdfDocument, sheetName: String) {
+        try {
+            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val filePath = File(directory, "${sheetName}_AnswerSheet.pdf")
+
+            FileOutputStream(filePath).use { outputStream ->
+                document.writeTo(outputStream)
+            }
+//            Toast.makeText(context, "PDF downloaded to ${filePath.absolutePath}", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "PDF saved to Downloads" ,Toast.LENGTH_SHORT).show()
+        } catch (e: IOException) {
+//            Toast.makeText(context, "Error downloading PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Error saving PDF: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
