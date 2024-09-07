@@ -84,10 +84,9 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         val pageWidth = 595 // A4 width in points (8.27 inches)
         val pageHeight = 842 // A4 height in points (11.69 inches)
         val margin = 40 // Margin for content within the page
-        val lineSpacing = 40 // Line spacing between answer fields
-        val boxSpacing = 60 // Spacing for Identification boxes
-        val largeBoxHeight = boxSpacing * 3 // Height for the Solution/Answer box in Word Problems
-        val halfPageWidth = pageWidth / 2 // Half width for Identification answer boxes
+        val lineSpacing = 30 // Line spacing between answer fields
+        val halfPageWidth = (pageWidth - (2 * margin)) / 2 // Half width for Identification answer boxes
+        val columnWidth = (pageWidth - (2 * margin)) / 3 // Dividing space for three possible columns
 
         // Create the first page for the PDF
         var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
@@ -113,34 +112,72 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         var yPosition = 180f // Starting position for answers below the header and fields
         var itemNumber = 1
 
+//        // Calculate items per column
+//        val itemsPerColumn = (answerSheet.items + columnsNeeded - 1) / columnsNeeded // Ensuring even distribution
+
         // Loop through the exam types and draw fields accordingly
         for (examType in answerSheet.examTypesList) {
             val (type, itemCount) = examType
 
-            // Draw section header
-            paint.textSize = 18f
-            paint.textAlign = Paint.Align.LEFT
-            canvas.drawText("$type Questions:", margin.toFloat(), yPosition, paint)
-            yPosition += 30f
+            // Determine the number of columns needed for each type
+            val columnsNeeded = when (type) {
+                "Multiple Choice", "Identification" -> {
+                    when {
+                        itemCount <= 20 -> 1
+                        itemCount <= 40 -> 2
+                        else -> 3
+                    }
+                }
+                "Word Problem" -> {
+                    // Each column can hold up to 2 problems (5 points each, 10 points per column)
+                    val maxProblemsPerColumn = 2
+                    when {
+                        itemCount <= maxProblemsPerColumn * 5 -> 1
+                        else -> 2
+                    }
+                }
+                else -> 1
+            }
+
+            // Calculate items per column, respecting the max items for each type
+            val maxItemsPerColumn = when (type) {
+                "Word Problem" -> 2
+                else -> 20
+            }
+
+//            // Draw section header
+//            paint.textSize = 18f
+//            paint.textAlign = Paint.Align.LEFT
+//            canvas.drawText("$type Questions:", margin.toFloat(), yPosition, paint)
+//            yPosition += 30f
 
             // Draw fields based on the type
             when (type) {
                 "Multiple Choice" -> {
                     // Draw Multiple Choice Fields
-                    paint.textSize = 14f
+                    paint.textSize = 12f
                     paint.style = Paint.Style.STROKE
 
                     for (i in 1..itemCount) {
+                        // Calculate the x-position based on the column
+                        val currentColumn = (itemNumber - 1) / maxItemsPerColumn
+                        val xPosition = margin + (currentColumn * (columnWidth + 20f))
+
+                        // Reset yPosition for each new column
+                        if ((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
+                            yPosition = 180f
+                        }
+
                         // Draw item number
-                        canvas.drawText("$itemNumber.", margin.toFloat(), yPosition, paint)
+                        canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
 
                         // Draw circles for A, B, C, D
-                        val startX = margin + 30f
-                        val bubbleRadius = 10f
-                        val gapBetweenBubbles = 50f
+                        val startX = xPosition + 30f
+                        val bubbleRadius = 8f
+                        val gapBetweenBubbles = 25f
 
                         for (j in 0 until 4) {
-                            val bubblesCenterX = startX + j *gapBetweenBubbles
+                            val bubblesCenterX = startX + j * gapBetweenBubbles
                             canvas.drawCircle(bubblesCenterX, yPosition - 8f, bubbleRadius, paint)
 
                             // Draw letter inside the circle (adjusted to be centered)
@@ -153,7 +190,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         yPosition += lineSpacing
 
                         // Check if we need to create a new page
-                        if (yPosition + lineSpacing > pageHeight - margin) {
+                        if (currentColumn == columnsNeeded - 1 && yPosition + lineSpacing > pageHeight - margin) {
                             document.finishPage(page) // Finish the current page
                             page = createNewPage(document, pageWidth, pageHeight) // Create a new page
                             canvas = page.canvas
@@ -167,21 +204,38 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                 "Identification" -> {
                     // Draw Identification Fields
-                    paint.textSize = 14f
+                    paint.textSize = 12f
                     paint.style = Paint.Style.STROKE
 
+                    // Adjusted box height to fit more items
+                    val identificationBoxHeight = 20f  // Reduced box height to fit more items
+                    val verticalSpacing = 10f // Reduced spacing between items
+                    val identificationBoxWidth = columnWidth - 40f  // Adjusted width to fit three columns
+
                     for (i in 1..itemCount) {
+                        // Calculate the x-position based on the column
+                        val currentColumn = (itemNumber - 1) / maxItemsPerColumn
+                        val xPosition =  margin + (currentColumn * (columnWidth  + 20f))
+
+                        // Reset yPosition for each new column
+                        if((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
+                            yPosition = 180f
+                        }
+
                         // Draw item number
-                        canvas.drawText("$itemNumber.", margin.toFloat(), yPosition, paint)
+                        canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
 
-                        // Draw box for answer (adjusted width to half the page)
-                        canvas.drawRect(margin + 30f, yPosition - 20f,
-                            margin + 30f + halfPageWidth, yPosition + 20f, paint)
+                        // Draw box for answer
+                        canvas.drawRect(
+                            xPosition  + 20f,
+                            yPosition - identificationBoxHeight / 2,
+                            xPosition + 20f + identificationBoxWidth,
+                            yPosition + identificationBoxHeight / 2, paint)
 
-                        yPosition += boxSpacing
+                        yPosition += identificationBoxHeight + verticalSpacing
 
                         // Check if we need to create a new page
-                        if (yPosition + boxSpacing > pageHeight - margin) {
+                        if (currentColumn == columnsNeeded - 1 && yPosition + identificationBoxHeight > pageHeight - margin) {
                             document.finishPage(page) // Finish the current page
                             page = createNewPage(document, pageWidth, pageHeight) // Create a new page
                             canvas = page.canvas
@@ -195,23 +249,38 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                 "Word Problem" -> {
                     // Draw Word Problem Fields
-                    paint.textSize = 14f
+                    paint.textSize = 12f
                     paint.style = Paint.Style.STROKE
+
+                    // Adjusted box sizes to fit more on a page
+                    val wordProblemBoxHeight = 25f  // Similar to Identification Box Height
+                    val solutionBoxHeight = wordProblemBoxHeight * 3
+                    val verticalSpacing = 15f       // Adjusted spacing to fit more items
+                    val wordProblemBoxWidth = halfPageWidth - 40f  // Adjusted width to fit in columns
 
                     // Calculate the number of word problems
                     val numberOfWordProblems = itemCount / 5
 
                     for (i in 1..numberOfWordProblems) {
+                        // Calculate the x-position based on the column
+                        val currentColumn = (i - 1) / maxItemsPerColumn
+                        val xPosition = margin + (currentColumn * (halfPageWidth + 20f))
+
+                        // Reset yPosition for each new column
+                        if ((i - 1) % maxItemsPerColumn == 0 && i > 1) {
+                            yPosition = 180f
+                        }
+
                         // Draw item number range (e.g., 1-5, 6-10)
                         val startRange = itemNumber
                         val endRange = startRange + 4
-                        canvas.drawText("$startRange - $endRange.", margin.toFloat(), yPosition, paint)
-                        yPosition += 30f // Adjust yPosition to avoid overlap with the next label
+                        canvas.drawText("$startRange - $endRange.", xPosition, yPosition, paint)
+                        yPosition += 20f // Adjust yPosition to avoid overlap with the next label
 
                         // Labels and boxes for each Word Problem part
                         val labels = listOf("A", "G", "O", "N", "A")
                         val labelFullText = listOf("Asked", "Given", "Operation", "Number Sentence", "Solution/Answer")
-                        val boxHeights = listOf(boxSpacing, boxSpacing, boxSpacing, boxSpacing, largeBoxHeight)
+                        val boxHeights = listOf(wordProblemBoxHeight, wordProblemBoxHeight, wordProblemBoxHeight, wordProblemBoxHeight, solutionBoxHeight)
 
                         for (j in labels.indices) {
                             val label = labels[j]
@@ -221,22 +290,24 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                             // Draw label above the box to avoid overlap
                             paint.textAlign = Paint.Align.LEFT
                             paint.style = Paint.Style.FILL
-                            canvas.drawText("$fullText ($label):", margin + 30f, yPosition, paint)
+                            canvas.drawText("$fullText ($label):", xPosition + 30f, yPosition, paint)
                             paint.style = Paint.Style.STROKE
 
-                            // Draw box for answer (half page width)
+                            // Draw box for answer
                             val boxTopY = yPosition + 10f
-                            val boxBottomY = boxTopY + (boxHeight - 20f)
+                            val boxBottomY = boxTopY + boxHeight
                             canvas.drawRect(
-                                (margin + 30f), boxTopY,
-                                (margin + 30f + halfPageWidth), boxBottomY, paint
+                                (xPosition + 30f), boxTopY,
+                                (xPosition + 30f + wordProblemBoxWidth), boxBottomY, paint
                             )
 
-                            yPosition += boxHeight // Move down by box height
+                            yPosition += boxHeight + 20f // Move down by box height + adjusted spacing
                         }
 
+                        yPosition += verticalSpacing // Add additional spacing for the next problem
+
                         // Check if we need to create a new page
-                        if (yPosition + largeBoxHeight > pageWidth - margin) {
+                        if (currentColumn == columnsNeeded - 1 && yPosition + solutionBoxHeight > pageWidth - margin) {
                             document.finishPage(page) // Finish the current page
                             page = createNewPage(document, pageWidth, pageHeight) // Create a new page
                             canvas = page.canvas
