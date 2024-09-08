@@ -112,8 +112,9 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         var yPosition = 180f // Starting position for answers below the header and fields
         var itemNumber = 1
 
-//        // Calculate items per column
-//        val itemsPerColumn = (answerSheet.items + columnsNeeded - 1) / columnsNeeded // Ensuring even distribution
+        // Initialize variables
+        var currentPage = 0
+        var currentColumn = 0
 
         // Loop through the exam types and draw fields accordingly
         for (examType in answerSheet.examTypesList) {
@@ -146,12 +147,6 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                 else -> 20
             }
 
-//            // Draw section header
-//            paint.textSize = 18f
-//            paint.textAlign = Paint.Align.LEFT
-//            canvas.drawText("$type Questions:", margin.toFloat(), yPosition, paint)
-//            yPosition += 30f
-
             // Draw fields based on the type
             when (type) {
                 "Multiple Choice" -> {
@@ -161,7 +156,6 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                     for (i in 1..itemCount) {
                         // Calculate the x-position based on the column
-                        val currentColumn = (itemNumber - 1) / maxItemsPerColumn
                         val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
                         // Reset yPosition for each new column
@@ -190,12 +184,21 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                         yPosition += lineSpacing
 
-                        // Check if we need to create a new page
-                        if (currentColumn == columnsNeeded - 1 && yPosition + lineSpacing > pageHeight - margin) {
-                            document.finishPage(page) // Finish the current page
-                            page = createNewPage(document, pageWidth, pageHeight) // Create a new page
-                            canvas = page.canvas
-                            yPosition = 180f // Reset yPosition for the new page
+                        // Check if we need to create a new page or move to a new column
+                        if (yPosition + lineSpacing > pageHeight - margin) {
+                            if (currentColumn == columnsNeeded - 1) {
+                                // If the last column is filled, create a new page and reset to the first column
+                                document.finishPage(page) // Finish the current page
+                                page = createNewPage(document, pageWidth, pageHeight) // Create a new page
+                                canvas = page.canvas
+                                yPosition = 180f // Reset yPosition for the new page
+                                currentColumn = 0 // Reset column index for new page
+                                currentPage++ // Increment current page
+                            } else {
+                                // Move to the next column on the same page
+                                currentColumn++
+                                yPosition = 180f // Reset yPosition for the new column
+                            }
                         }
 
                         itemNumber ++
@@ -209,14 +212,13 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                     paint.style = Paint.Style.STROKE
 
                     // Adjusted box height to fit more items
-                    val identificationBoxHeight = 20f  // Reduced box height to fit more items
+                    val identificationBoxHeight = 21f  // Reduced box height to fit more items
                     val verticalSpacing = 10f // Reduced spacing between items
                     val identificationBoxWidth = columnWidth - 40f  // Adjusted width to fit three columns
 
                     for (i in 1..itemCount) {
                         // Calculate the x-position based on the column
-                        val currentColumn = (itemNumber - 1) / maxItemsPerColumn
-                        val xPosition =  margin + (currentColumn * (columnWidth  + 20f))
+                        val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
                         // Reset yPosition for each new column
                         if((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
@@ -228,7 +230,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                         // Draw box for answer
                         canvas.drawRect(
-                            xPosition  + 20f,
+                            xPosition + 20f,
                             yPosition - identificationBoxHeight / 2,
                             xPosition + 20f + identificationBoxWidth,
                             yPosition + identificationBoxHeight / 2, paint)
@@ -236,11 +238,20 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         yPosition += identificationBoxHeight + verticalSpacing
 
                         // Check if we need to create a new page
-                        if (currentColumn == columnsNeeded - 1 && yPosition + identificationBoxHeight > pageHeight - margin) {
-                            document.finishPage(page) // Finish the current page
-                            page = createNewPage(document, pageWidth, pageHeight) // Create a new page
-                            canvas = page.canvas
-                            yPosition = 180f // Reset yPosition for the new page
+                        if (yPosition + identificationBoxHeight > pageHeight - margin) {
+                            if (currentColumn == columnsNeeded - 1) {
+                                // If the last column is filled, create a new page and reset to the first column
+                                document.finishPage(page) // Finish the current page
+                                page = createNewPage(document, pageWidth, pageHeight) // Create a new page
+                                canvas = page.canvas
+                                yPosition = 180f // Reset yPosition for the new page
+                                currentColumn = 0 // Reset column index for new page
+                                currentPage++ // Increment current page
+                            } else {
+                                // Move to the next column on the same page
+                                currentColumn++
+                                yPosition = 180f // Reset yPosition for the new column
+                            }
                         }
 
                         itemNumber ++
@@ -264,7 +275,6 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                     for (i in 1..numberOfWordProblems) {
                         // Calculate the x-position based on the column
-                        val currentColumn = (i - 1) / maxItemsPerColumn
                         val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
                         // Reset yPosition for each new column
@@ -307,12 +317,21 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                         yPosition += verticalSpacing // Add additional spacing for the next problem
 
-                        // Check if we need to create a new page
-                        if (currentColumn == columnsNeeded - 1 && yPosition + solutionBoxHeight > pageHeight - margin) {
-                            document.finishPage(page) // Finish the current page
-                            page = createNewPage(document, pageWidth, pageHeight) // Create a new page
-                            canvas = page.canvas
-                            yPosition = 180f // Reset yPosition for the new page
+                        // Check if we need to create a new page or move to a new column
+                        if (yPosition + solutionBoxHeight > pageHeight - margin) {
+                            if (currentColumn == columnsNeeded - 1) {
+                                // If the last column is filled, create a new page and reset to the first column
+                                document.finishPage(page) // Finish the current page
+                                page = createNewPage(document, pageWidth, pageHeight) // Create a new page
+                                canvas = page.canvas
+                                yPosition = 180f // Reset yPosition for the new page
+                                currentColumn = 0 // Reset column index for new page
+                                currentPage++ // Increment current page
+                            } else {
+                                // Move to the next column on the same page
+                                currentColumn++
+                                yPosition = 180f // Reset yPosition for the new column
+                            }
                         }
 
                         itemNumber += 5 // Increment item number by 5 for next word problem
