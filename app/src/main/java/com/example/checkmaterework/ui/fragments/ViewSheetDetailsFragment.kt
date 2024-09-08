@@ -130,10 +130,10 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                 }
                 "Word Problem" -> {
                     // Each column can hold up to 2 problems (5 points each, 10 points per column)
-                    val maxProblemsPerColumn = 2
                     when {
-                        itemCount <= maxProblemsPerColumn * 5 -> 1
-                        else -> 2
+                        itemCount <= 10  -> 1
+                        itemCount <= 20 -> 2
+                        else -> 3
                     }
                 }
                 else -> 1
@@ -141,6 +141,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
             // Calculate items per column, respecting the max items for each type
             val maxItemsPerColumn = when (type) {
+                "Multiple Choice", "Identification" -> 20
                 "Word Problem" -> 2
                 else -> 20
             }
@@ -255,8 +256,8 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                     // Adjusted box sizes to fit more on a page
                     val wordProblemBoxHeight = 25f  // Similar to Identification Box Height
                     val solutionBoxHeight = wordProblemBoxHeight * 3
-                    val verticalSpacing = 15f       // Adjusted spacing to fit more items
-                    val wordProblemBoxWidth = halfPageWidth - 40f  // Adjusted width to fit in columns
+                    val verticalSpacing = 20f       // Adjusted spacing to fit more items
+                    val wordProblemBoxWidth = columnWidth - 40f  // Adjusted width to fit in columns
 
                     // Calculate the number of word problems
                     val numberOfWordProblems = itemCount / 5
@@ -264,7 +265,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                     for (i in 1..numberOfWordProblems) {
                         // Calculate the x-position based on the column
                         val currentColumn = (i - 1) / maxItemsPerColumn
-                        val xPosition = margin + (currentColumn * (halfPageWidth + 20f))
+                        val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
                         // Reset yPosition for each new column
                         if ((i - 1) % maxItemsPerColumn == 0 && i > 1) {
@@ -307,7 +308,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         yPosition += verticalSpacing // Add additional spacing for the next problem
 
                         // Check if we need to create a new page
-                        if (currentColumn == columnsNeeded - 1 && yPosition + solutionBoxHeight > pageWidth - margin) {
+                        if (currentColumn == columnsNeeded - 1 && yPosition + solutionBoxHeight > pageHeight - margin) {
                             document.finishPage(page) // Finish the current page
                             page = createNewPage(document, pageWidth, pageHeight) // Create a new page
                             canvas = page.canvas
