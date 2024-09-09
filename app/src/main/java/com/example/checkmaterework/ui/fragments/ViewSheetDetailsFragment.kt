@@ -3,6 +3,7 @@ package com.example.checkmaterework.ui.fragments
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.os.Build
@@ -116,31 +117,47 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
         var currentPage = 0
         var currentColumn = 0
 
+        // Calculate total items for overall column management
+        var totalItems = 0
+        answerSheet.examTypesList.forEach { (_, itemCount) -> totalItems += itemCount }
+
+        // Determine the overall columns needed for all types combined
+        val overallColumnsNeeded = when {
+            totalItems <= 20 -> 1
+            totalItems <= 40 -> 2
+            else -> 3
+        }
+//
+//        // Initialize global tracking for column and positions
+//        var currentColumn = 0
+//        var currentPage = 0
+//        var yPosition = 180f
+//        var itemNumber = 1
+
         // Loop through the exam types and draw fields accordingly
         for (examType in answerSheet.examTypesList) {
             val (type, itemCount) = examType
-
             // Determine the number of columns needed for each type
-            val columnsNeeded = when (type) {
-                "Multiple Choice", "Identification" -> {
-                    when {
-                        itemCount <= 20 -> 1
-                        itemCount <= 40 -> 2
-                        else -> 3
-                    }
-                }
-                "Word Problem" -> {
-                    // Each column can hold up to 2 problems (5 points each, 10 points per column)
-                    when {
-                        itemCount <= 10  -> 1
-                        itemCount <= 20 -> 2
-                        else -> 3
-                    }
-                }
-                else -> 1
-            }
+//            val columnsNeeded = when (type) {
+//                "Multiple Choice", "Identification" -> {
+//                    when {
+//                        itemCount <= 20 -> 1
+//                        itemCount <= 40 -> 2
+//                        else -> 3
+//                    }
+//                }
+//                "Word Problem" -> {
+//                    // Each column can hold up to 2 problems (5 points each, 10 points per column)
+//                    when {
+//                        itemCount <= 10  -> 1
+//                        itemCount <= 20 -> 2
+//                        else -> 3
+//                    }
+//                }
+//                else -> 1
+//            }
 
-            // Calculate items per column, respecting the max items for each type
+            // Calculate items per column for each type
             val maxItemsPerColumn = when (type) {
                 "Multiple Choice", "Identification" -> 20
                 "Word Problem" -> 2
@@ -158,10 +175,10 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         // Calculate the x-position based on the column
                         val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
-                        // Reset yPosition for each new column
-                        if ((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
-                            yPosition = 180f
-                        }
+//                        // Reset yPosition for each new column
+//                        if ((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
+//                            yPosition = 180f
+//                        }
 
                         // Draw item number
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
@@ -186,7 +203,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                         // Check if we need to create a new page or move to a new column
                         if (yPosition + lineSpacing > pageHeight - margin) {
-                            if (currentColumn == columnsNeeded - 1) {
+                            if (currentColumn == overallColumnsNeeded - 1) {
                                 // If the last column is filled, create a new page and reset to the first column
                                 document.finishPage(page) // Finish the current page
                                 page = createNewPage(document, pageWidth, pageHeight) // Create a new page
@@ -220,10 +237,10 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         // Calculate the x-position based on the column
                         val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
-                        // Reset yPosition for each new column
-                        if((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
-                            yPosition = 180f
-                        }
+//                        // Reset yPosition for each new column
+//                        if((itemNumber - 1) % maxItemsPerColumn == 0 && itemNumber > 1) {
+//                            yPosition = 180f
+//                        }
 
                         // Draw item number
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
@@ -239,7 +256,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                         // Check if we need to create a new page
                         if (yPosition + identificationBoxHeight > pageHeight - margin) {
-                            if (currentColumn == columnsNeeded - 1) {
+                            if (currentColumn == overallColumnsNeeded - 1) {
                                 // If the last column is filled, create a new page and reset to the first column
                                 document.finishPage(page) // Finish the current page
                                 page = createNewPage(document, pageWidth, pageHeight) // Create a new page
@@ -277,15 +294,16 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                         // Calculate the x-position based on the column
                         val xPosition = margin + (currentColumn * (columnWidth + 20f))
 
-                        // Reset yPosition for each new column
-                        if ((i - 1) % maxItemsPerColumn == 0 && i > 1) {
-                            yPosition = 180f
-                        }
+//                        // Reset yPosition for each new column
+//                        if ((i - 1) % maxItemsPerColumn == 0 && i > 1) {
+//                            yPosition = 180f
+//                        }
 
                         // Draw item number range (e.g., 1-5, 6-10)
-                        val startRange = itemNumber
-                        val endRange = startRange + 4
-                        canvas.drawText("$startRange - $endRange.", xPosition, yPosition, paint)
+//                        val startRange = itemNumber
+//                        val endRange = startRange + 4
+//                        canvas.drawText("$startRange - $endRange.", xPosition, yPosition, paint)
+                        canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
                         yPosition += 20f // Adjust yPosition to avoid overlap with the next label
 
                         // Labels and boxes for each Word Problem part
@@ -301,15 +319,15 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
                             // Draw label above the box to avoid overlap
                             paint.textAlign = Paint.Align.LEFT
                             paint.style = Paint.Style.FILL
-                            canvas.drawText("$fullText ($label):", xPosition + 30f, yPosition, paint)
+                            canvas.drawText("$fullText ($label):", xPosition + 20f, yPosition, paint)
                             paint.style = Paint.Style.STROKE
 
                             // Draw box for answer
                             val boxTopY = yPosition + 10f
                             val boxBottomY = boxTopY + boxHeight
                             canvas.drawRect(
-                                (xPosition + 30f), boxTopY,
-                                (xPosition + 30f + wordProblemBoxWidth), boxBottomY, paint
+                                (xPosition + 20f), boxTopY,
+                                (xPosition + 20f + wordProblemBoxWidth), boxBottomY, paint
                             )
 
                             yPosition += boxHeight + 20f // Move down by box height + adjusted spacing
@@ -319,7 +337,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomShe
 
                         // Check if we need to create a new page or move to a new column
                         if (yPosition + solutionBoxHeight > pageHeight - margin) {
-                            if (currentColumn == columnsNeeded - 1) {
+                            if (currentColumn == overallColumnsNeeded - 1) {
                                 // If the last column is filled, create a new page and reset to the first column
                                 document.finishPage(page) // Finish the current page
                                 page = createNewPage(document, pageWidth, pageHeight) // Create a new page
