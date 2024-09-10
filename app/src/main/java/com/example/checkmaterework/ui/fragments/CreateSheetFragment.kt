@@ -9,21 +9,31 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentCreateSheetBinding
 import com.example.checkmaterework.models.AnswerSheet
+import com.example.checkmaterework.models.AnswerSheetDatabase
+import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerSheetViewModel
+import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 
 class CreateSheetFragment(
-    private val existingSheet: AnswerSheet? = null, // Optional parameter for editing
-    private val onNewSheetAdded: (AnswerSheet) -> Unit,
-    private val onSheetUpdated: (AnswerSheet) -> Unit // Callback for updating a sheet
+    private val existingSheet: AnswerSheetEntity? = null, // Optional parameter for editing
+    private val onNewSheetAdded: (AnswerSheetEntity) -> Unit,
+    private val onSheetUpdated: (AnswerSheetEntity) -> Unit // Callback for updating a sheet
 ) : BottomSheetDialogFragment() {
 
     private lateinit var createSheetBinding: FragmentCreateSheetBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
     private val examTypeOptions = listOf("Multiple Choice", "Identification", "Word Problem")
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
+        answerSheetViewModel = ViewModelProvider(this, AnswerSheetViewModelFactory(dao))
+            .get(AnswerSheetViewModel::class.java)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         createSheetBinding = FragmentCreateSheetBinding.inflate(inflater, container, false)
@@ -32,9 +42,6 @@ class CreateSheetFragment(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val activity = requireActivity()
-        answerSheetViewModel = ViewModelProvider(activity)[AnswerSheetViewModel::class.java]
 
         setupUI()
 
@@ -75,9 +82,6 @@ class CreateSheetFragment(
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, examTypeOptions)
         textInputExamType.setAdapter(adapter)
 
-//        // Set the initial hint for textInputItemsCount
-//        textInputItemsCount.hint = if (examType == "Word Problem") "Enter number of Word Problems (Each = 5 items)" else "Enter number of items"
-
         // Set existing values if provided
         textInputExamType.setText(examType)
         textInputItemsCount.setText(if (itemsCount > 0) itemsCount.toString() else "")
@@ -85,15 +89,6 @@ class CreateSheetFragment(
         textInputExamType.setOnClickListener {
             textInputExamType.showDropDown() // Show dropdown when clicked
         }
-//
-//        // Change hint dynamically based on selected exam type
-//        textInputExamType.setOnItemClickListener { _, _, position, _ ->
-//            if (examTypeOptions[position] == "Word Problem") {
-//                textInputItemsCount.hint = "Enter number of Word Problems (Each = 5 items)"
-//            } else {
-//                textInputItemsCount.hint = "Enter number of Items"
-//            }
-//        }
 
         buttonRemoveExamType.setOnClickListener {
             createSheetBinding.examTypesContainer.removeView(examTypeView) // Remove this view from the container
@@ -114,7 +109,6 @@ class CreateSheetFragment(
             val itemsCount = examTypeView.findViewById<TextInputEditText>(R.id.textInputItemsCount).text.toString().toIntOrNull() ?:0
 
             if (examType.isNotEmpty() && itemsCount > 0) {
-//                val adjustedCount = if (examType == "Word Problem") itemsCount * 5 else itemsCount
                 examTypesList.add(Pair(examType, itemsCount))
             }
         }
@@ -130,12 +124,12 @@ class CreateSheetFragment(
             return
         }
 
-        val newSheet = AnswerSheet(sheetName, numberOfItems, examTypesList)
+        val newSheet = AnswerSheetEntity(name = sheetName, items = numberOfItems, examTypesList = examTypesList)
 
         if (existingSheet == null) {
-            onNewSheetAdded(newSheet) // Creating new sheet
+            answerSheetViewModel.createSheet(newSheet) // Creating new sheet
         } else {
-            onSheetUpdated(newSheet) // Updating existing sheet
+            answerSheetViewModel.updateSheet(newSheet) // Updating existing sheet
         }
 
         // Clear input fields and dismiss the dialog

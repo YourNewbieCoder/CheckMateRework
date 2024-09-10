@@ -17,13 +17,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.checkmaterework.databinding.FragmentViewSheetDetailsBinding
-import com.example.checkmaterework.models.AnswerSheet
+import com.example.checkmaterework.models.AnswerSheetEntity
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-class ViewSheetDetailsFragment(private val answerSheet: AnswerSheet) : BottomSheetDialogFragment() {
+class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : BottomSheetDialogFragment() {
 
     private lateinit var viewSheetDetailsBinding: FragmentViewSheetDetailsBinding
 

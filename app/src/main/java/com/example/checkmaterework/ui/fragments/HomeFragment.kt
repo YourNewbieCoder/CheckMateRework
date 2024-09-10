@@ -7,10 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-
 import com.example.checkmaterework.databinding.FragmentHomeBinding
-import com.example.checkmaterework.models.AnswerSheet
+import com.example.checkmaterework.models.AnswerSheetDatabase
+import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerSheetViewModel
+import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.example.checkmaterework.ui.adapters.CreatedSheetsAdapter
 
 class HomeFragment : Fragment() {
@@ -19,6 +20,13 @@ class HomeFragment : Fragment() {
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
     private lateinit var createdSheetsAdapter: CreatedSheetsAdapter
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
+        answerSheetViewModel = ViewModelProvider(this, AnswerSheetViewModelFactory(dao))
+            .get(AnswerSheetViewModel::class.java)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         homeBinding = FragmentHomeBinding.inflate(inflater, container, false)
         return homeBinding.root
@@ -26,9 +34,6 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val activity = requireActivity()
-        answerSheetViewModel = ViewModelProvider(activity).get(AnswerSheetViewModel::class.java)
 
         homeBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
 
@@ -63,12 +68,12 @@ class HomeFragment : Fragment() {
         createSheetFragment.show(parentFragmentManager, createSheetFragment.tag)
     }
 
-    private fun showViewSheetDetailsFragment(sheet: AnswerSheet) {
+    private fun showViewSheetDetailsFragment(sheet: AnswerSheetEntity) {
         val viewSheetDetailsFragment = ViewSheetDetailsFragment(sheet)
         viewSheetDetailsFragment.show(parentFragmentManager, viewSheetDetailsFragment.tag)
     }
 
-    private fun showEditSheetDetailsFragment(sheet: AnswerSheet) {
+    private fun showEditSheetDetailsFragment(sheet: AnswerSheetEntity) {
         val editSheetFragment = CreateSheetFragment(
             existingSheet = sheet, // Pass the existing sheet for editing
             onNewSheetAdded = { newSheet ->
@@ -81,7 +86,7 @@ class HomeFragment : Fragment() {
         editSheetFragment.show(parentFragmentManager, editSheetFragment.tag)
     }
 
-    private fun deleteSheet(sheet: AnswerSheet) {
+    private fun deleteSheet(sheet: AnswerSheetEntity) {
         answerSheetViewModel.deleteSheet(sheet) // Call ViewModel method to delete sheet
     }
 }

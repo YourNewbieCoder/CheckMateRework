@@ -1,5 +1,6 @@
 package com.example.checkmaterework.ui.adapters
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,12 +9,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.checkmaterework.R
 import com.example.checkmaterework.models.AnswerSheet
+import com.example.checkmaterework.models.AnswerSheetEntity
 
 class CreatedSheetsAdapter(
-    private var createdSheets: MutableList<AnswerSheet>,
-    private val onItemClick: (AnswerSheet) -> Unit, // Click listener for viewing details
-    private val onEditClick: (AnswerSheet) -> Unit, // Click listener for editing
-    private val onDeleteClick: (AnswerSheet) -> Unit // Click listener for deleting
+    private var createdSheets: MutableList<AnswerSheetEntity>,
+    private val onItemClick: (AnswerSheetEntity) -> Unit, // Click listener for viewing details
+    private val onEditClick: (AnswerSheetEntity) -> Unit, // Click listener for editing
+    private val onDeleteClick: (AnswerSheetEntity) -> Unit // Click listener for deleting
 ): RecyclerView.Adapter<CreatedSheetsAdapter.CreatedSheetViewHolder>() {
 
     class CreatedSheetViewHolder(createdSheetView: View): RecyclerView.ViewHolder(createdSheetView) {
@@ -49,7 +51,8 @@ class CreatedSheetsAdapter(
         }
     }
 
-    fun updateSheetList(newSheets: MutableList<AnswerSheet>) {
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateSheetList(newSheets: MutableList<AnswerSheetEntity>) {
         createdSheets.clear()
         createdSheets.addAll(newSheets)
         notifyDataSetChanged()
