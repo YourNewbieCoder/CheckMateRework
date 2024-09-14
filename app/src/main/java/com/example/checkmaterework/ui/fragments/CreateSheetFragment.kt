@@ -127,9 +127,9 @@ class CreateSheetFragment(
         val newSheet = AnswerSheetEntity(name = sheetName, items = numberOfItems, examTypesList = examTypesList)
 
         if (existingSheet == null) {
-            answerSheetViewModel.createSheet(newSheet) // Creating new sheet
+            onNewSheetAdded(newSheet) // Creating new sheet
         } else {
-            answerSheetViewModel.updateSheet(newSheet) // Updating existing sheet
+            onSheetUpdated(newSheet) // Updating existing sheet
         }
 
         // Clear input fields and dismiss the dialog
