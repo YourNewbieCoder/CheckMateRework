@@ -5,5 +5,7 @@
 
     <string name="get_started">Get started by clicking Create Sheet to generate a answer sheet</string>
 
+    <string name="check_sheet">Select answer sheet to start checking</string>
+
     <string name="exam_and_count">Select Exam Types and Set Item Count</string>
 </resources>
