@@ -8,4 +8,9 @@
     <string name="check_sheet">Select answer sheet to start checking</string>
 
     <string name="exam_and_count">Select Exam Types and Set Item Count</string>
+
+    <string name="view_records">Select answer sheet to view records</string>
+
+
+
 </resources>
