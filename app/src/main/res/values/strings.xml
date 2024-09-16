@@ -13,5 +13,7 @@
 
     <string name="edit_key">Select answer sheet to add key to correction</string>
 
+    <string name="view_analysis">Select answer sheet to view item analysis</string>
+
 
 </resources>
