@@ -15,5 +15,7 @@
 
     <string name="view_analysis">Select answer sheet to view item analysis</string>
 
+    <string name="back_button">Back</string>
+
 
 </resources>

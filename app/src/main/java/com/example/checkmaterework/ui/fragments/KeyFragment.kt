@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentKeyBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
@@ -40,7 +41,7 @@ class KeyFragment : Fragment() {
         // Set up the adapter
         editKeyAdapter = EditKeyAdapter(
             mutableListOf(),
-            onEditKeyClick = { sheet -> openCameraToCheckSheet(sheet) }
+            onEditKeyClick = { sheet -> showEditAnswerKeyFragment(sheet) }
         )
 
         keyBinding.recyclerViewCreatedSheets.adapter = editKeyAdapter
@@ -50,7 +51,8 @@ class KeyFragment : Fragment() {
         }
     }
 
-    private fun openCameraToCheckSheet(sheet: AnswerSheetEntity) {
-
+    private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
+        val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
+        editAnswerKeyFragment.show(parentFragmentManager, editAnswerKeyFragment.tag)
     }
 }
