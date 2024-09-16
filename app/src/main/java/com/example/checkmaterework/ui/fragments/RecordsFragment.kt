@@ -7,13 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentRecordsBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
-import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter
 import com.example.checkmaterework.ui.adapters.ViewRecordsAdapter
 
 class RecordsFragment : Fragment() {

@@ -9,33 +9,32 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.checkmaterework.R
 import com.example.checkmaterework.models.AnswerSheetEntity
-import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter.CheckSheetViewHolder
 
-class ViewRecordsAdapter(
+class EditKeyAdapter(
     private var createdSheets: MutableList<AnswerSheetEntity>,
-    private val onViewRecordsClick: (AnswerSheetEntity) -> Unit // Click listener for "Check Sheet" button
-): RecyclerView.Adapter<ViewRecordsAdapter.ViewRecordsViewHolder>() {
-    class ViewRecordsViewHolder(createdSheetsView: View): RecyclerView.ViewHolder(createdSheetsView) {
+    private val onEditKeyClick: (AnswerSheetEntity) -> Unit // Click listener for "Check Sheet" button
+): RecyclerView.Adapter<EditKeyAdapter.EditKeyViewHolder>() {
+    class EditKeyViewHolder(createdSheetsView: View): RecyclerView.ViewHolder(createdSheetsView) {
         val createdSheetName: TextView = createdSheetsView.findViewById(R.id.createdSheetName)
-        val buttonViewRecords: Button = createdSheetsView.findViewById(R.id.buttonViewRecords)
+        val buttonEditKey: Button = createdSheetsView.findViewById(R.id.buttonEditKey)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewRecordsViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EditKeyViewHolder {
         val createdSheetsView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.layout_view_records, parent, false)
-        return ViewRecordsViewHolder(createdSheetsView)
+            .inflate(R.layout.layout_edit_key, parent, false)
+        return EditKeyViewHolder(createdSheetsView)
     }
 
     override fun getItemCount(): Int {
         return createdSheets.size
     }
 
-    override fun onBindViewHolder(holder: ViewRecordsViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: EditKeyViewHolder, position: Int) {
         val createdSheet = createdSheets[position]
         holder.createdSheetName.text = createdSheet.name
 
-        holder.buttonViewRecords.setOnClickListener {
-            onViewRecordsClick(createdSheet) // Trigger the check functionality
+        holder.buttonEditKey.setOnClickListener {
+            onEditKeyClick(createdSheet) // Trigger the check functionality
         }
     }
 

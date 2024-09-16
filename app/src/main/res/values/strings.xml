@@ -11,6 +11,7 @@
 
     <string name="view_records">Select answer sheet to view records</string>
 
+    <string name="edit_key">Select answer sheet to add key to correction</string>
 
 
 </resources>
