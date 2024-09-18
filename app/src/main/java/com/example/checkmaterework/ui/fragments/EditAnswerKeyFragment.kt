@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
 import com.example.checkmaterework.databinding.FragmentEditAnswerKeyBinding
 import com.example.checkmaterework.models.AnswerSheetEntity
 
-class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : DialogFragment() {
+class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragment() {
 
     private lateinit var editAnswerKeyBinding: FragmentEditAnswerKeyBinding
 
@@ -22,17 +22,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Dialog
 
         // Set up the back button click listener
         editAnswerKeyBinding.backButton.setOnClickListener {
-            dismiss() // Close the dialog
+            requireActivity().onBackPressed()
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        val dialog = dialog ?: return
-        val window = dialog.window ?: return
-
-        // Set the dialog to fill the screen
-        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        window.setWindowAnimations(android.R.style.Animation_Dialog) // Optional: to add animation
     }
 }

@@ -53,6 +53,9 @@ class KeyFragment : Fragment() {
 
     private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
         val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
-        editAnswerKeyFragment.show(parentFragmentManager, editAnswerKeyFragment.tag)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, editAnswerKeyFragment)
+            .addToBackStack(null)
+            .commit()
     }
 }
