@@ -19,32 +19,33 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        replaceFragment(HomeFragment())
+        setSupportActionBar(binding.myToolbar)
+        replaceFragment(HomeFragment(), getString(R.string.home_title))
 
         binding.bottomNavigationView.setOnItemSelectedListener { menuItem ->
             when(menuItem.itemId){
                 R.id.button_home -> {
-                    replaceFragment(HomeFragment())
+                    replaceFragment(HomeFragment(), getString(R.string.home_title))
                     true
                 }
 
                 R.id.button_key -> {
-                    replaceFragment(KeyFragment())
+                    replaceFragment(KeyFragment(), getString(R.string.key_title))
                     true
                 }
 
                 R.id.button_check -> {
-                    replaceFragment(CheckFragment())
+                    replaceFragment(CheckFragment(), getString(R.string.check_title))
                     true
                 }
 
                 R.id.button_records -> {
-                    replaceFragment(RecordsFragment())
+                    replaceFragment(RecordsFragment(), getString(R.string.records_title))
                     true
                 }
 
                 R.id.button_analysis -> {
-                    replaceFragment(AnalysisFragment())
+                    replaceFragment(AnalysisFragment(), getString(R.string.analysis_title))
                     true
                 }
 
@@ -54,7 +55,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun replaceFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction().replace(R.id.frame_container, fragment).commit()
+    private fun replaceFragment(fragment: Fragment, title: String) {
+        supportFragmentManager.beginTransaction().replace(R.id.frameContainer, fragment).commit()
+        supportActionBar?.title = title
     }
 }
