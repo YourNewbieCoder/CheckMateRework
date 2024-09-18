@@ -53,6 +53,8 @@ class KeyFragment : Fragment() {
 
     private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
         val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
+
+        // Replace the current fragment and add to back stack
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, editAnswerKeyFragment)
             .addToBackStack(null)
