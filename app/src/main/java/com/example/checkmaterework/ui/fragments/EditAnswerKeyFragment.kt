@@ -32,7 +32,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         activity.supportActionBar?.setDisplayShowHomeEnabled(true)
 
         // Set the toolbar title if needed
-        activity.supportActionBar?.title = getString(R.string.key_title)
+        activity.supportActionBar?.title = getString(R.string.edit_key_title)
 
         // Set click listener for the back button
         activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {

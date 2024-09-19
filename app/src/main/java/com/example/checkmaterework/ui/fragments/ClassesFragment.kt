@@ -5,8 +5,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentClassesBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
@@ -36,6 +39,22 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Set up the toolbar as the support action bar
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        // Enable the back button
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(true)
+
+        // Set the toolbar title if needed
+        activity.supportActionBar?.title = getString(R.string.classes_title)
+
+        // Set click listener for the back button
+        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+            activity.onBackPressed() // Handle the back press
+        }
 
         classesBinding.recyclerViewClasses.layoutManager = LinearLayoutManager(requireContext())
 

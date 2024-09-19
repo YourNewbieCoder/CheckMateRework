@@ -5,9 +5,13 @@
 
     <string name="key_title">Key</string>
 
+    <string name="edit_key_title">Edit Key</string>
+
     <string name="check_title">Check Sheet</string>
 
     <string name="records_title">Records</string>
+
+    <string name="classes_title">Classes</string>
 
     <string name="analysis_title">Item Analysis</string>
 

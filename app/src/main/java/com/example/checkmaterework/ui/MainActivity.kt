@@ -2,12 +2,12 @@ package com.example.checkmaterework.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.ActivityMainBinding
 import com.example.checkmaterework.ui.fragments.AnalysisFragment
 import com.example.checkmaterework.ui.fragments.CheckFragment
+import com.example.checkmaterework.ui.fragments.ClassesFragment
 import com.example.checkmaterework.ui.fragments.EditAnswerKeyFragment
 import com.example.checkmaterework.ui.fragments.HomeFragment
 import com.example.checkmaterework.ui.fragments.KeyFragment
@@ -58,14 +58,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun replaceFragment(fragment: Fragment, title: String) {
-        supportFragmentManager.beginTransaction()
+        val transaction = supportFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, fragment)
-            .addToBackStack(null) // Ensure fragments are added to the back stack
-            .commit()
 
+            // Add to the back stack only if the fragment is not one of the main fragments
+            if (fragment !is HomeFragment && fragment !is KeyFragment &&
+                fragment !is CheckFragment && fragment !is RecordsFragment &&
+                fragment !is AnalysisFragment) {
+                transaction.addToBackStack(title) // Add a title tag to the back stack entry
+            }
+
+            transaction.commit()
+
+        // Update the toolbar title
         supportActionBar?.title = title
 
-        // Determine if the back button should be shown or hidden
+        // Show or hide the back button depending on the fragment
         val isMainFragment = fragment is HomeFragment || fragment is KeyFragment ||
                 fragment is CheckFragment || fragment is RecordsFragment || fragment is AnalysisFragment
 
@@ -80,23 +88,36 @@ class MainActivity : AppCompatActivity() {
             // Set the white back arrow icon
             supportActionBar?.setHomeAsUpIndicator(R.drawable.baseline_arrow_back_24)
         }
-
     }
 
     override fun onBackPressed() {
         val fragmentManager = supportFragmentManager
         if (fragmentManager.backStackEntryCount > 0) {
             fragmentManager.popBackStack() // Go back to the previous fragment
+
+            // After popping, get the current top fragment
+            val currentFragment = fragmentManager.findFragmentById(R.id.frameContainer)
+
+            if (currentFragment != null && fragmentManager.backStackEntryCount > 0) {
+                // Get the tag from the previous fragment in the back stack
+                val fragmentTag = fragmentManager.getBackStackEntryAt(fragmentManager.backStackEntryCount - 1).name
+                supportActionBar?.title = fragmentTag ?: getString(R.string.app_name) // Set title to fragment tag or app name
+            }
+
+            // Handle back button visibility based on the current fragment
+//            val currentFragmentTag = currentFragment?.javaClass?.simpleName
+            val isMainFragment = currentFragment is HomeFragment || currentFragment is KeyFragment ||
+                    currentFragment is CheckFragment || currentFragment is RecordsFragment || currentFragment is AnalysisFragment
+
+            if (isMainFragment) {
+                supportActionBar?.setDisplayHomeAsUpEnabled(false)
+                supportActionBar?.setDisplayShowHomeEnabled(false)
+            } else {
+                supportActionBar?.setDisplayHomeAsUpEnabled(true)
+                supportActionBar?.setDisplayShowHomeEnabled(true)
+            }
         } else {
             super.onBackPressed() // Default back press behavior
-        }
-
-        // Reset the toolbar when not in EditAnswerKeyFragment
-        val fragment = fragmentManager.findFragmentById(R.id.frameContainer)
-        if (fragment !is EditAnswerKeyFragment) {
-            supportActionBar?.setDisplayHomeAsUpEnabled(false) // Hide the back button
-            supportActionBar?.setDisplayShowHomeEnabled(false)
-            supportActionBar?.title = getString(R.string.app_name) // Reset title
         }
     }
 }
