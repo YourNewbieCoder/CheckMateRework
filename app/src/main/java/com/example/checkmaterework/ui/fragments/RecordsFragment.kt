@@ -7,11 +7,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentRecordsBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
+import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.ui.adapters.ViewRecordsAdapter
 
 class RecordsFragment : Fragment() {
@@ -40,7 +42,7 @@ class RecordsFragment : Fragment() {
         // Set up the adapter
         viewRecordsAdapter = ViewRecordsAdapter(
             mutableListOf(),
-            onViewRecordsClick = { sheet -> openCameraToCheckSheet(sheet) }
+            onViewRecordsClick = { sheet -> openClassesFragment(sheet) }
         )
 
         recordsBinding.recyclerViewCreatedSheets.adapter = viewRecordsAdapter
@@ -50,7 +52,14 @@ class RecordsFragment : Fragment() {
         }
     }
 
-    private fun openCameraToCheckSheet(sheet: AnswerSheetEntity) {
+    // Function to open ClassesFragment with the selected class entity
+    private fun openClassesFragment(sheet: AnswerSheetEntity) {
+        val classesFragment = ClassesFragment(sheet)
 
+        // Replace the current fragment and add to back stack
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, classesFragment)
+            .addToBackStack(null)
+            .commit()
     }
 }

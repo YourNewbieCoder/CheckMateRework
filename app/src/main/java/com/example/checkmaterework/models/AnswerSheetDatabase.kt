@@ -8,10 +8,12 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 
-@Database(entities = [AnswerSheetEntity::class], version = 1)
+@Database(entities = [AnswerSheetEntity::class, ClassEntity::class], version = 2)
 @TypeConverters(Converters::class)
 abstract class AnswerSheetDatabase: RoomDatabase() {
+
     abstract fun answerSheetDao(): AnswerSheetDAO
+    abstract fun classDao(): ClassDAO // Add the DAO for ClassEntity
 
     companion object {
         @Volatile
@@ -24,7 +26,9 @@ abstract class AnswerSheetDatabase: RoomDatabase() {
                     context.applicationContext,
                     AnswerSheetDatabase::class.java,
                     "answer_sheet_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration() // This line will reset the database when there is a schema change.
+                    .build()
                 INSTANCE = instance
                 instance
             }
