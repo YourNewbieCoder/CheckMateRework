@@ -18,7 +18,7 @@ import com.example.checkmaterework.models.ClassViewModel
 import com.example.checkmaterework.models.ClassViewModelFactory
 import com.example.checkmaterework.ui.adapters.ClassesAdapter
 
-class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment() {
+class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
     private lateinit var classesBinding: FragmentClassesBinding
     private lateinit var classViewModel: ClassViewModel
     private lateinit var classesAdapter: ClassesAdapter
@@ -39,22 +39,6 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Set up the toolbar as the support action bar
-        val activity = requireActivity() as AppCompatActivity
-        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
-
-        // Enable the back button
-        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        activity.supportActionBar?.setDisplayShowHomeEnabled(true)
-
-        // Set the toolbar title if needed
-        activity.supportActionBar?.title = getString(R.string.classes_title)
-
-        // Set click listener for the back button
-        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
-            activity.onBackPressed() // Handle the back press
-        }
 
         classesBinding.recyclerViewClasses.layoutManager = LinearLayoutManager(requireContext())
 
@@ -97,4 +81,31 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment() {
             .addToBackStack(null)
             .commit()
     }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.classes_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
+    }
+
 }

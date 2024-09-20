@@ -2,6 +2,7 @@ package com.example.checkmaterework.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.ActivityMainBinding
@@ -10,6 +11,7 @@ import com.example.checkmaterework.ui.fragments.CheckFragment
 import com.example.checkmaterework.ui.fragments.HomeFragment
 import com.example.checkmaterework.ui.fragments.KeyFragment
 import com.example.checkmaterework.ui.fragments.RecordsFragment
+import com.example.checkmaterework.ui.fragments.ToolbarTitleProvider
 
 class MainActivity : AppCompatActivity() {
 
@@ -92,26 +94,11 @@ class MainActivity : AppCompatActivity() {
         if (fragmentManager.backStackEntryCount > 0) {
             fragmentManager.popBackStack() // Go back to the previous fragment
 
-            // After popping, get the current top fragment
-            val currentFragment = fragmentManager.findFragmentById(R.id.frameContainer)
+            // Update the toolbar title after navigating back
+            val currentFragment = fragmentManager.fragments.lastOrNull()
+            if (currentFragment is ToolbarTitleProvider) {
+                supportActionBar?.title = (currentFragment as ToolbarTitleProvider).getFragmentTitle()
 
-            if (currentFragment != null && fragmentManager.backStackEntryCount > 0) {
-                // Get the tag from the previous fragment in the back stack
-                val fragmentTag = fragmentManager.getBackStackEntryAt(fragmentManager.backStackEntryCount - 1).name
-                supportActionBar?.title = fragmentTag ?: getString(R.string.app_name) // Set title to fragment tag or app name
-            }
-
-            // Handle back button visibility based on the current fragment
-            val isMainFragment = currentFragment is HomeFragment || currentFragment is KeyFragment ||
-                    currentFragment is CheckFragment || currentFragment is RecordsFragment || currentFragment is AnalysisFragment
-
-            if (isMainFragment) {
-                // Hide back button on main fragments
-                supportActionBar?.setDisplayHomeAsUpEnabled(false)
-                supportActionBar?.setDisplayShowHomeEnabled(false)
-            } else {
-                supportActionBar?.setDisplayHomeAsUpEnabled(true)
-                supportActionBar?.setDisplayShowHomeEnabled(true)
             }
         } else {
             super.onBackPressed() // Default back press behavior
