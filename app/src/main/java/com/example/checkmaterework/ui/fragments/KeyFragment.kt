@@ -5,6 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
@@ -54,10 +56,38 @@ class KeyFragment : Fragment() {
     private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
         val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
 
+        // Set up the toolbar as the support action bar
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        // Enable the back button
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(true)
+
+        // Set the toolbar title if needed
+        activity.supportActionBar?.title = getString(R.string.edit_key_title)
+
+        // Set click listener for the back button
+        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+            handleBackButtonClick() // Custom function to handle back button logic
+        }
+
         // Replace the current fragment and add to back stack
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, editAnswerKeyFragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun handleBackButtonClick() {
+        // Hide the toolbar and back arrow
+        val activity = requireActivity() as AppCompatActivity
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
+        // Set the toolbar title if needed
+        activity.supportActionBar?.title = getString(R.string.key_title)
+
+        // Pop the fragment from the back stack (or navigate back to the previous fragment)
+        parentFragmentManager.popBackStack() // This will remove the current fragment from the back stack
     }
 }

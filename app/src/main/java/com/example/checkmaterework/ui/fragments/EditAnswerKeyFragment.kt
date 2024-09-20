@@ -23,20 +23,12 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Set up the toolbar as the support action bar
-        val activity = requireActivity() as AppCompatActivity
-        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
-
-        // Enable the back button
-        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        activity.supportActionBar?.setDisplayShowHomeEnabled(true)
-
-        // Set the toolbar title if needed
-        activity.supportActionBar?.title = getString(R.string.edit_key_title)
-
-        // Set click listener for the back button
-        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
-            activity.onBackPressed() // Handle the back press
-        }
+        // Here you can set up your view logic, such as loading the data of the answer sheet
+        loadAnswerKeyData(answerSheet)
     }
+
+    private fun loadAnswerKeyData(answerSheet: AnswerSheetEntity) {
+
+    }
+
 }

@@ -7,8 +7,6 @@ import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.ActivityMainBinding
 import com.example.checkmaterework.ui.fragments.AnalysisFragment
 import com.example.checkmaterework.ui.fragments.CheckFragment
-import com.example.checkmaterework.ui.fragments.ClassesFragment
-import com.example.checkmaterework.ui.fragments.EditAnswerKeyFragment
 import com.example.checkmaterework.ui.fragments.HomeFragment
 import com.example.checkmaterework.ui.fragments.KeyFragment
 import com.example.checkmaterework.ui.fragments.RecordsFragment
@@ -58,8 +56,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun replaceFragment(fragment: Fragment, title: String) {
-        val transaction = supportFragmentManager.beginTransaction()
-            .replace(R.id.frameContainer, fragment)
+        val transaction = supportFragmentManager.beginTransaction().replace(R.id.frameContainer, fragment)
 
             // Add to the back stack only if the fragment is not one of the main fragments
             if (fragment !is HomeFragment && fragment !is KeyFragment &&
@@ -105,11 +102,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Handle back button visibility based on the current fragment
-//            val currentFragmentTag = currentFragment?.javaClass?.simpleName
             val isMainFragment = currentFragment is HomeFragment || currentFragment is KeyFragment ||
                     currentFragment is CheckFragment || currentFragment is RecordsFragment || currentFragment is AnalysisFragment
 
             if (isMainFragment) {
+                // Hide back button on main fragments
                 supportActionBar?.setDisplayHomeAsUpEnabled(false)
                 supportActionBar?.setDisplayShowHomeEnabled(false)
             } else {
