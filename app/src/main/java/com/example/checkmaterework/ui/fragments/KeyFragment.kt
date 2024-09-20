@@ -17,7 +17,7 @@ import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.example.checkmaterework.ui.adapters.EditKeyAdapter
 
-class KeyFragment : Fragment() {
+class KeyFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var keyBinding: FragmentKeyBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
@@ -56,22 +56,6 @@ class KeyFragment : Fragment() {
     private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
         val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
 
-        // Set up the toolbar as the support action bar
-        val activity = requireActivity() as AppCompatActivity
-        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
-
-        // Enable the back button
-        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        activity.supportActionBar?.setDisplayShowHomeEnabled(true)
-
-        // Set the toolbar title if needed
-        activity.supportActionBar?.title = getString(R.string.edit_key_title)
-
-        // Set click listener for the back button
-        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
-            handleBackButtonClick() // Custom function to handle back button logic
-        }
-
         // Replace the current fragment and add to back stack
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, editAnswerKeyFragment)
@@ -79,15 +63,29 @@ class KeyFragment : Fragment() {
             .commit()
     }
 
-    private fun handleBackButtonClick() {
-        // Hide the toolbar and back arrow
+    override fun getFragmentTitle(): String {
+        return getString(R.string.key_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
         val activity = requireActivity() as AppCompatActivity
-        activity.supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
 
-        // Set the toolbar title if needed
-        activity.supportActionBar?.title = getString(R.string.key_title)
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
 
-        // Pop the fragment from the back stack (or navigate back to the previous fragment)
-        parentFragmentManager.popBackStack() // This will remove the current fragment from the back stack
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
     }
 }

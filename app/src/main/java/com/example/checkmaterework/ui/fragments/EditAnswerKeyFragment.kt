@@ -11,7 +11,7 @@ import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentEditAnswerKeyBinding
 import com.example.checkmaterework.models.AnswerSheetEntity
 
-class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragment() {
+class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var editAnswerKeyBinding: FragmentEditAnswerKeyBinding
 
@@ -31,4 +31,29 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     }
 
+    override fun getFragmentTitle(): String {
+        return getString(R.string.edit_key_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
+    }
 }

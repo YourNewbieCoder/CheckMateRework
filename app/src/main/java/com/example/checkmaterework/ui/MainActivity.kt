@@ -98,7 +98,6 @@ class MainActivity : AppCompatActivity() {
             val currentFragment = fragmentManager.fragments.lastOrNull()
             if (currentFragment is ToolbarTitleProvider) {
                 supportActionBar?.title = (currentFragment as ToolbarTitleProvider).getFragmentTitle()
-
             }
         } else {
             super.onBackPressed() // Default back press behavior
