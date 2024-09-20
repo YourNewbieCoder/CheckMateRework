@@ -9,12 +9,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentCheckBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
@@ -27,6 +30,7 @@ class CheckFragment : Fragment() {
     private lateinit var checkBinding: FragmentCheckBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
     private lateinit var checkSheetsAdapter: CheckSheetsAdapter
+    private var cameraProvider: ProcessCameraProvider? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +63,22 @@ class CheckFragment : Fragment() {
     }
 
     private fun onSheetSelected(sheet: AnswerSheetEntity) {
+        // Show the back arrow and toolbar
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        // Enable the back button
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(true)
+
+        // Set the toolbar title if needed
+        activity.supportActionBar?.title = getString(R.string.check_title)
+
+        // Set click listener for the back button
+        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+            closeCameraAndReturn() // Handle returning to the previous state
+        }
+
         // Fade-in animation for smooth transition to the camera preview
         checkBinding.viewFinder.apply {
             alpha = 0f
@@ -68,6 +88,9 @@ class CheckFragment : Fragment() {
                 .setDuration(300L)
                 .setListener(null)
         }
+
+        // Hide the RecyclerView
+        checkBinding.recyclerViewCreatedSheets.visibility = View.GONE
 
         //Start the camera
         openCameraToCheckSheet(sheet)
@@ -88,7 +111,7 @@ class CheckFragment : Fragment() {
 
         cameraProviderFeature.addListener({
             //Camera Provider
-            val cameraProvider: ProcessCameraProvider = cameraProviderFeature.get()
+            cameraProvider = cameraProviderFeature.get()
 
             //Preview
             val preview = Preview.Builder().build().also {
@@ -100,16 +123,31 @@ class CheckFragment : Fragment() {
 
             try {
                 // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
+                cameraProvider?.unbindAll()
 
                 // Bind use cases to camera
-                cameraProvider.bindToLifecycle(
+                cameraProvider?.bindToLifecycle(
                     this, cameraSelector, preview
                 )
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun closeCameraAndReturn() {
+        // Unbind all use cases to stop the camera
+        cameraProvider?.unbindAll()
+
+        // Hide the PreviewView and Back button
+        checkBinding.viewFinder.visibility = View.GONE
+
+        // Show the RecyclerView
+        checkBinding.recyclerViewCreatedSheets.visibility = View.VISIBLE
+
+        // Hide the toolbar and back arrow
+        val activity = requireActivity() as AppCompatActivity
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
 
     // Check if camera permissions are granted
