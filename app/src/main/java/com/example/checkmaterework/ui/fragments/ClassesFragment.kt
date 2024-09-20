@@ -61,7 +61,7 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment() {
         // Setup RecyclerView Adapter
         classesAdapter = ClassesAdapter(
             mutableListOf(),
-            onViewRecordsClick = { classEntity ->  viewRecords(classEntity)}
+            onViewStudentRecordsClick = { classEntity ->  viewStudentRecords(classEntity)}
         )
 
         // Set the adapter to the RecyclerView
@@ -87,7 +87,14 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment() {
 
     }
 
-    private fun viewRecords(classEntity: ClassEntity) {
-        // Handle record viewing logic for the selected class
+    private fun viewStudentRecords(classEntity: ClassEntity) {
+        // Create a new instance of StudentRecordsFragment and pass the classId as an argument
+        val studentRecordsFragment = StudentRecordsFragment(classEntity.id) // assuming classEntity has an `id` field
+
+        // Navigate to the StudentRecordsFragment
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, studentRecordsFragment)
+            .addToBackStack(null)
+            .commit()
     }
 }

@@ -35,7 +35,7 @@ class ViewRecordsAdapter(
         holder.createdSheetName.text = createdSheet.name
 
         holder.buttonViewRecords.setOnClickListener {
-            onViewRecordsClick(createdSheet) // Trigger the check functionality
+            onViewRecordsClick(createdSheet)
         }
     }
 

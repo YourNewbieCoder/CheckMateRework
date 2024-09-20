@@ -13,12 +13,12 @@ import com.example.checkmaterework.models.ClassEntity
 
 class ClassesAdapter(
     private val classList: MutableList<ClassEntity>,
-    private val onViewRecordsClick: (ClassEntity) -> Unit
+    private val onViewStudentRecordsClick: (ClassEntity) -> Unit
 ) :
 RecyclerView.Adapter<ClassesAdapter.ClassesViewHolder>(){
     class ClassesViewHolder(addedClassesView: View) : RecyclerView.ViewHolder(addedClassesView) {
         val addedClassesName: TextView = addedClassesView.findViewById(R.id.addedClassesName)
-        val buttonViewRecords: Button = addedClassesView.findViewById(R.id.buttonViewRecords)
+        val buttonViewStudentRecords: Button = addedClassesView.findViewById(R.id.buttonViewStudentRecords)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClassesViewHolder {
@@ -35,7 +35,9 @@ RecyclerView.Adapter<ClassesAdapter.ClassesViewHolder>(){
         val addedClasses = classList[position]
         holder.addedClassesName.text = addedClasses.className
 
-
+        holder.buttonViewStudentRecords.setOnClickListener {
+            onViewStudentRecordsClick(addedClasses)
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")

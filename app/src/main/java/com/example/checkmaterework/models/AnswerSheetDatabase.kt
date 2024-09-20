@@ -8,12 +8,13 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 
-@Database(entities = [AnswerSheetEntity::class, ClassEntity::class], version = 2)
+@Database(entities = [AnswerSheetEntity::class, ClassEntity::class, StudentEntity::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AnswerSheetDatabase: RoomDatabase() {
 
     abstract fun answerSheetDao(): AnswerSheetDAO
     abstract fun classDao(): ClassDAO // Add the DAO for ClassEntity
+    abstract fun studentDao(): StudentDAO
 
     companion object {
         @Volatile
