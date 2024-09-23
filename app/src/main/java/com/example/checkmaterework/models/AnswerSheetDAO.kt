@@ -20,4 +20,7 @@ interface AnswerSheetDAO {
 
     @Query("SELECT * FROM answer_sheets")
     suspend fun getAllAnswerSheets(): List<AnswerSheetEntity>
+
+    @Query("SELECT * FROM answer_sheets WHERE id = :id")
+    suspend fun getAnswerSheetById(id: Int): AnswerSheetEntity?
 }

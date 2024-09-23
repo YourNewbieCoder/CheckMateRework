@@ -15,7 +15,6 @@ import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
-import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.ui.adapters.ViewRecordsAdapter
 
 class RecordsFragment : Fragment(), ToolbarTitleProvider {

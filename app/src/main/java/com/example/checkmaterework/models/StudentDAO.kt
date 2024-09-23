@@ -18,11 +18,20 @@ interface StudentDAO {
     @Query("SELECT * FROM students WHERE classId = :classId ORDER BY lastName ASC")
     suspend fun getStudentsByClass(classId: Int): List<StudentEntity>
 
+    @Query("SELECT * FROM students WHERE id = :id")
+    suspend fun getStudentById(id: Int): StudentEntity?
+
+    @Query("SELECT * FROM students WHERE classId = :classId")
+    suspend fun getStudentsByClassId(classId: Int): List<StudentEntity>
+
     @Update
     suspend fun update(student: StudentEntity)
 
     @Delete
     suspend fun delete(student: StudentEntity)
+
+    @Insert
+    suspend fun insertStudent(student: StudentEntity): Long
 
 
 }
