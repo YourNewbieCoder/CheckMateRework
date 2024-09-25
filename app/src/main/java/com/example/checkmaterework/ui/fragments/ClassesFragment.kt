@@ -5,10 +5,12 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentClassesBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
@@ -16,12 +18,12 @@ import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.models.ClassViewModel
 import com.example.checkmaterework.models.ClassViewModelFactory
-import com.example.checkmaterework.ui.adapters.ClassesAdapter
 
 class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
     private lateinit var classesBinding: FragmentClassesBinding
     private lateinit var classViewModel: ClassViewModel
-    private lateinit var classesAdapter: ClassesAdapter
+    private lateinit var spinnerClasses: Spinner
+    private lateinit var classesAdapter: ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,20 +42,55 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment(), Toolba
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        classesBinding.recyclerViewClasses.layoutManager = LinearLayoutManager(requireContext())
+//        classesBinding.recyclerViewClasses.layoutManager = LinearLayoutManager(requireContext())
+//
+//        // Setup RecyclerView Adapter
+//        classesAdapter = ClassesAdapter(
+//            mutableListOf(),
+//            onViewStudentRecordsClick = { classEntity ->  viewStudentRecords(classEntity)}
+//        )
+//
+//        // Set the adapter to the RecyclerView
+//        classesBinding.recyclerViewClasses.adapter = classesAdapter
+//
+//        // Observe the data from ViewModel
+//        classViewModel.classList.observe(viewLifecycleOwner) { classes ->
+//            classesAdapter.updateClassList(classes)
+//        }
 
-        // Setup RecyclerView Adapter
-        classesAdapter = ClassesAdapter(
-            mutableListOf(),
-            onViewStudentRecordsClick = { classEntity ->  viewStudentRecords(classEntity)}
-        )
-
-        // Set the adapter to the RecyclerView
-        classesBinding.recyclerViewClasses.adapter = classesAdapter
+        // Setup Spinner
+        spinnerClasses = classesBinding.spinnerClasses
+        classesAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mutableListOf())
+        classesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerClasses.adapter = classesAdapter
 
         // Observe the data from ViewModel
         classViewModel.classList.observe(viewLifecycleOwner) { classes ->
-            classesAdapter.updateClassList(classes)
+            val classNames = classes.map { it.className }.toMutableList()
+            classNames.add(0, "All Classes") // Add the "All Classes" option as the first entry
+
+            classesAdapter.clear()
+            classesAdapter.addAll(classNames)
+            classesAdapter.notifyDataSetChanged()
+        }
+
+        // Handle selection in Spinner
+        spinnerClasses.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                if (position == 0) {
+                    // Show all student records when "All Classes" is selected
+                    viewAllStudentRecords()
+                } else {
+                    // Get the selected class and view student records
+                    val selectedClass = classViewModel.classList.value?.get(position - 1) // Adjust index due to "All Classes"
+                    selectedClass?.let { viewStudentRecords(it) }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Show all student records when nothing is selected
+                viewAllStudentRecords()
+            }
         }
 
         classesBinding.buttonAddClass.setOnClickListener {
@@ -75,11 +112,23 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment(), Toolba
         // Create a new instance of StudentRecordsFragment and pass the classId as an argument
         val studentRecordsFragment = StudentRecordsFragment(classEntity.id) // assuming classEntity has an `id` field
 
-        // Navigate to the StudentRecordsFragment
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.frameContainer, studentRecordsFragment)
-            .addToBackStack(null)
-            .commit()
+//        // Navigate to the StudentRecordsFragment
+//        parentFragmentManager.beginTransaction()
+//            .replace(R.id.frameContainer, studentRecordsFragment)
+//            .addToBackStack(null)
+//            .commit()
+
+        studentRecordsFragment.show(parentFragmentManager, studentRecordsFragment.tag)
+    }
+
+    private fun viewAllStudentRecords() {
+        val studentRecordsFragment = StudentRecordsFragment(null)
+//        parentFragmentManager.beginTransaction()
+//            .replace(R.id.frameContainer, studentRecordsFragment)
+//            .addToBackStack(null)
+//            .commit()
+        studentRecordsFragment.show(parentFragmentManager, studentRecordsFragment.tag)
+
     }
 
     override fun getFragmentTitle(): String {
@@ -107,5 +156,4 @@ class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment(), Toolba
             }
         }
     }
-
 }

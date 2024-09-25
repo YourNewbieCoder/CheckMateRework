@@ -53,6 +53,18 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         }
     }
 
+    private fun openStudentRecords(sheet: AnswerSheetEntity) {
+        val classId = sheet.id
+
+        // Navigate directly to StudentRecordsFragment, passing the classId
+        val studentRecordsFragment = StudentRecordsFragment(classId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, studentRecordsFragment)
+            .addToBackStack(null)
+            .commit()
+
+    }
+
     // Function to open ClassesFragment with the selected class entity
     private fun openClassesFragment(sheet: AnswerSheetEntity) {
         val classesFragment = ClassesFragment(sheet)

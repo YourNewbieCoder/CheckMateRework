@@ -18,6 +18,12 @@ class StudentViewModel(private val studentDAO: StudentDAO) : ViewModel() {
         }
     }
 
+    fun loadAllStudents() {
+        viewModelScope.launch {
+            _studentList.value = studentDAO.getAllStudents().toMutableList()
+        }
+    }
+
     fun addStudent(student: StudentEntity) {
         viewModelScope.launch {
             studentDAO.insert(student)
