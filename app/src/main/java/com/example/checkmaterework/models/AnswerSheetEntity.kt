@@ -9,5 +9,4 @@ data class AnswerSheetEntity(
     val name: String,
     val items: Int,
     val examTypesList: List<Pair<String, Int>>
-) {
-}
+)
