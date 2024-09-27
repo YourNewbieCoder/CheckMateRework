@@ -180,6 +180,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 //                            yPosition = 180f
 //                        }
 
+                        paint.style = Paint.Style.FILL
                         // Draw item number
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
 
@@ -190,13 +191,12 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 
                         for (j in 0 until 4) {
                             val bubblesCenterX = startX + j * gapBetweenBubbles
-                            canvas.drawCircle(bubblesCenterX, yPosition - 8f, bubbleRadius, paint)
-
                             // Draw letter inside the circle (adjusted to be centered)
                             paint.style = Paint.Style.FILL // Switch to fill for text
                             paint.textAlign = Paint.Align.CENTER
                             canvas.drawText(('A' + j).toString(), bubblesCenterX, yPosition - 4f, paint)
                             paint.style = Paint.Style.STROKE // Switch back to stroke for circles
+                            canvas.drawCircle(bubblesCenterX, yPosition - 8f, bubbleRadius, paint)
                         }
 
                         yPosition += lineSpacing
@@ -242,9 +242,11 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 //                            yPosition = 180f
 //                        }
 
+                        paint.style = Paint.Style.FILL
                         // Draw item number
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
 
+                        paint.style = Paint.Style.STROKE
                         // Draw box for answer
                         canvas.drawRect(
                             xPosition + 20f,
@@ -303,6 +305,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 //                        val startRange = itemNumber
 //                        val endRange = startRange + 4
 //                        canvas.drawText("$startRange - $endRange.", xPosition, yPosition, paint)
+                        paint.style = Paint.Style.FILL
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
                         yPosition += 20f // Adjust yPosition to avoid overlap with the next label
 
