@@ -5,8 +5,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentRecordsBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
@@ -14,7 +17,7 @@ import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.example.checkmaterework.ui.adapters.ViewRecordsAdapter
 
-class RecordsFragment : Fragment() {
+class RecordsFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var recordsBinding: FragmentRecordsBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
@@ -40,7 +43,7 @@ class RecordsFragment : Fragment() {
         // Set up the adapter
         viewRecordsAdapter = ViewRecordsAdapter(
             mutableListOf(),
-            onViewRecordsClick = { sheet -> openCameraToCheckSheet(sheet) }
+            onViewRecordsClick = { sheet -> openClassesFragment(sheet) }
         )
 
         recordsBinding.recyclerViewCreatedSheets.adapter = viewRecordsAdapter
@@ -50,7 +53,53 @@ class RecordsFragment : Fragment() {
         }
     }
 
-    private fun openCameraToCheckSheet(sheet: AnswerSheetEntity) {
+    private fun openStudentRecords(sheet: AnswerSheetEntity) {
+        val classId = sheet.id
+
+        // Navigate directly to StudentRecordsFragment, passing the classId
+        val studentRecordsFragment = StudentRecordsFragment(classId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, studentRecordsFragment)
+            .addToBackStack(null)
+            .commit()
 
     }
+
+    // Function to open ClassesFragment with the selected class entity
+    private fun openClassesFragment(sheet: AnswerSheetEntity) {
+        val classesFragment = ClassesFragment(sheet)
+
+        // Replace the current fragment and add to back stack
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, classesFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.records_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
+    }
+
 }

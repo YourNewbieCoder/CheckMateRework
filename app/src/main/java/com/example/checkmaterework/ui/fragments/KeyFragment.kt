@@ -5,6 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
@@ -15,7 +17,7 @@ import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.example.checkmaterework.ui.adapters.EditKeyAdapter
 
-class KeyFragment : Fragment() {
+class KeyFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var keyBinding: FragmentKeyBinding
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
@@ -53,6 +55,37 @@ class KeyFragment : Fragment() {
 
     private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
         val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
-        editAnswerKeyFragment.show(parentFragmentManager, editAnswerKeyFragment.tag)
+
+        // Replace the current fragment and add to back stack
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, editAnswerKeyFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.key_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
     }
 }

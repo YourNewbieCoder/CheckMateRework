@@ -16,6 +16,16 @@
         android:orientation="vertical">
 
         <!-- Button to generate RadioGroups -->
+    <!-- Title TextView -->
+    <TextView
+        android:id="@+id/BubbleSheetTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Input your Answer Key"
+        android:textSize="20sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
         <!-- LinearLayout to add RadioGroups dynamically -->
         <androidx.constraintlayout.widget.ConstraintLayout

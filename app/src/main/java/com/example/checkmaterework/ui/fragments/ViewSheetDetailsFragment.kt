@@ -117,16 +117,16 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
         var currentPage = 0
         var currentColumn = 0
 
-        // Calculate total items for overall column management
-        var totalItems = 0
-        answerSheet.examTypesList.forEach { (_, itemCount) -> totalItems += itemCount }
-
-        // Determine the overall columns needed for all types combined
-        val overallColumnsNeeded = when {
-            totalItems <= 20 -> 1
-            totalItems <= 40 -> 2
-            else -> 3
-        }
+//        // Calculate total items for overall column management
+//        var totalItems = 0
+//        answerSheet.examTypesList.forEach { (_, itemCount) -> totalItems += itemCount }
+//
+//        // Determine the overall columns needed for all types combined
+//        val overallColumnsNeeded = when {
+//            totalItems <= 20 -> 1
+//            totalItems <= 40 -> 2
+//            else -> 3
+//        }
 //
 //        // Initialize global tracking for column and positions
 //        var currentColumn = 0
@@ -138,24 +138,23 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
         for (examType in answerSheet.examTypesList) {
             val (type, itemCount) = examType
             // Determine the number of columns needed for each type
-//            val columnsNeeded = when (type) {
-//                "Multiple Choice", "Identification" -> {
-//                    when {
-//                        itemCount <= 20 -> 1
-//                        itemCount <= 40 -> 2
-//                        else -> 3
-//                    }
-//                }
-//                "Word Problem" -> {
-//                    // Each column can hold up to 2 problems (5 points each, 10 points per column)
-//                    when {
-//                        itemCount <= 10  -> 1
-//                        itemCount <= 20 -> 2
-//                        else -> 3
-//                    }
-//                }
-//                else -> 1
-//            }
+            val columnsNeeded = when (type) {
+                "Multiple Choice", "Identification" -> {
+                    when {
+                        itemCount <= 20 -> 1
+                        itemCount <= 40 -> 2
+                        else -> 3
+                    }
+                }
+                "Word Problem" -> {
+                    // Each column can hold up to 2 problems (5 points each, 10 points per column)
+                    when {
+                        itemCount <= 10  -> 1
+                        else -> 2
+                    }
+                }
+                else -> 1
+            }
 
             // Calculate items per column for each type
             val maxItemsPerColumn = when (type) {
@@ -180,6 +179,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 //                            yPosition = 180f
 //                        }
 
+                        paint.style = Paint.Style.FILL
                         // Draw item number
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
 
@@ -190,20 +190,19 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 
                         for (j in 0 until 4) {
                             val bubblesCenterX = startX + j * gapBetweenBubbles
-                            canvas.drawCircle(bubblesCenterX, yPosition - 8f, bubbleRadius, paint)
-
                             // Draw letter inside the circle (adjusted to be centered)
                             paint.style = Paint.Style.FILL // Switch to fill for text
                             paint.textAlign = Paint.Align.CENTER
                             canvas.drawText(('A' + j).toString(), bubblesCenterX, yPosition - 4f, paint)
                             paint.style = Paint.Style.STROKE // Switch back to stroke for circles
+                            canvas.drawCircle(bubblesCenterX, yPosition - 8f, bubbleRadius, paint)
                         }
 
                         yPosition += lineSpacing
 
                         // Check if we need to create a new page or move to a new column
                         if (yPosition + lineSpacing > pageHeight - margin) {
-                            if (currentColumn == overallColumnsNeeded - 1) {
+                            if (currentColumn == columnsNeeded - 1) {
                                 // If the last column is filled, create a new page and reset to the first column
                                 document.finishPage(page) // Finish the current page
                                 page = createNewPage(document, pageWidth, pageHeight) // Create a new page
@@ -242,9 +241,11 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 //                            yPosition = 180f
 //                        }
 
+                        paint.style = Paint.Style.FILL
                         // Draw item number
                         canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
 
+                        paint.style = Paint.Style.STROKE
                         // Draw box for answer
                         canvas.drawRect(
                             xPosition + 20f,
@@ -256,7 +257,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 
                         // Check if we need to create a new page
                         if (yPosition + identificationBoxHeight > pageHeight - margin) {
-                            if (currentColumn == overallColumnsNeeded - 1) {
+                            if (currentColumn == columnsNeeded - 1) {
                                 // If the last column is filled, create a new page and reset to the first column
                                 document.finishPage(page) // Finish the current page
                                 page = createNewPage(document, pageWidth, pageHeight) // Create a new page
@@ -282,17 +283,17 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
                     paint.style = Paint.Style.STROKE
 
                     // Adjusted box sizes to fit more on a page
-                    val wordProblemBoxHeight = 25f  // Similar to Identification Box Height
-                    val solutionBoxHeight = wordProblemBoxHeight * 3
+                    val wordProblemBoxHeight = 25f * 2 // Similar to Identification Box Height
+                    val solutionBoxHeight = wordProblemBoxHeight * 3 * 2
                     val verticalSpacing = 20f       // Adjusted spacing to fit more items
-                    val wordProblemBoxWidth = columnWidth - 40f  // Adjusted width to fit in columns
+                    val wordProblemBoxWidth = halfPageWidth - 40f  // Adjusted width to fit in columns
 
                     // Calculate the number of word problems
                     val numberOfWordProblems = itemCount / 5
 
                     for (i in 1..numberOfWordProblems) {
                         // Calculate the x-position based on the column
-                        val xPosition = margin + (currentColumn * (columnWidth + 20f))
+                        val xPosition = margin + (currentColumn * (halfPageWidth + 20f))
 
 //                        // Reset yPosition for each new column
 //                        if ((i - 1) % maxItemsPerColumn == 0 && i > 1) {
@@ -300,10 +301,11 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
 //                        }
 
                         // Draw item number range (e.g., 1-5, 6-10)
-//                        val startRange = itemNumber
-//                        val endRange = startRange + 4
-//                        canvas.drawText("$startRange - $endRange.", xPosition, yPosition, paint)
-                        canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
+                        val startRange = itemNumber
+                        val endRange = startRange + 4
+                        paint.style = Paint.Style.FILL
+                        canvas.drawText("$startRange - $endRange.", xPosition, yPosition, paint)
+//                        canvas.drawText("$itemNumber.", xPosition, yPosition, paint)
                         yPosition += 20f // Adjust yPosition to avoid overlap with the next label
 
                         // Labels and boxes for each Word Problem part
@@ -330,14 +332,14 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
                                 (xPosition + 20f + wordProblemBoxWidth), boxBottomY, paint
                             )
 
-                            yPosition += boxHeight + 20f // Move down by box height + adjusted spacing
+                            yPosition += boxHeight + 25f // Move down by box height + adjusted spacing
                         }
 
                         yPosition += verticalSpacing // Add additional spacing for the next problem
 
                         // Check if we need to create a new page or move to a new column
                         if (yPosition + solutionBoxHeight > pageHeight - margin) {
-                            if (currentColumn == overallColumnsNeeded - 1) {
+                            if (currentColumn == columnsNeeded - 1) {
                                 // If the last column is filled, create a new page and reset to the first column
                                 document.finishPage(page) // Finish the current page
                                 page = createNewPage(document, pageWidth, pageHeight) // Create a new page
