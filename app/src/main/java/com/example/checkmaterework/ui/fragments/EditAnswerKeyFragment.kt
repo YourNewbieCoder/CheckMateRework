@@ -1,5 +1,7 @@
 package com.example.checkmaterework.ui.fragments
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.LayoutInflater
@@ -7,8 +9,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentEditAnswerKeyBinding
@@ -21,6 +29,18 @@ import com.google.android.material.textfield.TextInputLayout
 class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var editAnswerKeyBinding: FragmentEditAnswerKeyBinding
+    private var cameraProvider: ProcessCameraProvider? = null
+
+    // Permission request launcher
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            startCamera()
+        } else {
+            Toast.makeText(requireContext(), "Camera permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         editAnswerKeyBinding = FragmentEditAnswerKeyBinding.inflate(inflater, container, false)
@@ -30,8 +50,52 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Set up button click for adding key with camera
+        editAnswerKeyBinding.buttonAddKeyWithCamera.setOnClickListener {
+            checkCameraPermissionAndStart()
+        }
+
         // Here you can set up your view logic, such as loading the data of the answer sheet
         loadAnswerKeyData(answerSheet)
+    }
+
+    private fun checkCameraPermissionAndStart() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun startCamera() {
+        editAnswerKeyBinding.viewFinder.visibility = View.VISIBLE // Show camera preview
+        editAnswerKeyBinding.buttonCheck.visibility = View.VISIBLE // Show the "Check Paper" button
+
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        cameraProviderFuture.addListener({
+            cameraProvider = cameraProviderFuture.get()
+            bindCameraPreview()
+        }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun bindCameraPreview() {
+        val preview = Preview.Builder()
+            .build()
+            .also { it.setSurfaceProvider(editAnswerKeyBinding.viewFinder.surfaceProvider) }
+
+        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+        try {
+            cameraProvider?.unbindAll() // Unbind any previous use cases before rebinding
+            cameraProvider?.bindToLifecycle(this, cameraSelector, preview)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Error binding camera preview: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        cameraProvider?.unbindAll() // Unbind camera when fragment is destroyed
     }
 
     private fun loadAnswerKeyData(answerSheet: AnswerSheetEntity) {
@@ -42,127 +106,101 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         var currentItemNumber = 1
 
         for ((examType, itemCount) in answerSheet.examTypesList) {
-            if (examType == "Multiple Choice") {
-                for (i in 1..itemCount) {
-                    // Create horizontal LinearLayout for each question
-//                    val questionLayout = LinearLayout(requireContext()).apply {
-//                        orientation = LinearLayout.HORIZONTAL
-//                        layoutParams = LinearLayout.LayoutParams(
-//                            LinearLayout.LayoutParams.MATCH_PARENT,
-//                            LinearLayout.LayoutParams.WRAP_CONTENT
-//                        )
-//                    }
-
-                    // Create TextView for numbering
-                    val numberTextView = TextView(requireContext()).apply {
-                        text = "$currentItemNumber: "
-                        textSize = 20f // Adjust text size as needed
+            when (examType) {
+                "Multiple Choice" -> {
+                    for (i in 1..itemCount) {
+                        addMultipleChoiceView(answerKeyContainer, currentItemNumber)
+                        currentItemNumber++
                     }
-                    answerKeyContainer.addView(numberTextView)
-
-                    // Create ChipGroup for multiple-choice
-                    val chipGroup = ChipGroup(requireContext()).apply {
-                        isSingleSelection = true // Only one answer can be selected
-                    }
-                    for (option in listOf("A", "B", "C", "D")) {
-                        chipGroup.addView(Chip(requireContext()).apply {
-                            text = option
-                            isCheckable = true
-                        })
-                    }
-                    answerKeyContainer.addView(chipGroup)
-
-//                    // Add the horizontal LinearLayout to the answerKeyContainer
-//                    answerKeyContainer.addView(questionLayout)
-
-                    currentItemNumber++ // Increment item number
                 }
-            } else if (examType == "Identification") {
-                for (i in 1..itemCount) {
-                    // Create horizontal LinearLayout for each question
-                    val questionLayout = LinearLayout(requireContext()).apply {
-                        orientation = LinearLayout.HORIZONTAL
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
+                "Identification" -> {
+                    for (i in 1..itemCount) {
+                        addIdentificationView(answerKeyContainer, currentItemNumber)
+                        currentItemNumber++
+
                     }
-
-                    // Create TextView for numbering
-                    val numberTextView = TextView(requireContext()).apply {
-                        text = "$currentItemNumber : "
-                        textSize = 20f // Adjust text size as needed
-                    }
-                    questionLayout.addView(numberTextView)
-
-                    // Create TextInputLayout for identification
-                    val identificationLayout = createTextInputLayout("Answer for $currentItemNumber")
-
-//                    val textInputLayout = TextInputLayout(requireContext()).apply {
-//                        hint = "Answer for $currentItemNumber"
-//                        layoutParams = LinearLayout.LayoutParams(
-//                            0, // Set width to 0dp
-//                            LinearLayout.LayoutParams.WRAP_CONTENT
-//                        ).apply {
-//                            weight = 1f // Set weight to 1 to take up remaining space
-//                        }
-//                        visibility = View.VISIBLE
-//
-//                        // Add TextInputEditText to TextInputLayout
-//                        val textInputEditText = TextInputEditText(requireContext())
-//                        hint = "Answer for $currentItemNumber"
-//
-//                        addView(textInputEditText)
-//                    }
-                    questionLayout.addView(identificationLayout)
-
-                    // Add the horizontal LinearLayout to the answerKeyContainer
-                    answerKeyContainer.addView(questionLayout)
-
-                    currentItemNumber ++ // Increment the item number for the next iteration
                 }
-            } else if (examType == "Word Problem") {
-                // Calculate the number of word problems
-                val wordProblemsCount = itemCount / 5
-
-                for (i in 1..wordProblemsCount) {
-                    val questionLayout = LinearLayout(requireContext()).apply {
-                        orientation = LinearLayout.VERTICAL // Change to vertical orientation
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
+                "Word Problem" -> {
+                    val wordProblemsCount = itemCount / 5
+                    for (i in 1..wordProblemsCount) {
+                        addWordProblemView(answerKeyContainer, currentItemNumber)
+                        currentItemNumber += 5
                     }
-
-                    val wordProblemStart = currentItemNumber
-                    val wordProblemEnd = currentItemNumber + 4
-
-                    val numberTextView = TextView(requireContext()).apply {
-                        text = "$wordProblemStart - $wordProblemEnd : "
-                        textSize = 20f
-                    }
-                    questionLayout.addView(numberTextView)
-
-                    // Create layouts for Asked, Given, Operation, Number Sentence, Solution/Answer
-                    val askedLayout = createTextInputLayout("Asked")
-                    val givenLayout =createTextInputLayout("Given")
-                    val operationLayout = createTextInputLayout("Operation")
-                    val numberSentenceLayout = createTextInputLayout("Number Sentence")
-                    val solutionLayout = createTextInputLayout("Solution/Answer")
-
-                    // Add layouts to questionLayout
-                    questionLayout.addView(askedLayout)
-                    questionLayout.addView(givenLayout)
-                    questionLayout.addView(operationLayout)
-                    questionLayout.addView(numberSentenceLayout)
-                    questionLayout.addView(solutionLayout)
-
-                    answerKeyContainer.addView(questionLayout)
-
-                    currentItemNumber += 5 // Increment item number for the next iteration
                 }
             }
         }
+    }
+
+    private fun addMultipleChoiceView(container: ViewGroup, currentItemNumber: Int) {
+        val numberTextView = TextView(requireContext()).apply {
+            text = "$currentItemNumber: "
+            textSize = 20f // Adjust text size as needed
+        }
+        container.addView(numberTextView)
+
+        val chipGroup = ChipGroup(requireContext()).apply {
+            isSingleSelection = true // Only one answer can be selected
+        }
+        for (option in listOf("A", "B", "C", "D")) {
+            chipGroup.addView(Chip(requireContext()).apply {
+                text = option
+                isCheckable = true
+            })
+        }
+        container.addView(chipGroup)
+    }
+
+    private fun addIdentificationView(container: ViewGroup, currentItemNumber: Int) {
+        val questionLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val numberTextView = TextView(requireContext()).apply {
+            text = "$currentItemNumber : "
+            textSize = 20f // Adjust text size as needed
+        }
+        questionLayout.addView(numberTextView)
+
+        // Create TextInputLayout for identification
+        val identificationLayout = createTextInputLayout("Answer for $currentItemNumber")
+        questionLayout.addView(identificationLayout)
+
+        container.addView(questionLayout)
+    }
+
+    private fun addWordProblemView(container: ViewGroup, currentItemNumber: Int) {
+        val questionLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL // Change to vertical orientation
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val numberTextView = TextView(requireContext()).apply {
+            text = "$currentItemNumber - ${currentItemNumber + 4} : "
+            textSize = 20f
+        }
+        questionLayout.addView(numberTextView)
+
+        val askedLayout = createTextInputLayout("Asked")
+        val givenLayout =createTextInputLayout("Given")
+        val operationLayout = createTextInputLayout("Operation")
+        val numberSentenceLayout = createTextInputLayout("Number Sentence")
+        val solutionLayout = createTextInputLayout("Solution/Answer")
+
+        // Add layouts to questionLayout
+        questionLayout.addView(askedLayout)
+        questionLayout.addView(givenLayout)
+        questionLayout.addView(operationLayout)
+        questionLayout.addView(numberSentenceLayout)
+        questionLayout.addView(solutionLayout)
+
+        container.addView(questionLayout)
     }
 
     private fun createTextInputLayout(hint: String): TextInputLayout {
