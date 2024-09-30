@@ -76,13 +76,13 @@
         android:visibility="gone" /> <!-- Initially hidden -->
 
     <Button
-        android:id="@+id/buttonCheck"
+        android:id="@+id/buttonScan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
-        android:text="Check Paper"
+        android:text="Scan Key"
         android:visibility="gone" />
 
 </RelativeLayout>

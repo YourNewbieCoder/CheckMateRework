@@ -69,9 +69,12 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     }
 
     private fun startCamera() {
+        // Change toolbar title to "Scanning Key..."
+        setupToolbarTitle("Scanning Key...")
+        
         isCameraActive = true // Set the camera state to active
         editAnswerKeyBinding.viewFinder.visibility = View.VISIBLE // Show camera preview
-        editAnswerKeyBinding.buttonCheck.visibility = View.VISIBLE // Show the "Check Paper" button
+        editAnswerKeyBinding.buttonScan.visibility = View.VISIBLE // Show the "Check Paper" button
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener({
@@ -80,10 +83,15 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
+    private fun setupToolbarTitle(title: String) {
+        val activity = requireActivity() as AppCompatActivity
+        activity.supportActionBar?.title = title
+    }
+
     private fun bindCameraPreview() {
         val preview = Preview.Builder()
             .build()
-            .also { it.setSurfaceProvider(editAnswerKeyBinding.viewFinder.surfaceProvider) }
+            .also { it.surfaceProvider = editAnswerKeyBinding.viewFinder.surfaceProvider }
 
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
@@ -98,8 +106,10 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     private fun deactivateCamera() {
         isCameraActive = false // Set the camera state to inactive
         editAnswerKeyBinding.viewFinder.visibility = View.GONE // Hide camera preview
-        editAnswerKeyBinding.buttonCheck.visibility = View.GONE // Hide the "Check Paper" button
-//        editAnswerKeyBinding.editKeyLayout.visibility = View.VISIBLE // Show the answer key items
+        editAnswerKeyBinding.buttonScan.visibility = View.GONE // Hide the "Check Paper" button
+
+        // Reset the toolbar title to the original title
+        setupToolbarTitle(getFragmentTitle()) // Assuming this method sets the toolbar title
     }
 
     override fun onResume() {
@@ -256,11 +266,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         activity.supportActionBar?.title = getFragmentTitle()
 
-//        if (canGoBack) {
-//            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
-//                activity.onBackPressed()
-//            }
-//        }
         activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
             if (isCameraActive) {
                 deactivateCamera() // Close the camera and revert UI
