@@ -3,13 +3,13 @@ package com.example.checkmaterework.ui.fragments
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -30,6 +30,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     private lateinit var editAnswerKeyBinding: FragmentEditAnswerKeyBinding
     private var cameraProvider: ProcessCameraProvider? = null
+    private var isCameraActive = false
 
     // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
@@ -68,6 +69,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     }
 
     private fun startCamera() {
+        isCameraActive = true // Set the camera state to active
         editAnswerKeyBinding.viewFinder.visibility = View.VISIBLE // Show camera preview
         editAnswerKeyBinding.buttonCheck.visibility = View.VISIBLE // Show the "Check Paper" button
 
@@ -93,9 +95,30 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         }
     }
 
+    private fun deactivateCamera() {
+        isCameraActive = false // Set the camera state to inactive
+        editAnswerKeyBinding.viewFinder.visibility = View.GONE // Hide camera preview
+        editAnswerKeyBinding.buttonCheck.visibility = View.GONE // Hide the "Check Paper" button
+//        editAnswerKeyBinding.editKeyLayout.visibility = View.VISIBLE // Show the answer key items
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            if (isCameraActive) {
+                deactivateCamera() // Go back to the initial UI state
+            } else {
+                parentFragmentManager.popBackStack() // Default back navigation
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         cameraProvider?.unbindAll() // Unbind camera when fragment is destroyed
+        deactivateCamera() // Ensure the camera is deactivated
     }
 
     private fun loadAnswerKeyData(answerSheet: AnswerSheetEntity) {
@@ -223,11 +246,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         return getString(R.string.edit_key_title)
     }
 
-    override fun onResume() {
-        super.onResume()
-        setupToolbar()
-    }
-
     private fun setupToolbar() {
         val activity = requireActivity() as AppCompatActivity
         activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
@@ -238,9 +256,16 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         activity.supportActionBar?.title = getFragmentTitle()
 
-        if (canGoBack) {
-            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
-                activity.onBackPressed()
+//        if (canGoBack) {
+//            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+//                activity.onBackPressed()
+//            }
+//        }
+        activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+            if (isCameraActive) {
+                deactivateCamera() // Close the camera and revert UI
+            } else {
+                activity.onBackPressed() // Default back navigation
             }
         }
     }
