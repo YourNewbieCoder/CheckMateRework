@@ -24,8 +24,6 @@
             android:textSize="24sp"
             android:layout_margin="20dp"/>
 
-        <!-- LinearLayout to add RadioGroups dynamically -->
-
         <LinearLayout
             android:id="@+id/answerKeyContainer"
             android:layout_width="match_parent"
