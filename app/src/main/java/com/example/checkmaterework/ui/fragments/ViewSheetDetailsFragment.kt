@@ -149,7 +149,7 @@ class ViewSheetDetailsFragment(private val answerSheet: AnswerSheetEntity) : Bot
                 "Word Problem" -> {
                     // Each column can hold up to 2 problems (5 points each, 10 points per column)
                     when {
-                        itemCount <= 10  -> 1
+                        itemCount <= 5  -> 1
                         else -> 2
                     }
                 }

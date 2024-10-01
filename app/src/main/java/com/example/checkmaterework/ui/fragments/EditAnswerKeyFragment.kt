@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -92,6 +93,13 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val preview = Preview.Builder()
             .build()
             .also { it.surfaceProvider = editAnswerKeyBinding.viewFinder.surfaceProvider }
+
+        // Image analysis use case
+        val imageAnalyzer = ImageAnalysis.Builder()
+            .build()
+            .also {
+                it.setAnalyzer(ContextCompat.getMainExecutor(requireContext()), YourImageAnalyzer())
+            }
 
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
