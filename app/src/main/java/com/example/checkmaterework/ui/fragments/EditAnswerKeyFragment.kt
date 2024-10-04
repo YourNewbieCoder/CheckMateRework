@@ -1,7 +1,11 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +32,10 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import java.io.FileNotFoundException
 
 class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
 
@@ -37,6 +45,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     // ViewModel for handling text recognition
     private lateinit var textRecognitionViewModel: TextRecognitionViewModel
+
 
     // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
@@ -52,7 +61,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Initialize the ViewModel
-        textRecognitionViewModel = ViewModelProvider(this).get(TextRecognitionViewModel::class.java)
+        textRecognitionViewModel = ViewModelProvider(this)[TextRecognitionViewModel::class.java]
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -65,14 +74,12 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         // Set up button click for adding key with camera
         editAnswerKeyBinding.buttonAddKeyWithCamera.setOnClickListener {
-            checkCameraPermissionAndStart()
+//            checkCameraPermissionAndStart()
+            showImageSourceOptionsDialog()
         }
 
         // Observe the recognized text from the ViewModel and update the UI
         textRecognitionViewModel.recognizedText.observe(viewLifecycleOwner) { recognizedText ->
-//            editAnswerKeyBinding.textViewRecognizedText.text = recognizedText
-//            editAnswerKeyBinding.textViewRecognizedText.visibility = View.VISIBLE
-//            deactivateCamera()
         }
 
         // Set up button click for scanning the key
@@ -92,12 +99,32 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         loadAnswerKeyData(answerSheet)
     }
 
+    private fun showImageSourceOptionsDialog() {
+        val options = arrayOf("Camera", "Gallery")
+        val builder = android.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Choose an Option").setItems(options) { dialog, which ->
+            when (which) {
+                0 -> checkCameraPermissionAndStart()
+                1 -> openImagePicker()
+            }
+        }
+        builder.show()
+    }
+
     private fun checkCameraPermissionAndStart() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
+    }
+
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            type = "image/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        startActivityForResult(intent, REQUEST_CODE_IMAGE_PICKER)
     }
 
     private fun startCamera() {
@@ -293,6 +320,44 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_IMAGE_PICKER && resultCode == AppCompatActivity.RESULT_OK){
+            data?.data?.let { uri ->
+                processImageFromURI(uri)
+            }
+        }
+    }
+
+    private fun processImageFromURI(uri: Uri) {
+        try {
+            val inputStream = requireContext().contentResolver.openInputStream(uri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+
+            // Now pass the bitmap to your text recognition process
+            recognizeTextFromBitmap(bitmap)
+        } catch (e: FileNotFoundException) {
+            Toast.makeText(requireContext(), "File not found: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
+    private fun recognizeTextFromBitmap(bitmap: Bitmap?) {
+        val image = bitmap?.let { InputImage.fromBitmap(it, 0) }
+
+        // Use ML Kit's text recognition with the image
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        if (image != null) {
+            recognizer.process(image).addOnSuccessListener { visionText ->
+                val recognizedText = visionText.text
+                textRecognitionViewModel.setRecognizedText(recognizedText)
+            }
+                .addOnFailureListener { e ->
+                    Toast.makeText(requireContext(), "Text recognition failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
     override fun getFragmentTitle(): String {
         return getString(R.string.edit_key_title)
     }
@@ -314,5 +379,9 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                 activity.onBackPressed() // Default back navigation
             }
         }
+    }
+
+    companion object {
+        private const val REQUEST_CODE_IMAGE_PICKER = 1001  // Unique request code
     }
 }
