@@ -19,9 +19,11 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentEditAnswerKeyBinding
 import com.example.checkmaterework.models.AnswerSheetEntity
+import com.example.checkmaterework.models.TextRecognitionViewModel
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
@@ -33,6 +35,9 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     private var cameraProvider: ProcessCameraProvider? = null
     private var isCameraActive = false
 
+    // ViewModel for handling text recognition
+    private lateinit var textRecognitionViewModel: TextRecognitionViewModel
+
     // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -42,6 +47,12 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         } else {
             Toast.makeText(requireContext(), "Camera permission denied", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Initialize the ViewModel
+        textRecognitionViewModel = ViewModelProvider(this).get(TextRecognitionViewModel::class.java)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -55,6 +66,13 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         // Set up button click for adding key with camera
         editAnswerKeyBinding.buttonAddKeyWithCamera.setOnClickListener {
             checkCameraPermissionAndStart()
+        }
+
+        // Observe the recognized text from the ViewModel and update the UI
+        textRecognitionViewModel.recognizedText.observe(viewLifecycleOwner) { recognizedText ->
+            editAnswerKeyBinding.textViewRecognizedText.text = recognizedText
+            editAnswerKeyBinding.textViewRecognizedText.visibility = View.VISIBLE
+            deactivateCamera()
         }
 
         // Here you can set up your view logic, such as loading the data of the answer sheet
@@ -98,14 +116,14 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val imageAnalyzer = ImageAnalysis.Builder()
             .build()
             .also {
-                it.setAnalyzer(ContextCompat.getMainExecutor(requireContext()), YourImageAnalyzer())
+                it.setAnalyzer(ContextCompat.getMainExecutor(requireContext()), YourImageAnalyzer(textRecognitionViewModel))
             }
 
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
         try {
             cameraProvider?.unbindAll() // Unbind any previous use cases before rebinding
-            cameraProvider?.bindToLifecycle(this, cameraSelector, preview)
+            cameraProvider?.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Error binding camera preview: ${e.message}", Toast.LENGTH_SHORT).show()
         }
