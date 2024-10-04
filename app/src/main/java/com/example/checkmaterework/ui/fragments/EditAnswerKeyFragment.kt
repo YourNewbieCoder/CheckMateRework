@@ -70,9 +70,22 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         // Observe the recognized text from the ViewModel and update the UI
         textRecognitionViewModel.recognizedText.observe(viewLifecycleOwner) { recognizedText ->
-            editAnswerKeyBinding.textViewRecognizedText.text = recognizedText
-            editAnswerKeyBinding.textViewRecognizedText.visibility = View.VISIBLE
+//            editAnswerKeyBinding.textViewRecognizedText.text = recognizedText
+//            editAnswerKeyBinding.textViewRecognizedText.visibility = View.VISIBLE
+//            deactivateCamera()
+        }
+
+        // Set up button click for scanning the key
+        editAnswerKeyBinding.buttonScan.setOnClickListener {
             deactivateCamera()
+
+            val recognizedText = textRecognitionViewModel.recognizedText.value ?: "No text recognized"
+            // Navigate to ScannedKeyFragment
+            val fragment = ScannedKeyFragment.newInstance(recognizedText)
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.frameContainer, fragment)
+                .addToBackStack(null)
+                .commit()
         }
 
         // Here you can set up your view logic, such as loading the data of the answer sheet
@@ -133,6 +146,8 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         isCameraActive = false // Set the camera state to inactive
         editAnswerKeyBinding.viewFinder.visibility = View.GONE // Hide camera preview
         editAnswerKeyBinding.buttonScan.visibility = View.GONE // Hide the "Check Paper" button
+
+        cameraProvider?.unbindAll()
 
         // Reset the toolbar title to the original title
         setupToolbarTitle(getFragmentTitle()) // Assuming this method sets the toolbar title

@@ -68,16 +68,16 @@
 
     </ScrollView>
 
-    <TextView
-        android:id="@+id/textViewRecognizedText"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/viewFinder"
-        android:gravity="center"
-        android:padding="16dp"
-        android:text="Detected Text will appear here"
-        android:textSize="18sp"
-        android:visibility="gone" />
+<!--    <TextView-->
+<!--        android:id="@+id/textViewRecognizedText"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_below="@+id/viewFinder"-->
+<!--        android:gravity="center"-->
+<!--        android:padding="16dp"-->
+<!--        android:text="Detected Text will appear here"-->
+<!--        android:textSize="18sp"-->
+<!--        android:visibility="gone" />-->
 
     <!-- Add PreviewView for CameraX here -->
     <androidx.camera.view.PreviewView
