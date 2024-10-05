@@ -96,6 +96,24 @@
         android:text="Scan Key"
         android:visibility="gone" />
 
+    <ImageView
+        android:id="@+id/imageViewSelected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:contentDescription="Selected Image"
+        android:scaleType="centerCrop"
+        android:layout_gravity="center" />
+
+    <Button
+        android:id="@+id/buttonProceedWithImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="Proceed"
+        android:layout_gravity="center_horizontal" />
+
+
 </RelativeLayout>
 
 

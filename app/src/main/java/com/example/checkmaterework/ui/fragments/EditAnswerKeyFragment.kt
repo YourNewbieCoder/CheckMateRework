@@ -324,23 +324,44 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_IMAGE_PICKER && resultCode == AppCompatActivity.RESULT_OK){
             data?.data?.let { uri ->
-                processImageFromURI(uri)
+                displaySelectedImage(uri)
             }
         }
     }
 
-    private fun processImageFromURI(uri: Uri) {
+    private fun displaySelectedImage(uri: Uri) {
         try {
             val inputStream = requireContext().contentResolver.openInputStream(uri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
 
-            // Now pass the bitmap to your text recognition process
-            recognizeTextFromBitmap(bitmap)
+            // Set the selected image to the ImageView
+            editAnswerKeyBinding.imageViewSelected.setImageBitmap(bitmap)
+            editAnswerKeyBinding.imageViewSelected.visibility = View.VISIBLE
+
+            // Show the "Proceed" button
+            editAnswerKeyBinding.buttonProceedWithImage.visibility = View.VISIBLE
+
+            // Set click listener on the "Proceed" button
+            editAnswerKeyBinding.buttonProceedWithImage.setOnClickListener {
+                recognizeTextFromBitmap(bitmap) // Call text recognition here
+            }
         } catch (e: FileNotFoundException) {
             Toast.makeText(requireContext(), "File not found: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-
     }
+
+//    private fun processImageFromURI(uri: Uri) {
+//        try {
+//            val inputStream = requireContext().contentResolver.openInputStream(uri)
+//            val bitmap = BitmapFactory.decodeStream(inputStream)
+//
+//            // Now pass the bitmap to your text recognition process
+//            recognizeTextFromBitmap(bitmap)
+//        } catch (e: FileNotFoundException) {
+//            Toast.makeText(requireContext(), "File not found: ${e.message}", Toast.LENGTH_SHORT).show()
+//        }
+//
+//    }
 
     private fun recognizeTextFromBitmap(bitmap: Bitmap?) {
         val image = bitmap?.let { InputImage.fromBitmap(it, 0) }
@@ -351,6 +372,13 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             recognizer.process(image).addOnSuccessListener { visionText ->
                 val recognizedText = visionText.text
                 textRecognitionViewModel.setRecognizedText(recognizedText)
+
+                // Navigate to ScannedKeyFragment after successful recognition
+                val fragment = ScannedKeyFragment.newInstance(recognizedText)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.frameContainer, fragment)
+                    .addToBackStack(null)
+                    .commit()
             }
                 .addOnFailureListener { e ->
                     Toast.makeText(requireContext(), "Text recognition failed: ${e.message}", Toast.LENGTH_SHORT).show()
