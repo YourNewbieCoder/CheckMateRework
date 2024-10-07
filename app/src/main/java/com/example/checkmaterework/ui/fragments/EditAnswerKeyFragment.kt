@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,10 +16,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -54,7 +59,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         if (isGranted) {
             startCamera()
         } else {
-            Toast.makeText(requireContext(), "Camera permission denied", Toast.LENGTH_SHORT).show()
+            showToast("Camera permission denied")
         }
     }
 
@@ -74,7 +79,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         // Set up button click for adding key with camera
         editAnswerKeyBinding.buttonAddKeyWithCamera.setOnClickListener {
-//            checkCameraPermissionAndStart()
             showImageSourceOptionsDialog()
         }
 
@@ -82,7 +86,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         textRecognitionViewModel.recognizedText.observe(viewLifecycleOwner) { recognizedText ->
         }
 
-        // Set up button click for scanning the key
+        // Button to scan the current camera frame
         editAnswerKeyBinding.buttonScan.setOnClickListener {
             deactivateCamera()
 
@@ -93,9 +97,19 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                 .replace(R.id.frameContainer, fragment)
                 .addToBackStack(null)
                 .commit()
+
+//            disableUIDuringImageProcessing(true) // Disable UI components during processing
+//            captureCurrentFrame()
+//                ?.let { bitmap ->
+//                displayCapturedImage(bitmap)
+//                editAnswerKeyBinding.buttonProceedWithImage.setOnClickListener {
+//                    processCapturedImage(bitmap)
+//                }
+//            } ?: showToast("Failed to capture image")
+//            disableUIDuringImageProcessing(false) // Re-enable UI components after processing
         }
 
-        // Here you can set up your view logic, such as loading the data of the answer sheet
+        // Load answer key data from the provided answer sheet
         loadAnswerKeyData(answerSheet)
     }
 
@@ -119,18 +133,10 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         }
     }
 
-    private fun openImagePicker() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            type = "image/*"
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-        startActivityForResult(intent, REQUEST_CODE_IMAGE_PICKER)
-    }
-
     private fun startCamera() {
         // Change toolbar title to "Scanning Key..."
         setupToolbarTitle("Scanning Key...")
-        
+
         isCameraActive = true // Set the camera state to active
         editAnswerKeyBinding.viewFinder.visibility = View.VISIBLE // Show camera preview
         editAnswerKeyBinding.buttonScan.visibility = View.VISIBLE // Show the "Check Paper" button
@@ -149,14 +155,19 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     private fun bindCameraPreview() {
         val preview = Preview.Builder()
+            .setTargetResolution(Size(1280, 720))
             .build()
-            .also { it.surfaceProvider = editAnswerKeyBinding.viewFinder.surfaceProvider }
+            .apply {
+                surfaceProvider = editAnswerKeyBinding.viewFinder.surfaceProvider
+            }
 
         // Image analysis use case
         val imageAnalyzer = ImageAnalysis.Builder()
+            .setTargetResolution(Size(640, 480))
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-            .also {
-                it.setAnalyzer(ContextCompat.getMainExecutor(requireContext()), YourImageAnalyzer(textRecognitionViewModel))
+            .apply {
+                setAnalyzer(ContextCompat.getMainExecutor(requireContext()), YourImageAnalyzer(textRecognitionViewModel))
             }
 
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -165,9 +176,186 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             cameraProvider?.unbindAll() // Unbind any previous use cases before rebinding
             cameraProvider?.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Error binding camera preview: ${e.message}", Toast.LENGTH_SHORT).show()
+            showToast("Error binding camera preview: ${e.message}")
         }
     }
+
+//    @OptIn(ExperimentalGetImage::class)
+//    private fun captureCurrentFrame() {
+//        // Set up an ImageCapture use case
+//        val imageCapture = ImageCapture.Builder()
+//            .setTargetResolution(Size(1280, 720)) // Choose resolution that matches your preview
+//            .build()
+//
+//        // Camera selector
+//        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+//
+//        try {
+//            // Unbind all use cases first
+//            cameraProvider?.unbindAll()
+//
+//            // Bind the image capture use case
+//            cameraProvider?.bindToLifecycle(this, cameraSelector, imageCapture)
+//
+//            // Capture image on button click or another trigger
+//            val outputOptions = ImageCapture.OutputFileOptions.Builder(createTempFile()).build()
+//
+//            imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(requireContext()),
+//                object : ImageCapture.OnImageSavedCallback {
+//                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+//                        val savedUri = output.savedUri
+//
+//                        // Analyze the image here after it's captured and saved
+//                        if (savedUri != null) {
+//                            analyzeImage(savedUri)
+//                        }
+//                    }
+//
+//                    override fun onError(exception: ImageCaptureException) {
+//                        showToast("Failed to capture image: ${exception.message}")
+//                    }
+//                })
+//
+//        } catch (e: Exception) {
+//            showToast("Error capturing frame: ${e.message}")
+//        }
+//
+////        var bitmap: Bitmap? = null
+////
+////        val imageAnalysis = ImageAnalysis.Builder().build().also {
+////            it.setAnalyzer(ContextCompat.getMainExecutor(requireContext())) { imageProxy ->
+////                val mediaImage = imageProxy.image
+////                mediaImage?.let {
+////                    val image = InputImage.fromMediaImage(it, imageProxy.imageInfo.rotationDegrees)
+////                    bitmap = image.bitmapInternal
+////                }
+////                imageProxy.close()
+////            }
+////        }
+////        cameraProvider?.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, imageAnalysis)
+////        return bitmap
+//    }
+
+//    private fun analyzeImage(imageUri: Uri) {
+//        // Load the image as a bitmap
+//        val bitmap = BitmapFactory.decodeFile(imageUri.path)
+//
+//        // Pass the bitmap to your analyzer
+//        val inputImage = InputImage.fromBitmap(bitmap, 0)
+//
+//        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+//
+//        recognizer.process(inputImage).addOnSuccessListener { visionText ->
+//            val recognizedText = visionText.text
+//            textRecognitionViewModel.setRecognizedText(recognizedText)
+//            navigateToScannedKeyFragment(recognizedText)
+//        } .addOnFailureListener { e ->
+//            showToast("Text recognition failed: ${e.message}")
+//        }
+//
+////        // Perform text recognition (or other analysis)
+////        textRecognizer.process(inputImage)
+////            .addOnSuccessListener { result ->
+////                // Handle the recognized text
+////                processTextRecognitionResult(result)
+////            }
+////            .addOnFailureListener { e ->
+////                showToast("Failed to analyze image: ${e.message}")
+////            }
+//    }
+
+//    private fun processCapturedImage(bitmap: Bitmap) {
+//        val image = InputImage.fromBitmap(bitmap, 0)
+//        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+//
+//        recognizer.process(image).addOnSuccessListener { visionText ->
+//            val recognizedText = visionText.text
+//            textRecognitionViewModel.setRecognizedText(recognizedText)
+//            navigateToScannedKeyFragment(recognizedText)
+//        } .addOnFailureListener { e ->
+//            showToast("Text recognition failed: ${e.message}")
+//        }
+//    }
+
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            type = "image/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        startActivityForResult(intent, REQUEST_CODE_IMAGE_PICKER)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_IMAGE_PICKER && resultCode == AppCompatActivity.RESULT_OK){
+            data?.data?.let { uri ->
+                displaySelectedImage(uri)
+            }
+        }
+    }
+
+    private fun displaySelectedImage(uri: Uri) {
+        try {
+            val inputStream = requireContext().contentResolver.openInputStream(uri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+
+            // Set the selected image to the ImageView
+            editAnswerKeyBinding.imageViewSelected.setImageBitmap(bitmap)
+            editAnswerKeyBinding.imageViewSelected.visibility = View.VISIBLE
+
+            // Show the "Proceed" button
+            editAnswerKeyBinding.buttonProceedWithImage.visibility = View.VISIBLE
+
+            // Set click listener on the "Proceed" button
+            editAnswerKeyBinding.buttonProceedWithImage.setOnClickListener {
+                recognizeTextFromBitmap(bitmap) // Call text recognition here
+            }
+        } catch (e: FileNotFoundException) {
+            showToast("File not found: ${e.message}")
+//            Toast.makeText(requireContext(), "File not found: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+//    private fun displayCapturedImage(bitmap: Bitmap) {
+//        editAnswerKeyBinding.imageViewSelected.setImageBitmap(bitmap)
+//        editAnswerKeyBinding.imageViewSelected.visibility = View.VISIBLE
+//        editAnswerKeyBinding.buttonProceedWithImage.visibility = View.VISIBLE
+//    }
+
+    private fun navigateToScannedKeyFragment(recognizedText: String) {
+        val fragment = ScannedKeyFragment.newInstance(recognizedText)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun recognizeTextFromBitmap(bitmap: Bitmap?) {
+        val image = bitmap?.let { InputImage.fromBitmap(it, 0) }
+
+        // Use ML Kit's text recognition with the image
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        if (image != null) {
+            recognizer.process(image).addOnSuccessListener { visionText ->
+                val recognizedText = visionText.text
+                textRecognitionViewModel.setRecognizedText(recognizedText)
+
+                navigateToScannedKeyFragment(recognizedText)
+//
+//                // Navigate to ScannedKeyFragment after successful recognition
+//                val fragment = ScannedKeyFragment.newInstance(recognizedText)
+//                parentFragmentManager.beginTransaction()
+//                    .replace(R.id.frameContainer, fragment)
+//                    .addToBackStack(null)
+//                    .commit()
+            }
+                .addOnFailureListener { e ->
+                    showToast("Text recognition failed: ${e.message}")
+                    Toast.makeText(requireContext(), "Text recognition failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
 
     private fun deactivateCamera() {
         isCameraActive = false // Set the camera state to inactive
@@ -180,56 +368,43 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         setupToolbarTitle(getFragmentTitle()) // Assuming this method sets the toolbar title
     }
 
-    override fun onResume() {
-        super.onResume()
-        setupToolbar()
-
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            if (isCameraActive) {
-                deactivateCamera() // Go back to the initial UI state
-            } else {
-                parentFragmentManager.popBackStack() // Default back navigation
-            }
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        cameraProvider?.unbindAll() // Unbind camera when fragment is destroyed
-        deactivateCamera() // Ensure the camera is deactivated
-    }
-
     private fun loadAnswerKeyData(answerSheet: AnswerSheetEntity) {
         editAnswerKeyBinding.textViewSheetNameKey.text = answerSheet.name // Set the name of the answer sheet
-
         val answerKeyContainer = editAnswerKeyBinding.answerKeyContainer // Get the container for answer key items
-
         var currentItemNumber = 1
 
-        for ((examType, itemCount) in answerSheet.examTypesList) {
+        // Add appropriate views for each question type
+        answerSheet.examTypesList.forEach { (examType, itemCount) ->
             when (examType) {
-                "Multiple Choice" -> {
-                    for (i in 1..itemCount) {
-                        addMultipleChoiceView(answerKeyContainer, currentItemNumber)
-                        currentItemNumber++
-                    }
-                }
-                "Identification" -> {
-                    for (i in 1..itemCount) {
-                        addIdentificationView(answerKeyContainer, currentItemNumber)
-                        currentItemNumber++
-
-                    }
-                }
-                "Word Problem" -> {
-                    val wordProblemsCount = itemCount / 5
-                    for (i in 1..wordProblemsCount) {
-                        addWordProblemView(answerKeyContainer, currentItemNumber)
-                        currentItemNumber += 5
-                    }
-                }
+                "Multiple Choice" -> repeat(itemCount) { addMultipleChoiceView(answerKeyContainer, currentItemNumber++) }
+                "Identification" -> repeat(itemCount) { addIdentificationView(answerKeyContainer, currentItemNumber++) }
+                "Word Problem" -> repeat(itemCount / 5) { addWordProblemView(answerKeyContainer, currentItemNumber.also { currentItemNumber += 5 }) }
             }
         }
+//        for ((examType, itemCount) in answerSheet.examTypesList) {
+//            when (examType) {
+//                "Multiple Choice" -> {
+//                    for (i in 1..itemCount) {
+//                        addMultipleChoiceView(answerKeyContainer, currentItemNumber)
+//                        currentItemNumber++
+//                    }
+//                }
+//                "Identification" -> {
+//                    for (i in 1..itemCount) {
+//                        addIdentificationView(answerKeyContainer, currentItemNumber)
+//                        currentItemNumber++
+//
+//                    }
+//                }
+//                "Word Problem" -> {
+//                    val wordProblemsCount = itemCount / 5
+//                    for (i in 1..wordProblemsCount) {
+//                        addWordProblemView(answerKeyContainer, currentItemNumber)
+//                        currentItemNumber += 5
+//                    }
+//                }
+//            }
+//        }
     }
 
     private fun addMultipleChoiceView(container: ViewGroup, currentItemNumber: Int) {
@@ -317,37 +492,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             this.hint = hint
             addView(textInputEditText)
         }
-
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_IMAGE_PICKER && resultCode == AppCompatActivity.RESULT_OK){
-            data?.data?.let { uri ->
-                displaySelectedImage(uri)
-            }
-        }
-    }
-
-    private fun displaySelectedImage(uri: Uri) {
-        try {
-            val inputStream = requireContext().contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-
-            // Set the selected image to the ImageView
-            editAnswerKeyBinding.imageViewSelected.setImageBitmap(bitmap)
-            editAnswerKeyBinding.imageViewSelected.visibility = View.VISIBLE
-
-            // Show the "Proceed" button
-            editAnswerKeyBinding.buttonProceedWithImage.visibility = View.VISIBLE
-
-            // Set click listener on the "Proceed" button
-            editAnswerKeyBinding.buttonProceedWithImage.setOnClickListener {
-                recognizeTextFromBitmap(bitmap) // Call text recognition here
-            }
-        } catch (e: FileNotFoundException) {
-            Toast.makeText(requireContext(), "File not found: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
     }
 
 //    private fun processImageFromURI(uri: Uri) {
@@ -363,27 +507,14 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 //
 //    }
 
-    private fun recognizeTextFromBitmap(bitmap: Bitmap?) {
-        val image = bitmap?.let { InputImage.fromBitmap(it, 0) }
+//    private fun disableUIDuringImageProcessing(disable: Boolean) {
+//        editAnswerKeyBinding.buttonAddKeyWithCamera.isEnabled = !disable
+//        editAnswerKeyBinding.buttonScan.isEnabled = !disable
+//        editAnswerKeyBinding.buttonProceedWithImage.isEnabled = !disable
+//    }
 
-        // Use ML Kit's text recognition with the image
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        if (image != null) {
-            recognizer.process(image).addOnSuccessListener { visionText ->
-                val recognizedText = visionText.text
-                textRecognitionViewModel.setRecognizedText(recognizedText)
-
-                // Navigate to ScannedKeyFragment after successful recognition
-                val fragment = ScannedKeyFragment.newInstance(recognizedText)
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.frameContainer, fragment)
-                    .addToBackStack(null)
-                    .commit()
-            }
-                .addOnFailureListener { e ->
-                    Toast.makeText(requireContext(), "Text recognition failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        }
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
     override fun getFragmentTitle(): String {
@@ -407,6 +538,25 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                 activity.onBackPressed() // Default back navigation
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            if (isCameraActive) {
+                deactivateCamera() // Go back to the initial UI state
+            } else {
+                parentFragmentManager.popBackStack() // Default back navigation
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        cameraProvider?.unbindAll() // Unbind camera when fragment is destroyed
+        deactivateCamera() // Ensure the camera is deactivated
     }
 
     companion object {
