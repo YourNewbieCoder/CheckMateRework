@@ -180,11 +180,13 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    // Convert ImageProxy to Bitmap
-                    val bitmap = image.toBitmap()
+
+                    // Convert ImageProxy to Bitmap and handle rotation
+                    val rotationDegrees = image.imageInfo.rotationDegrees
+                    val bitmap = image.toBitmap().rotate(rotationDegrees)
+
                     displayCapturedImage(bitmap)
                     image.close()
-                    deactivateCamera()
                 }
                 override fun onError(exc: ImageCaptureException) {
                     showToast("Failed to capture image: ${exc.message}")
@@ -193,7 +195,14 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         )
     }
 
+    private fun Bitmap.rotate(degrees: Int): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(degrees.toFloat())
+        return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    }
+
     private fun displayCapturedImage(bitmap: Bitmap?) {
+        setupToolbarTitle("Captured Image")
         requireActivity().runOnUiThread {
             bitmap?.let {
                 // Set the captured image to the ImageView
@@ -239,6 +248,8 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             editAnswerKeyBinding.imageViewSelected.setImageBitmap(bitmap)
             editAnswerKeyBinding.imageViewSelected.visibility = View.VISIBLE
 
+            setupToolbarTitle("Image from Gallery")
+
             // Show the "Proceed" button
             editAnswerKeyBinding.buttonProceedWithImage.visibility = View.VISIBLE
 
@@ -248,7 +259,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             }
         } catch (e: FileNotFoundException) {
             showToast("File not found: ${e.message}")
-//            Toast.makeText(requireContext(), "File not found: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -259,14 +269,13 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         if (image != null) {
             recognizer.process(image).addOnSuccessListener { visionText ->
-                val recognizedText = textRecognitionViewModel.recognizedText.value ?: "No text recognized"
+                val recognizedText = visionText.text
                 textRecognitionViewModel.setRecognizedText(recognizedText)
 
                 navigateToScannedKeyFragment(recognizedText)
             }
             .addOnFailureListener { e ->
                 showToast("Text recognition failed: ${e.message}")
-                Toast.makeText(requireContext(), "Text recognition failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
