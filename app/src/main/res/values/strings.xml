@@ -7,6 +7,8 @@
 
     <string name="edit_key_title">Edit Key for</string>
 
+    <string name="scanned_key_title">Scanned Key</string>
+
     <string name="check_title">Check Sheet</string>
 
     <string name="records_title">Records</string>

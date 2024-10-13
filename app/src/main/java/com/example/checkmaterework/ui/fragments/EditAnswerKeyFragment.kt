@@ -31,6 +31,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentEditAnswerKeyBinding
+import com.example.checkmaterework.models.Answer
+import com.example.checkmaterework.models.AnswerKeyViewModel
+import com.example.checkmaterework.models.AnswerKeyViewModelFactory
+import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.TextRecognitionViewModel
 import com.google.android.material.chip.Chip
@@ -52,6 +56,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     // ViewModel for handling text recognition
     private lateinit var textRecognitionViewModel: TextRecognitionViewModel
 
+    private lateinit var answerKeyViewModel: AnswerKeyViewModel
 
     // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
@@ -68,6 +73,11 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         super.onCreate(savedInstanceState)
         // Initialize the ViewModel
         textRecognitionViewModel = ViewModelProvider(this)[TextRecognitionViewModel::class.java]
+
+        // Initialize ViewModel (assuming you are using a ViewModelFactory for DI)
+        val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerKeyDao()
+        answerKeyViewModel = ViewModelProvider(this, AnswerKeyViewModelFactory(dao))
+            .get(AnswerKeyViewModel::class.java)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -94,6 +104,55 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         // Load answer key data from the provided answer sheet
         loadAnswerKeyData(answerSheet)
+        
+        // Set up the Save button listener
+        editAnswerKeyBinding.buttonSave.setOnClickListener {
+            val answers = gatherAnswersFromInput()
+            saveAnswers(answers)
+        }
+    }
+
+    private fun gatherAnswersFromInput(): List<Answer> {
+        val answerKeyContainer = editAnswerKeyBinding.answerKeyContainer
+        val answers = mutableListOf<Answer>()
+
+        var currentItemNumber = 1
+
+        for (i in 0 until answerKeyContainer.childCount) {
+            val view = answerKeyContainer.getChildAt(i)
+
+            when (view) {
+                is LinearLayout -> {
+                    val textView = view.getChildAt(0) as TextView
+                    val questionNumber = textView.text.split(":")[0].toInt()
+
+                    when (val secondView = view.getChildAt(1)) {
+                        is ChipGroup -> {
+                            val selectedChip = secondView.checkedChipId
+                            if (selectedChip != View.NO_ID) {
+                                val selectedAnswer = secondView.findViewById<Chip>(selectedChip).text.toString()
+                                answers.add(Answer(questionNumber, selectedAnswer))
+                            }
+                        }
+                        is TextInputLayout -> {
+                            val answerText = secondView.editText?.text.toString()
+                            answers.add(Answer(questionNumber, answerText))
+                        }
+                    }
+                }
+            }
+        }
+
+        return answers
+    }
+
+    private fun saveAnswers(answers: List<Answer>): Int {
+        val answerSheetId = answerSheet.id
+
+        // Pass answers to ViewModel for saving to database
+        answerKeyViewModel.saveAnswersToDatabase(answerSheetId, answers)
+
+        return answerSheetId
     }
 
     private fun showImageSourceOptionsDialog() {

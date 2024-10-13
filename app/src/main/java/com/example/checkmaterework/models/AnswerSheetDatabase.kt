@@ -12,7 +12,8 @@ import kotlinx.coroutines.internal.synchronized
     AnswerSheetEntity::class,
     ClassEntity::class,
     StudentEntity::class,
-    ImageCaptureEntity::class], version = 2, exportSchema = false)
+    ImageCaptureEntity::class,
+    QuestionEntity::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AnswerSheetDatabase: RoomDatabase() {
 
@@ -20,6 +21,7 @@ abstract class AnswerSheetDatabase: RoomDatabase() {
     abstract fun classDao(): ClassDAO // Add the DAO for ClassEntity
     abstract fun studentDao(): StudentDAO
     abstract fun imageCaptureDao(): ImageCaptureDAO
+    abstract fun answerKeyDao(): AnswerKeyDao
 
     companion object {
         @Volatile
