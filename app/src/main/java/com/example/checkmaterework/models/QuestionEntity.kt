@@ -20,5 +20,12 @@ data class QuestionEntity(
     @PrimaryKey(autoGenerate = true) val questionId: Int = 0,
     var answerSheetId: Int,   // Foreign key referencing AnswerSheetEntity
     val questionNumber: Int,
-    val answer: String
+    val answer: String,
+    val answerType: AnswerType // Add this field to specify the type of answer
 )
+
+enum class AnswerType {
+    MULTIPLE_CHOICE,
+    IDENTIFICATION,
+    WORD_PROBLEM
+}

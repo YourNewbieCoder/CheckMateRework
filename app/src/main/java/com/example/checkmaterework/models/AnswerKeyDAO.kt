@@ -27,6 +27,7 @@ interface AnswerKeyDao {
 
     @Query("DELETE FROM questions") // Replace `question_table` with the actual name of your table
     fun clearAll()
-    fun clearQuestionsByAnswerSheetId(answerSheetId: Int) {
-    }
+
+    @Query("DELETE FROM questions WHERE answerSheetId = :answerSheetId")
+    fun clearQuestionsByAnswerSheetId(answerSheetId: Int)
 }

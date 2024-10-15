@@ -54,7 +54,11 @@ class KeyFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun showEditAnswerKeyFragment(sheet: AnswerSheetEntity) {
-        val editAnswerKeyFragment = EditAnswerKeyFragment(sheet)
+        val editAnswerKeyFragment = EditAnswerKeyFragment(sheet).apply {
+            arguments = Bundle().apply {
+                putInt("ANSWER_SHEET_ID", sheet.id)  // Pass the answer sheet ID here
+            }
+        }
 //        val viewSheetDetailsKeyFragment = ViewSheetDetailsKeyFragment(sheet)
 
         // Replace the current fragment and add to back stack

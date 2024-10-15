@@ -37,6 +37,8 @@ import com.example.checkmaterework.models.AnswerKeyViewModel
 import com.example.checkmaterework.models.AnswerKeyViewModelFactory
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
+import com.example.checkmaterework.models.AnswerType
+import com.example.checkmaterework.models.QuestionEntity
 import com.example.checkmaterework.models.TextRecognitionViewModel
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -53,6 +55,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     private var cameraProvider: ProcessCameraProvider? = null
     private var isCameraActive = false
     private var imageCapture: ImageCapture? = null
+    private var answerSheetId: Int = 0
 
     // ViewModel for handling text recognition
     private lateinit var textRecognitionViewModel: TextRecognitionViewModel
@@ -72,6 +75,11 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        arguments?.let {
+            answerSheetId = it.getInt("ANSWER_SHEET_ID")
+        }
+
         // Initialize the ViewModel
         textRecognitionViewModel = ViewModelProvider(this)[TextRecognitionViewModel::class.java]
 
@@ -105,6 +113,8 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         // Load answer key data from the provided answer sheet
         loadAnswerKeyData(answerSheet)
+
+        setupObservers()
         
         // Set up the Save button listener
         editAnswerKeyBinding.buttonSave.setOnClickListener {
@@ -118,7 +128,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         for (i in 0 until answerKeyContainer.childCount) {
             val view = answerKeyContainer.getChildAt(i)
-
             when (view) {
                 is ChipGroup -> {
                     // For Multiple Choice Questions
@@ -427,6 +436,8 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     private fun loadAnswerKeyData(answerSheet: AnswerSheetEntity) {
         editAnswerKeyBinding.textViewSheetNameKey.text = answerSheet.name // Set the name of the answer sheet
         val answerKeyContainer = editAnswerKeyBinding.answerKeyContainer // Get the container for answer key items
+        answerKeyContainer.removeAllViews() // Clear any existing views
+
         var currentItemNumber = 1
 
         // Add appropriate views for each question type
@@ -438,6 +449,75 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             }
         }
         Log.d("EditAnswerKeyFragment", "Number of views in answerKeyContainer: ${answerKeyContainer.childCount}")
+    }
+
+    private fun setupObservers() {
+        // Assuming you have the answerSheetId available
+        answerKeyViewModel.loadAnswerKeysForSheet(answerSheetId)
+
+        answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
+            questions?.let {
+                populateAnswerKeys(it)
+            }
+        }
+    }
+
+    private fun populateAnswerKeys(questions: List<QuestionEntity>) {
+        questions.forEach { question ->
+            when (question.answerType) {
+                AnswerType.MULTIPLE_CHOICE -> {
+                    // Find the ChipGroup for the specific question
+                    val chipGroup = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<ChipGroup>(question.questionNumber)
+                    chipGroup?.let {
+                        val selectedAnswerIndex = when (question.answer) {
+                            "A" -> 0
+                            "B" -> 1
+                            "C" -> 2
+                            "D" -> 3
+                            else -> -1 // Default case if no valid answer is found
+                        }
+
+                        if (selectedAnswerIndex != -1) {
+                            // Get the Chip corresponding to the selected index and check it
+                            it.check(it.getChildAt(selectedAnswerIndex).id)
+                        } else {
+                            Log.e("EditAnswerKeyFragment", "Invalid answer for question ${question.questionNumber}: ${question.answer}")
+                        }
+                    } ?: Log.e("EditAnswerKeyFragment", "ChipGroup for question ${question.questionNumber} not found.")
+                }
+                AnswerType.IDENTIFICATION -> {
+                    val identificationLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>(question.questionNumber)
+                    identificationLayout?.editText?.setText(question.answer)
+                }
+                AnswerType.WORD_PROBLEM -> {
+                    val prefix = "${question.questionNumber}:"
+                    val askedLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Asked")
+                    val givenLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Given")
+                    val operationLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Operation")
+                    val numberSentenceLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Number Sentence")
+                    val solutionLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Solution/Answer")
+
+//                    // Log existence of each layout
+//                    Log.d("ViewTag", "Asked Layout found: ${askedLayout != null}")
+//                    Log.d("ViewTag", "Given Layout found: ${givenLayout != null}")
+//                    Log.d("ViewTag", "Operation Layout found: ${operationLayout != null}")
+//                    Log.d("ViewTag", "Number Sentence Layout found: ${numberSentenceLayout != null}")
+//                    Log.d("ViewTag", "Solution Layout found: ${solutionLayout != null}")
+
+                    val answerParts = question.answer.split("\n").associate {
+                        val parts = it.split(": ", limit = 2)
+                        parts[0].trim() to (if (parts.size > 1) parts[1].trim() else "")
+                    }
+
+                    // Check and populate each field
+                    askedLayout?.editText?.setText(answerParts["Asked"])
+                    givenLayout?.editText?.setText(answerParts["Given"])
+                    operationLayout?.editText?.setText(answerParts["Operation"])
+                    numberSentenceLayout?.editText?.setText(answerParts["Number Sentence"])
+                    solutionLayout?.editText?.setText(answerParts["Solution"])
+                }
+            }
+        }
     }
 
     private fun addMultipleChoiceView(container: ViewGroup, currentItemNumber: Int) {

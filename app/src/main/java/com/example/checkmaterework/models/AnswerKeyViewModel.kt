@@ -30,23 +30,25 @@ class AnswerKeyViewModel(private val answerKeyDao: AnswerKeyDao) : ViewModel() {
     fun saveAnswersToDatabase(answerSheetId: Int, answers: List<Answer>) {
         viewModelScope.launch(Dispatchers.IO) {
             // Clear all questions before inserting new ones (if necessary)
-            answerKeyDao.clearAll() // Optional, only if you want to start fresh
+//            answerKeyDao.clearAll() // Optional, only if you want to start fresh
 
             // Clear all questions for the specific answer sheet if necessary (optional)
-//            answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
+            answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
 
             // Create a list to hold all QuestionEntity objects
             val questionEntities = answers.map { answer ->
                 when(answer) {
                     is Answer.MultipleChoice -> QuestionEntity(
-                            answerSheetId = answerSheetId,
-                            questionNumber = answer.questionNumber,
-                            answer = answer.selectedAnswer
+                        answerSheetId = answerSheetId,
+                        questionNumber = answer.questionNumber,
+                        answer = answer.selectedAnswer,
+                        answerType = AnswerType.MULTIPLE_CHOICE // Set the type here
                     )
                     is Answer.Identification -> QuestionEntity(
-                            answerSheetId = answerSheetId,
-                            questionNumber = answer.questionNumber,
-                            answer = answer.answer
+                        answerSheetId = answerSheetId,
+                        questionNumber = answer.questionNumber,
+                        answer = answer.answer,
+                        answerType = AnswerType.IDENTIFICATION // Set the type here
                     )
                     is Answer.WordProblemAnswer -> {
                         // Handle saving all fields for word problem
@@ -59,7 +61,8 @@ class AnswerKeyViewModel(private val answerKeyDao: AnswerKeyDao) : ViewModel() {
                                 Operation: ${answer.operation}
                                 Number Sentence: ${answer.numberSentence}
                                 Solution: ${answer.solutionAnswer}
-                            """.trimIndent() // You can format it as a multiline string or store them separately if needed
+                            """.trimIndent(), // You can format it as a multiline string or store them separately if needed
+                            answerType = AnswerType.WORD_PROBLEM // Set the type here
                         )
                     }
                 }
