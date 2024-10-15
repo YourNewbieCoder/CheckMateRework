@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
@@ -107,8 +108,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         
         // Set up the Save button listener
         editAnswerKeyBinding.buttonSave.setOnClickListener {
-            val answers = gatherAnswersFromInput()
-            saveAnswers(answers)
+            saveAnswers()
         }
     }
 
@@ -116,43 +116,109 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val answerKeyContainer = editAnswerKeyBinding.answerKeyContainer
         val answers = mutableListOf<Answer>()
 
-        var currentItemNumber = 1
-
         for (i in 0 until answerKeyContainer.childCount) {
             val view = answerKeyContainer.getChildAt(i)
 
             when (view) {
+                is ChipGroup -> {
+                    // For Multiple Choice Questions
+                    val questionNumber = view.tag as? Int
+                    if (questionNumber != null) {
+                        val selectedChipId = view.checkedChipId
+                        if (selectedChipId != View.NO_ID) {
+                            val selectedAnswer = view.findViewById<Chip>(selectedChipId).text.toString()
+                            answers.add(Answer.MultipleChoice(questionNumber, selectedAnswer))
+                            Log.d("EditAnswerKeyFragment", "Question $questionNumber: $selectedAnswer")
+                        } else {
+                            Log.d("EditAnswerKeyFragment", "No answer selected for question $questionNumber.")
+                        }
+                    }
+                }
+//                is LinearLayout -> {
+//                    // For Identification Questions
+//                    for (j in 0 until view.childCount) {
+//                        val child = view.getChildAt(j)
+//                        if (child is TextInputLayout) {
+//                            val questionNumber = child.tag as? Int
+//                            if (questionNumber != null) {
+//                                val answerText = child.editText?.text.toString().trim()
+//                                if (answerText.isNotEmpty()) {
+//                                    answers.add(Answer.Identification(questionNumber, answerText))
+//                                    Log.d("EditAnswerKeyFragment", "Question $questionNumber: $answerText")
+//                                } else {
+//                                    Log.d("EditAnswerKeyFragment", "No answer entered for question $questionNumber.")
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
                 is LinearLayout -> {
-                    val textView = view.getChildAt(0) as TextView
-                    val questionNumber = textView.text.split(":")[0].toInt()
+                    val wordProblemAnswers = mutableMapOf<String, String>()
+                    var wordProblemNumber: Int? = null // To track the question number for word problems
 
-                    when (val secondView = view.getChildAt(1)) {
-                        is ChipGroup -> {
-                            val selectedChip = secondView.checkedChipId
-                            if (selectedChip != View.NO_ID) {
-                                val selectedAnswer = secondView.findViewById<Chip>(selectedChip).text.toString()
-                                answers.add(Answer(questionNumber, selectedAnswer))
+                    for (j in 0 until view.childCount) {
+                        val child = view.getChildAt(j)
+                        if (child is TextInputLayout) {
+                            val tag = child.tag
+
+                            // Check if the tag is an Int (for identification questions)
+                            val questionNumber = (tag as? Int) ?: tag.toString().toIntOrNull()
+
+                            if (questionNumber != null) {
+                                val answerText = child.editText?.text.toString()
+                                if (answerText.isNotEmpty()) {
+                                    answers.add(Answer.Identification(questionNumber, answerText))
+                                    Log.d("EditAnswerKeyFragment", "Question $questionNumber: $answerText")
+                                } else {
+                                    Log.d("EditAnswerKeyFragment", "No answer entered for question $questionNumber.")
+                                }
+                            } else if (tag is String) {
+                                // Handle Word Problems
+                                wordProblemNumber = tag.split(":").firstOrNull()?.toIntOrNull()
+
+                                val answerText = child.editText?.text.toString()
+                                if (answerText.isNotEmpty()) {
+                                    wordProblemAnswers[tag] = answerText
+                                }
                             }
                         }
-                        is TextInputLayout -> {
-                            val answerText = secondView.editText?.text.toString()
-                            answers.add(Answer(questionNumber, answerText))
-                        }
+                    }
+
+                    // After processing all child views, if we have answers for a word problem, store them
+                    if (wordProblemNumber != null && wordProblemAnswers.isNotEmpty()) {
+                        val asked = wordProblemAnswers["$wordProblemNumber: Asked"] ?: ""
+                        val given = wordProblemAnswers["$wordProblemNumber: Given"] ?: ""
+                        val operation = wordProblemAnswers["$wordProblemNumber: Operation"] ?: ""
+                        val numberSentence = wordProblemAnswers["$wordProblemNumber: Number Sentence"] ?: ""
+                        val solution = wordProblemAnswers["$wordProblemNumber: Solution/Answer"] ?: ""
+
+                        answers.add(Answer.WordProblemAnswer(wordProblemNumber, asked, given, operation, numberSentence, solution))
+                        Log.d("EditAnswerKeyFragment", "Word Problem $wordProblemNumber: Asked=$asked, Given=$given, Operation=$operation, NumberSentence=$numberSentence, Solution=$solution")
                     }
                 }
             }
         }
-
         return answers
     }
 
-    private fun saveAnswers(answers: List<Answer>): Int {
+    private fun saveAnswers() {
         val answerSheetId = answerSheet.id
+        val answers = gatherAnswersFromInput() // Retrieve the answers
 
-        // Pass answers to ViewModel for saving to database
-        answerKeyViewModel.saveAnswersToDatabase(answerSheetId, answers)
+        if (answers.isNotEmpty()) {
+            // Assume you have a method in your ViewModel to save answers
+            answerKeyViewModel.saveAnswersToDatabase(answerSheetId, answers)
 
-        return answerSheetId
+        } else {
+            Log.e("EditAnswerKeyFragment", "No answers to save.")
+        }
+
+        // Navigate to DisplaySavedAnswersFragment to show saved answers
+        val fragment = DisplaySavedAnswersFragment.newInstance(answerSheetId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun showImageSourceOptionsDialog() {
@@ -371,6 +437,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                 "Word Problem" -> repeat(itemCount / 5) { addWordProblemView(answerKeyContainer, currentItemNumber.also { currentItemNumber += 5 }) }
             }
         }
+        Log.d("EditAnswerKeyFragment", "Number of views in answerKeyContainer: ${answerKeyContainer.childCount}")
     }
 
     private fun addMultipleChoiceView(container: ViewGroup, currentItemNumber: Int) {
@@ -382,6 +449,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
         val chipGroup = ChipGroup(requireContext()).apply {
             isSingleSelection = true // Only one answer can be selected
+            tag = currentItemNumber // Set the tag to the current question number
         }
         for (option in listOf("A", "B", "C", "D")) {
             chipGroup.addView(Chip(requireContext()).apply {
@@ -408,7 +476,9 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         questionLayout.addView(numberTextView)
 
         // Create TextInputLayout for identification
-        val identificationLayout = createTextInputLayout("Answer for $currentItemNumber")
+        val identificationLayout = createTextInputLayout("Answer for $currentItemNumber").apply {
+            tag = currentItemNumber // Set the tag to the current question number
+        }
         questionLayout.addView(identificationLayout)
 
         container.addView(questionLayout)
@@ -429,11 +499,11 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         }
         questionLayout.addView(numberTextView)
 
-        val askedLayout = createTextInputLayout("Asked")
-        val givenLayout =createTextInputLayout("Given")
-        val operationLayout = createTextInputLayout("Operation")
-        val numberSentenceLayout = createTextInputLayout("Number Sentence")
-        val solutionLayout = createTextInputLayout("Solution/Answer")
+        val askedLayout = createTextInputLayout("Asked").apply { tag = "$currentItemNumber: Asked" }
+        val givenLayout =createTextInputLayout("Given").apply { tag = "$currentItemNumber: Given" }
+        val operationLayout = createTextInputLayout("Operation").apply { tag = "$currentItemNumber: Operation" }
+        val numberSentenceLayout = createTextInputLayout("Number Sentence").apply { tag = "$currentItemNumber: Number Sentence" }
+        val solutionLayout = createTextInputLayout("Solution/Answer").apply { tag = "$currentItemNumber: Solution/Answer" }
 
         // Add layouts to questionLayout
         questionLayout.addView(askedLayout)

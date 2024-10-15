@@ -9,6 +9,8 @@
 
     <string name="scanned_key_title">Scanned Key</string>
 
+    <string name="no_answers_found">No Answers Found!</string>
+
     <string name="check_title">Check Sheet</string>
 
     <string name="records_title">Records</string>
