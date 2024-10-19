@@ -45,7 +45,7 @@ class AddStudentFragment(
 //            val score = addStudentBinding.textInputScore.text.toString().toIntOrNull() ?: 0
 
             if (lastName.isNotEmpty() && firstName.isNotEmpty()){
-                val newStudent = StudentEntity(lastName = lastName, firstName = firstName, score = 0, classId = 0)
+                val newStudent = StudentEntity(studentName = firstName, score = 0, classId = 0)
                 onStudentAdded(newStudent)
                 dismiss()
             } else {

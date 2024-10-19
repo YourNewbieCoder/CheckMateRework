@@ -15,11 +15,11 @@ interface StudentDAO {
     suspend fun insert(student: StudentEntity)
 
     // Get all students from the database
-    @Query("SELECT * FROM students WHERE classId = :classId ORDER BY lastName ASC")
+    @Query("SELECT * FROM students WHERE classId = :classId ORDER BY studentName ASC")
     suspend fun getStudentsByClass(classId: Int): List<StudentEntity>
 
     // Fetch all students
-    @Query("SELECT * FROM students ORDER BY lastName ASC")
+    @Query("SELECT * FROM students ORDER BY studentName ASC")
     suspend fun getAllStudents(): List<StudentEntity>
 
     @Query("SELECT * FROM students WHERE id = :id")

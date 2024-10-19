@@ -2,7 +2,8 @@ package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -23,14 +24,18 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentCheckBinding
+import com.example.checkmaterework.models.AnswerKeyViewModel
+import com.example.checkmaterework.models.AnswerKeyViewModelFactory
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerSheetViewModel
 import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.example.checkmaterework.models.ImageCaptureViewModel
 import com.example.checkmaterework.models.ImageCaptureViewModelFactory
-import com.example.checkmaterework.models.Student
 import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -40,6 +45,7 @@ class CheckFragment : Fragment() {
     private lateinit var checkBinding: FragmentCheckBinding
 
     private lateinit var answerSheetViewModel: AnswerSheetViewModel
+    private lateinit var answerKeyViewModel: AnswerKeyViewModel
     private lateinit var imageCaptureViewModel: ImageCaptureViewModel
 
     private lateinit var checkSheetsAdapter: CheckSheetsAdapter
@@ -53,6 +59,10 @@ class CheckFragment : Fragment() {
         val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
         answerSheetViewModel = ViewModelProvider(this, AnswerSheetViewModelFactory(dao))
             .get(AnswerSheetViewModel::class.java)
+
+        val answerKeyDao = AnswerSheetDatabase.getDatabase(requireContext()).answerKeyDao()
+        answerKeyViewModel = ViewModelProvider(this, AnswerKeyViewModelFactory(answerKeyDao))
+            .get(AnswerKeyViewModel::class.java)
 
         val imageCaptureDao = AnswerSheetDatabase.getDatabase(requireContext()).imageCaptureDao()
         imageCaptureViewModel = ViewModelProvider(this, ImageCaptureViewModelFactory(imageCaptureDao))
@@ -88,6 +98,20 @@ class CheckFragment : Fragment() {
     }
 
     private fun onSheetSelected(sheet: AnswerSheetEntity) {
+        // Load the answer keys from the database for the selected sheet
+        answerKeyViewModel.loadAnswerKeysForSheet(sheet.id)
+
+        // Observe the savedAnswerKeys LiveData to see if the correct data is retrieved
+        answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
+            if (questions.isNotEmpty()) {
+                Log.d("CheckFragment", "Answer key retrieved: ${questions.joinToString("\n")}")
+                // Optionally, show a Toast message to confirm
+                Toast.makeText(requireContext(), "Answer key retrieved successfully", Toast.LENGTH_SHORT).show()
+            } else {
+                Log.d("CheckFragment", "No answer key found for the selected sheet.")
+            }
+        }
+
         // Show the back arrow and toolbar
         val activity = requireActivity() as AppCompatActivity
         activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
@@ -174,11 +198,18 @@ class CheckFragment : Fragment() {
             outputOptions, ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val reviewImageFragment = ReviewImageFragment.newInstance(sheet.id, photoFile.absolutePath)
-                    parentFragmentManager.beginTransaction()
-                        .replace(R.id.frameContainer, reviewImageFragment)
-                        .addToBackStack(null)
-                        .commit()
+                    // Decode the captured image as a Bitmap
+                    val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+
+                    // Process the image for text recognition
+                    processCapturedImage(bitmap, sheet, photoFile)
+
+                    // Send recognized text to ReviewImageFragment
+//                    val reviewImageFragment = ReviewImageFragment.newInstance(sheet.id, photoFile.absolutePath)
+//                    parentFragmentManager.beginTransaction()
+//                        .replace(R.id.frameContainer, reviewImageFragment)
+//                        .addToBackStack(null)
+//                        .commit()
                 }
 
                 override fun onError(exc: ImageCaptureException) {
@@ -187,6 +218,113 @@ class CheckFragment : Fragment() {
             }
         )
     }
+
+    private fun processCapturedImage(bitmap: Bitmap, sheet: AnswerSheetEntity, photoFile: File) {
+        // Apply any preprocessing steps (optional)
+//        val processedImage = preprocessImage(imageBitmap)
+
+        val image = InputImage.fromBitmap(bitmap, 0)
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        recognizer.process(image)
+            .addOnSuccessListener { visionText ->
+                val recognizedText = visionText.text
+                Log.d("CheckFragment", "Recognized text: $recognizedText")
+                val reviewImageFragment = ReviewImageFragment.newInstance(sheet.id, photoFile.absolutePath, recognizedText)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.frameContainer, reviewImageFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Text recognition failed", e)
+            }
+
+//        // Perform text recognition
+//        recognizeTextFromImage(imageBitmap) { recognizedText ->
+//            // Parse the recognized text
+//            val parsedAnswers = parseRecognizedText(recognizedText)
+//
+////            // Match answers with the stored answer key
+////            answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { answerKeys ->
+////                val results = matchAnswers(parsedAnswers, answerKeys)
+////
+////                // Show results in UI or proceed to the next step (e.g., saving, review)
+////                showResults(results)
+////            }
+//
+//            // Compare the answers with the correct answer key
+//            compareAnswers(sheet.id, parsedAnswers)
+//        }
+    }
+
+//    private fun recognizeTextFromImage(imageBitmap: Bitmap, onTextRecognized: (String) -> Unit) {
+//        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+//        val inputImage = InputImage.fromBitmap(imageBitmap, 0)
+//
+//        recognizer.process(inputImage)
+//            .addOnSuccessListener { visionText ->
+//                val recognizedText = visionText.text
+//                onTextRecognized(recognizedText)
+//            }
+//            .addOnFailureListener { e ->
+//                Log.e(TAG, "Error recognizing text: ", e)
+//            }
+//    }
+
+//    private fun matchAnswers(recognizedAnswers: Map<Int, String>, answerKeys: List<QuestionEntity>): List<Pair<Int, Boolean>> {
+//        val results = mutableListOf<Pair<Int, Boolean>>()
+//
+//        for (question in answerKeys) {
+//            val recognizedAnswer = recognizedAnswers[question.questionNumber]
+//            val isCorrect = recognizedAnswer == question.answer
+//            results.add(Pair(question.questionNumber, isCorrect))
+//        }
+//
+//        return results
+//    }
+//
+//    private fun showResults(results: List<Pair<Int, Boolean>>) {
+//        val resultString = results.joinToString("\n") { (question, isCorrect) ->
+//            "Q$question: ${if (isCorrect) "Correct" else "Incorrect"}"
+//        }
+//        Toast.makeText(requireContext(), resultString, Toast.LENGTH_LONG).show()
+//    }
+
+//    private fun processCapturedImage(imageBitmap: Bitmap): String {
+//        // Step 1: Apply any image preprocessing (e.g., grayscale, resizing, rotation, etc.)
+//        val processedImage = preprocessImage(imageBitmap)
+//
+//        // Step 2: Perform text recognition using ML Kit or other OCR library
+//        val recognizedText = recognizeTextFromImage(processedImage)
+//
+//        // Step 3: Parse the recognized text
+////        return parseRecognizedText(recognizedText)
+//        return recognizedText
+//    }
+
+//    private fun preprocessImage(imageBitmap: Bitmap): Bitmap {
+//        // Example: convert to grayscale
+//        // You can also apply OpenCV transformations here
+//        return imageBitmap // Adjust the image as per requirement
+//    }
+
+//    private fun recognizeTextFromImage(imageBitmap: Bitmap): String {
+//        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+//        val image = InputImage.fromBitmap(imageBitmap, 0) // 0 is the default rotation
+//
+//        var recognizedText = ""
+//        recognizer.process(image)
+//            .addOnSuccessListener { visionText ->
+//                recognizedText = visionText.text
+//            }
+//            .addOnFailureListener { e ->
+//                // Handle error
+//                Log.e("OCR", "Error recognizing text: ", e)
+//            }
+//
+//        return recognizedText // Ensure this is handled correctly in real-time
+//    }
+
 
     private fun closeCameraAndReturn() {
         // Unbind all use cases to stop the camera

@@ -127,8 +127,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val answers = mutableListOf<Answer>()
 
         for (i in 0 until answerKeyContainer.childCount) {
-            val view = answerKeyContainer.getChildAt(i)
-            when (view) {
+            when (val view = answerKeyContainer.getChildAt(i)) {
                 is ChipGroup -> {
                     // For Multiple Choice Questions
                     val questionNumber = view.tag as? Int
@@ -351,8 +350,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                     recognizeTextFromBitmap(bitmap) // Call text recognition here
                 }
             }
-        } ?: run {
-            showToast("Failed to capture image")
         }
     }
 

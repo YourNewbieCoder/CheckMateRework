@@ -30,8 +30,7 @@ class StudentAdapter(
 
     override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
        val student = studentList[position]
-        holder.textLastName.text = student.lastName
-        holder.textFirstName.text = student.firstName
+        holder.textFirstName.text = student.studentName
         holder.textScore.text = student.score.toString()
     }
 
