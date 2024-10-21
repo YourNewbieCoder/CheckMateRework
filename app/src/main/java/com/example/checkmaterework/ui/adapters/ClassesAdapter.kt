@@ -13,17 +13,22 @@ import com.example.checkmaterework.models.ClassEntity
 
 class ClassesAdapter(
     private val classList: MutableList<ClassEntity>,
-    private val onViewStudentRecordsClick: (ClassEntity) -> Unit
+    private val onItemClick: (ClassEntity) -> Unit, // Click listener for viewing details
+    private val onEditClick: (ClassEntity) -> Unit, // Click listener for editing
+    private val onDeleteClick: (ClassEntity) -> Unit // Click listener for deleting
+//    private val onViewStudentRecordsClick: (ClassEntity) -> Unit
 ) :
-RecyclerView.Adapter<ClassesAdapter.ClassesViewHolder>(){
+    RecyclerView.Adapter<ClassesAdapter.ClassesViewHolder>(){
     class ClassesViewHolder(addedClassesView: View) : RecyclerView.ViewHolder(addedClassesView) {
         val addedClassesName: TextView = addedClassesView.findViewById(R.id.addedClassesName)
-        val buttonViewStudentRecords: Button = addedClassesView.findViewById(R.id.buttonViewStudentRecords)
+        val buttonEdit: Button = addedClassesView.findViewById(R.id.buttonEdit)
+        val buttonDelete: Button = addedClassesView.findViewById(R.id.buttonDelete)
+//        val buttonViewStudentRecords: Button = addedClassesView.findViewById(R.id.buttonViewStudentRecords)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClassesViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.layout_view_classes, parent, false)
+            .inflate(R.layout.layout_added_classes, parent, false)
         return ClassesViewHolder(view)
     }
 
@@ -35,9 +40,21 @@ RecyclerView.Adapter<ClassesAdapter.ClassesViewHolder>(){
         val addedClasses = classList[position]
         holder.addedClassesName.text = addedClasses.className
 
-        holder.buttonViewStudentRecords.setOnClickListener {
-            onViewStudentRecordsClick(addedClasses)
+        holder.itemView.setOnClickListener {
+            onItemClick(addedClasses) // View details
         }
+
+        holder.buttonEdit.setOnClickListener {
+            onEditClick(addedClasses) // Edit functionality
+        }
+
+        holder.buttonDelete.setOnClickListener {
+            onDeleteClick(addedClasses) // Delete functionality
+        }
+
+//        holder.buttonViewStudentRecords.setOnClickListener {
+//            onViewStudentRecordsClick(addedClasses)
+//        }
     }
 
     @SuppressLint("NotifyDataSetChanged")

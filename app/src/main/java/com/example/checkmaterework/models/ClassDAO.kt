@@ -9,22 +9,22 @@ import androidx.room.Update
 
 @Dao
 interface ClassDAO {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(classEntity: ClassEntity)
+//    @Insert(onConflict = OnConflictStrategy.REPLACE)
+//    suspend fun insertClass(classEntity: ClassEntity)
 
     @Update
-    suspend fun update(classEntity: ClassEntity)
+    suspend fun updateClass(classEntity: ClassEntity)
 
     @Delete
-    suspend fun delete(classEntity: ClassEntity)
+    suspend fun deleteClass(classEntity: ClassEntity)
 
-    @Query("SELECT * FROM classes_table")
+    @Query("SELECT * FROM classes")
     suspend fun getAllClasses(): List<ClassEntity>
 
-    @Query("SELECT * FROM classes_table WHERE id = :id")
+    @Query("SELECT * FROM classes WHERE id = :id")
     suspend fun getClassById(id: Int): ClassEntity?
 
-    @Query("SELECT * FROM classes_table WHERE className = :className LIMIT 1")
+    @Query("SELECT * FROM classes WHERE className = :className LIMIT 1")
     suspend fun getClassByName(className: String): ClassEntity?
 
     @Insert

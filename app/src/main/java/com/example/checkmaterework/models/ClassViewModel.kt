@@ -19,9 +19,9 @@ class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
     }
 
     // Function to add a new class
-    fun createClass(newClass: ClassEntity) {
+    fun addClass(newClass: ClassEntity) {
         viewModelScope.launch {
-            dao.insert(newClass)
+            dao.insertClass(newClass)
             val currentClasses = _classList.value ?: mutableListOf()
             currentClasses.add(newClass)
             _classList.value = currentClasses
@@ -31,7 +31,7 @@ class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
     // Function to update an existing class
     fun updateClass(updatedClass: ClassEntity) {
         viewModelScope.launch {
-            dao.update(updatedClass)
+            dao.updateClass(updatedClass)
             val currentClasses = _classList.value ?: mutableListOf()
             val index = currentClasses.indexOfFirst { it.id == updatedClass.id } // Use an ID or unique field for comparison
             if (index != -1) {
@@ -44,7 +44,7 @@ class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
     // Function to delete a class
     fun deleteClass(classEntity: ClassEntity) {
         viewModelScope.launch {
-            dao.delete(classEntity)
+            dao.deleteClass(classEntity)
             val currentClasses = _classList.value ?: mutableListOf()
             currentClasses.remove(classEntity)
             _classList.value = currentClasses

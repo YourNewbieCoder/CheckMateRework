@@ -7,25 +7,25 @@
     android:layout_height="match_parent"
     tools:context=".ui.fragments.ClassesFragment">
 
-<!--    <androidx.recyclerview.widget.RecyclerView-->
-<!--        android:id="@+id/recyclerViewClasses"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:layout_above="@id/buttonAddClass"-->
-<!--        android:layout_alignParentTop="true"-->
-<!--        android:layout_marginVertical="16dp"-->
-<!--        tools:listitem="@layout/layout_view_classes"/>-->
-
-    <Spinner
-        android:id="@+id/spinnerClasses"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewClasses"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_above="@id/buttonAddClass"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
         android:layout_marginVertical="16dp"
+        tools:listitem="@layout/layout_added_classes"/>
 
-        />
+<!--    <Spinner-->
+<!--        android:id="@+id/spinnerClasses"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:spinnerMode="dropdown"-->
+<!--        android:layout_alignParentTop="true"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_marginVertical="16dp"-->
+
+<!--        />-->
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/buttonAddClass"

@@ -9,13 +9,16 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentAddClassesBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
+import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.models.ClassViewModel
 import com.example.checkmaterework.models.ClassViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class AddClassesFragment(
-    private val onClassAdded: (ClassEntity) -> Unit // Callback to add the class
+    private val existingClass: ClassEntity? = null, // Optional parameter for editing
+    private val onClassAdded: (ClassEntity) -> Unit, // Callback to add the class
+    private val onClassUpdated: (ClassEntity) -> Unit // Callback for updating a class
 ) : BottomSheetDialogFragment() {
 
     private lateinit var addClassesBinding: FragmentAddClassesBinding
@@ -38,16 +41,25 @@ class AddClassesFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        existingClass?.let { classEntity ->
+            addClassesBinding.textInputClassName.setText(classEntity.className)
+        }
+
         // Set up the save button click listener
         addClassesBinding.buttonSaveClass.setOnClickListener {
             val className = addClassesBinding.textInputClassName.text.toString()
 
-            if (className.isNotEmpty()) {
-                val newClass = ClassEntity(className = className)
-                onClassAdded(newClass) // Pass the class name back to the parent fragment
-                dismiss()
-            } else {
+            if (className.isEmpty()) {
                 addClassesBinding.textInputClassName.error = "Please enter a class name"
+            } else {
+                val newClass = ClassEntity(className = className)
+                if (existingClass == null) {
+                    onClassAdded(newClass) // Pass the class name back to the parent fragment
+                } else {
+                    onClassUpdated(newClass) // Updating existing sheet
+                }
+                addClassesBinding.textInputClassName.setText("")
+                dismiss()
             }
         }
     }
