@@ -13,7 +13,7 @@ import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter.CheckSheetView
 
 class ViewRecordsAdapter(
     private var createdSheets: MutableList<AnswerSheetEntity>,
-    private val onViewRecordsClick: (AnswerSheetEntity) -> Unit // Click listener for "Check Sheet" button
+//    private val onViewRecordsClick: (AnswerSheetEntity) -> Unit // Click listener for "Check Sheet" button
 ): RecyclerView.Adapter<ViewRecordsAdapter.ViewRecordsViewHolder>() {
     class ViewRecordsViewHolder(createdSheetsView: View): RecyclerView.ViewHolder(createdSheetsView) {
         val createdSheetName: TextView = createdSheetsView.findViewById(R.id.createdSheetName)
@@ -34,9 +34,9 @@ class ViewRecordsAdapter(
         val createdSheet = createdSheets[position]
         holder.createdSheetName.text = createdSheet.name
 
-        holder.buttonViewRecords.setOnClickListener {
-            onViewRecordsClick(createdSheet)
-        }
+//        holder.buttonViewRecords.setOnClickListener {
+//            onViewRecordsClick(createdSheet)
+//        }
     }
 
     @SuppressLint("NotifyDataSetChanged")

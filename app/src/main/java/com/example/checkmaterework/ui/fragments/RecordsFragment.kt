@@ -40,11 +40,13 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
 
         recordsBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
 
-        // Set up the adapter
-        viewRecordsAdapter = ViewRecordsAdapter(
-            mutableListOf(),
-            onViewRecordsClick = { sheet -> openClassesFragment(sheet) }
-        )
+//        // Set up the adapter
+//        viewRecordsAdapter = ViewRecordsAdapter(
+//            mutableListOf(),
+//            onViewRecordsClick = { sheet -> openClassesFragment(sheet) }
+//        )
+
+        viewRecordsAdapter = ViewRecordsAdapter(mutableListOf())
 
         recordsBinding.recyclerViewCreatedSheets.adapter = viewRecordsAdapter
 
@@ -65,16 +67,16 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
 
     }
 
-    // Function to open ClassesFragment with the selected class entity
-    private fun openClassesFragment(sheet: AnswerSheetEntity) {
-        val classesFragment = ClassesFragment(sheet)
-
-        // Replace the current fragment and add to back stack
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.frameContainer, classesFragment)
-            .addToBackStack(null)
-            .commit()
-    }
+//    // Function to open ClassesFragment with the selected class entity
+//    private fun openClassesFragment(sheet: AnswerSheetEntity) {
+//        val classesFragment = ClassesFragment(sheet)
+//
+//        // Replace the current fragment and add to back stack
+//        parentFragmentManager.beginTransaction()
+//            .replace(R.id.frameContainer, classesFragment)
+//            .addToBackStack(null)
+//            .commit()
+//    }
 
     override fun getFragmentTitle(): String {
         return getString(R.string.records_title)

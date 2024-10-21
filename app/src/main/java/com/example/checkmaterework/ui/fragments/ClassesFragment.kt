@@ -19,7 +19,7 @@ import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.models.ClassViewModel
 import com.example.checkmaterework.models.ClassViewModelFactory
 
-class ClassesFragment(private val sheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
+class ClassesFragment() : Fragment(), ToolbarTitleProvider {
     private lateinit var classesBinding: FragmentClassesBinding
     private lateinit var classViewModel: ClassViewModel
     private lateinit var spinnerClasses: Spinner

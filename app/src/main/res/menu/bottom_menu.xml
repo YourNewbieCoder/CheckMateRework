@@ -20,8 +20,13 @@
         android:title="Records"
         android:icon="@drawable/baseline_content_paste_24"/>
 
+<!--    <item-->
+<!--        android:id="@+id/button_analysis"-->
+<!--        android:title="Analysis"-->
+<!--        android:icon="@drawable/baseline_analytics_24"/>-->
+
     <item
-        android:id="@+id/button_analysis"
-        android:title="Analysis"
-        android:icon="@drawable/baseline_analytics_24"/>
+        android:id="@+id/button_classes"
+        android:title="Classes"
+        android:icon="@drawable/baseline_person_24"/>
 </menu>

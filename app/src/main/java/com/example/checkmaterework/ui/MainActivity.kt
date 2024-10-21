@@ -8,6 +8,7 @@ import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.ActivityMainBinding
 import com.example.checkmaterework.ui.fragments.AnalysisFragment
 import com.example.checkmaterework.ui.fragments.CheckFragment
+import com.example.checkmaterework.ui.fragments.ClassesFragment
 import com.example.checkmaterework.ui.fragments.HomeFragment
 import com.example.checkmaterework.ui.fragments.KeyFragment
 import com.example.checkmaterework.ui.fragments.RecordsFragment
@@ -46,8 +47,8 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
 
-                R.id.button_analysis -> {
-                    replaceFragment(AnalysisFragment(), getString(R.string.analysis_title))
+                R.id.button_classes -> {
+                    replaceFragment(ClassesFragment(), getString(R.string.classes_title))
                     true
                 }
 
