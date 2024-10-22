@@ -14,33 +14,33 @@ class ReviewImageViewModel(
         return imageCaptureDAO.getImageCaptureById(id)
     }
 
-    // Retrieve student by ID
-    suspend fun getStudentById(id: Int): StudentEntity? {
-        return studentDAO.getStudentById(id)
-    }
+//    // Retrieve student by ID
+//    suspend fun getStudentById(id: Int): StudentEntity? {
+//        return studentDAO.getStudentById(id)
+//    }
 
-    // Retrieve class by ID
-    suspend fun getClassById(id: Int): ClassEntity? {
-        return classDAO.getClassById(id)
-    }
+//    // Retrieve class by ID
+//    suspend fun getClassById(id: Int): ClassEntity? {
+//        return classDAO.getClassById(id)
+//    }
 
-    // Retrieve answer sheet by ID
-    suspend fun getAnswerSheetById(id: Int): AnswerSheetEntity? {
-    return answerSheetDAO.getAnswerSheetById(id) }
+//    // Retrieve answer sheet by ID
+//    suspend fun getAnswerSheetById(id: Int): AnswerSheetEntity? {
+//    return answerSheetDAO.getAnswerSheetById(id) }
 
-    // Retrieve class by name (section name)
-    suspend fun getClassByName(className: String): ClassEntity? {
-        return classDAO.getClassByName(className)
-    }
+//    // Retrieve class by name (section name)
+//    suspend fun getClassByName(className: String): ClassEntity? {
+//        return classDAO.getClassByName(className)
+//    }
 
-    // Insert student and return ID
-    suspend fun insertStudent(student: StudentEntity): Long {
-        return studentDAO.insertStudent(student)
-    }
+//    // Insert student and return ID
+//    suspend fun insertStudent(student: StudentEntity): Long {
+//        return studentDAO.insertStudent(student)
+//    }
 
-    // Insert ImageCapture
-    suspend fun insertImageCapture(imageCapture: ImageCaptureEntity) {
-        imageCaptureDAO.insertImageCapture(imageCapture)
-    }
+//    // Insert ImageCapture
+//    suspend fun insertImageCapture(imageCapture: ImageCaptureEntity) {
+//        imageCaptureDAO.insertImageCapture(imageCapture)
+//    }
 }
 

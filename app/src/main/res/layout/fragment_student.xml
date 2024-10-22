@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.fragments.StudentFragment">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewStudents"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_above="@id/buttonAddStudent"
+        android:layout_alignParentTop="true"
+        android:layout_marginVertical="16dp"
+        tools:listitem="@layout/layout_added_students"/>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/buttonAddStudent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="20dp"
+        android:backgroundTint="@color/blue"
+        android:text="Add Student"
+        android:textColor="@color/white"
+        app:icon="@drawable/baseline_add_24"
+        app:iconTint="@color/white" />
+
+<!--    &lt;!&ndash; Static header row for Last Name, First Name, and Score &ndash;&gt;-->
+<!--    <LinearLayout-->
+<!--        android:id="@+id/headerLayout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentTop="true"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:padding="20dp">-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/textLastNameHeader"-->
+<!--            style="@style/TextAppearance.AppCompat.Title"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="2"-->
+<!--            android:text="Last Name"-->
+<!--            android:textColor="@color/black"-->
+<!--            android:textSize="16sp"-->
+<!--            android:textStyle="bold" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/textFirstNameHeader"-->
+<!--            style="@style/TextAppearance.AppCompat.Title"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="2"-->
+<!--            android:text="First Name"-->
+<!--            android:textColor="@color/black"-->
+<!--            android:textSize="16sp" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/textMiddleNameHeader"-->
+<!--            style="@style/TextAppearance.AppCompat.Title"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="2"-->
+<!--            android:text="Middle Name"-->
+<!--            android:textColor="@color/black"-->
+<!--            android:textSize="16sp" />-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/textActionHeader"-->
+<!--            style="@style/TextAppearance.AppCompat.Title"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="1"-->
+<!--            android:text="Action"-->
+<!--            android:textColor="@color/black"-->
+<!--            android:textSize="16sp" />-->
+
+<!--    </LinearLayout>-->
+
+<!--    &lt;!&ndash; No Students Message &ndash;&gt;-->
+<!--    <TextView-->
+<!--        android:id="@+id/textViewNoStudents"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_above="@+id/buttonAddStudent"-->
+<!--        android:layout_below="@+id/headerLayout"-->
+<!--        android:layout_marginVertical="16dp"-->
+<!--        android:gravity="center"-->
+<!--        android:text="No Students Available"-->
+<!--        android:textSize="20sp"-->
+<!--        android:visibility="gone" />-->
+
+<!--    &lt;!&ndash; RecyclerView for displaying the list of students &ndash;&gt;-->
+<!--    <androidx.recyclerview.widget.RecyclerView-->
+<!--        android:id="@+id/recyclerViewStudents"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:layout_above="@id/buttonAddStudent"-->
+<!--        android:layout_below="@+id/headerLayout"-->
+<!--        android:layout_marginVertical="16dp"-->
+<!--        android:clipToPadding="false"-->
+<!--        android:paddingBottom="16dp"-->
+<!--        tools:listitem="@layout/layout_view_students" />-->
+
+<!--    &lt;!&ndash; Floating Action Button to add a new student &ndash;&gt;-->
+<!--    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton-->
+<!--        android:id="@+id/buttonAddStudent"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentEnd="true"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_margin="20dp"-->
+<!--        android:backgroundTint="@color/blue"-->
+<!--        android:text="Add Student"-->
+<!--        android:textColor="@color/white"-->
+<!--        app:icon="@drawable/baseline_add_24"-->
+<!--        app:iconTint="@color/white" />-->
+
+</RelativeLayout>
+
+
+

@@ -25,9 +25,15 @@ class StudentRecordsFragment(private val classId: Int?) : BottomSheetDialogFragm
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+//        // Setup ViewModel
+//        val dao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
+//        studentViewModel = ViewModelProvider(this, StudentViewModelFactory(dao))
+//            .get(StudentViewModel::class.java)
+
         // Setup ViewModel
-        val dao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
-        studentViewModel = ViewModelProvider(this, StudentViewModelFactory(dao))
+        val studentDao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
+        val classDao = AnswerSheetDatabase.getDatabase(requireContext()).classDao() // Add this line
+        studentViewModel = ViewModelProvider(this, StudentViewModelFactory(studentDao, classDao))
             .get(StudentViewModel::class.java)
     }
 
@@ -40,19 +46,19 @@ class StudentRecordsFragment(private val classId: Int?) : BottomSheetDialogFragm
         super.onViewCreated(view, savedInstanceState)
 
         // Setup RecyclerView
-        studentAdapter = StudentAdapter(mutableListOf())
+//        studentAdapter = StudentAdapter(mutableListOf())
 
         studentRecordsBinding.recyclerViewStudents.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = studentAdapter
         }
 
-        // Load students based on classId
-        if (classId != null) {
-            studentViewModel.loadStudentsByClass(classId) // Filter by class
-        } else {
-            studentViewModel.loadAllStudents() // Load all students if no classId is provided
-        }
+//        // Load students based on classId
+//        if (classId != null) {
+//            studentViewModel.loadStudentsByClass(classId) // Filter by class
+//        } else {
+//            studentViewModel.loadAllStudents() // Load all students if no classId is provided
+//        }
 
         // Observe the list of students
         studentViewModel.studentList.observe(viewLifecycleOwner) { students ->

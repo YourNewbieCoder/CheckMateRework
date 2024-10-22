@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
-class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
+class ClassViewModel(private val classDao: ClassDAO) : ViewModel() {
 
     // MutableLiveData for the list of classes
     private val _classList = MutableLiveData<MutableList<ClassEntity>> ()
@@ -14,14 +14,14 @@ class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
     init {
         // Fetch all classes when the ViewModel is initialized
         viewModelScope.launch {
-            _classList.value = dao.getAllClasses().toMutableList()
+            _classList.value = classDao.getAllClasses().toMutableList()
         }
     }
 
     // Function to add a new class
     fun addClass(newClass: ClassEntity) {
         viewModelScope.launch {
-            dao.insertClass(newClass)
+            classDao.addClass(newClass)
             val currentClasses = _classList.value ?: mutableListOf()
             currentClasses.add(newClass)
             _classList.value = currentClasses
@@ -31,9 +31,9 @@ class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
     // Function to update an existing class
     fun updateClass(updatedClass: ClassEntity) {
         viewModelScope.launch {
-            dao.updateClass(updatedClass)
+            classDao.updateClass(updatedClass)
             val currentClasses = _classList.value ?: mutableListOf()
-            val index = currentClasses.indexOfFirst { it.id == updatedClass.id } // Use an ID or unique field for comparison
+            val index = currentClasses.indexOfFirst { it.classId == updatedClass.classId } // Use an ID or unique field for comparison
             if (index != -1) {
                 currentClasses[index] = updatedClass
                 _classList.value = currentClasses
@@ -44,7 +44,7 @@ class ClassViewModel(private val dao: ClassDAO) : ViewModel() {
     // Function to delete a class
     fun deleteClass(classEntity: ClassEntity) {
         viewModelScope.launch {
-            dao.deleteClass(classEntity)
+            classDao.deleteClass(classEntity)
             val currentClasses = _classList.value ?: mutableListOf()
             currentClasses.remove(classEntity)
             _classList.value = currentClasses

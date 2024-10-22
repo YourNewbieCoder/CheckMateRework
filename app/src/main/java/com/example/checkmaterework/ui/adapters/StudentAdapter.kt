@@ -4,23 +4,28 @@ import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.checkmaterework.R
 import com.example.checkmaterework.models.StudentEntity
 
 class StudentAdapter(
-    private var studentList: MutableList<StudentEntity>
+    private var studentList: MutableList<StudentEntity>,
+    private val onDeleteClick: (StudentEntity) -> Unit
 ) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder> () {
     class StudentViewHolder(studentsView: View) : RecyclerView.ViewHolder(studentsView) {
-        val textLastName: TextView = studentsView.findViewById(R.id.textLastName)
-        val textFirstName: TextView = studentsView.findViewById(R.id.textFirstName)
-        val textScore: TextView = studentsView.findViewById(R.id.textScore)
+//        val textLastName: TextView = studentsView.findViewById(R.id.textLastName)
+//        val textFirstName: TextView = studentsView.findViewById(R.id.textFirstName)
+//        val textScore: TextView = studentsView.findViewById(R.id.textScore)
+        val addedStudentName: TextView = studentsView.findViewById(R.id.addedStudentName)
+        val buttonDelete: Button = studentsView.findViewById(R.id.buttonDelete)
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StudentViewHolder {
         val studentsView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.layout_view_students, parent, false)
+            .inflate(R.layout.layout_added_students, parent, false)
         return StudentViewHolder(studentsView)
     }
 
@@ -30,8 +35,13 @@ class StudentAdapter(
 
     override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
        val student = studentList[position]
-        holder.textFirstName.text = student.studentName
-        holder.textScore.text = student.score.toString()
+        holder.addedStudentName.text = student.studentName
+
+        holder.buttonDelete.setOnClickListener {
+            onDeleteClick(student) // Delete functionality
+        }
+//        holder.textFirstName.text = student.studentName
+//        holder.textScore.text = student.score.toString()
     }
 
     @SuppressLint("NotifyDataSetChanged")

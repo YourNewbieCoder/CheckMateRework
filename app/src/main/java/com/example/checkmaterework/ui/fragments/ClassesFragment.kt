@@ -126,11 +126,11 @@ class ClassesFragment() : Fragment(), ToolbarTitleProvider {
     }
 
     private fun showViewStudentsFragment(classEntity: ClassEntity) {
-//        val studentFragment = StudentFragment.newInstance(classEntity.classId)
-//        parentFragmentManager.beginTransaction()
-//            .replace(R.id.frameContainer, studentFragment)
-//            .addToBackStack(null)
-//            .commit()
+        val studentFragment = StudentFragment.newInstance(classEntity.classId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, studentFragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun showEditClassDetailsFragment(classEntity: ClassEntity) {

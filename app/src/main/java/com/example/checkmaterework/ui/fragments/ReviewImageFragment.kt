@@ -64,13 +64,13 @@ class ReviewImageFragment : Fragment() {
 
         lifecycleScope.launch {
             val imageCapture = reviewImageViewModel.getImageCaptureById(imageCaptureId)
-            val student = imageCapture?.studentId?.let { reviewImageViewModel.getStudentById(it) }
-            val classEntity = imageCapture?.sectionId?.let { reviewImageViewModel.getClassById(it) }
+//            val student = imageCapture?.studentId?.let { reviewImageViewModel.getStudentById(it) }
+//            val classEntity = imageCapture?.sectionId?.let { reviewImageViewModel.getClassById(it) }
 
-            student?.let {
-                // Use student.lastName, student.firstName, etc.
-                Log.d("Student Info", "Student Name: ${it.studentName}")
-            }
+//            student?.let {
+//                // Use student.lastName, student.firstName, etc.
+//                Log.d("Student Info", "Student Name: ${it.studentName}")
+//            }
         }
 
         // Load captured image using Glide or similar library
@@ -151,21 +151,21 @@ class ReviewImageFragment : Fragment() {
 
         // Step 1: Create or retrieve the StudentEntity
         lifecycleScope.launch {
-            val classEntity = reviewImageViewModel.getClassByName(sectionName)
-            val classId = classEntity?.id ?: 0
+//            val classEntity = reviewImageViewModel.getClassByName(sectionName)
+//            val classId = classEntity?.classId ?: 0
 
-            val student = StudentEntity(studentName = studentName, score = score, classId = classId)
-            val studentId = reviewImageViewModel.insertStudent(student)
+//            val student = StudentEntity(studentName = studentName, score = score, classId = classId)
+//            val studentId = reviewImageViewModel.insertStudent(student)
 
-            // Step 2: Create and save ImageCaptureEntity
-            val imageCapture = ImageCaptureEntity(
-                sheetId = sheetId,
-                studentId = studentId.toInt(),
-                imagePath = imagePath,
-                sectionId = classId,
-                score = score
-            )
-            reviewImageViewModel.insertImageCapture(imageCapture)
+//            // Step 2: Create and save ImageCaptureEntity
+//            val imageCapture = ImageCaptureEntity(
+//                sheetId = sheetId,
+//                studentId = studentId.toInt(),
+//                imagePath = imagePath,
+//                sectionId = classId,
+//                score = score
+//            )
+//            reviewImageViewModel.insertImageCapture(imageCapture)
 
             // Navigate back or show a success message
             requireActivity().onBackPressed()
