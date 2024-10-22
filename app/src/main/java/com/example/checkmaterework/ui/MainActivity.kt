@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
             // Add to the back stack only if the fragment is not one of the main fragments
             if (fragment !is HomeFragment && fragment !is KeyFragment &&
                 fragment !is CheckFragment && fragment !is RecordsFragment &&
-                fragment !is AnalysisFragment) {
+                fragment !is ClassesFragment) {
                 transaction.addToBackStack(title) // Add a title tag to the back stack entry
             }
 
@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
 
         // Show or hide the back button depending on the fragment
         val isMainFragment = fragment is HomeFragment || fragment is KeyFragment ||
-                fragment is CheckFragment || fragment is RecordsFragment || fragment is AnalysisFragment
+                fragment is CheckFragment || fragment is RecordsFragment || fragment is ClassesFragment
 
         if (isMainFragment) {
             // Disable the back button for main fragments

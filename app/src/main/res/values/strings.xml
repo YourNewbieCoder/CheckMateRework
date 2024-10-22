@@ -17,7 +17,9 @@
 
     <string name="classes_title">Classes</string>
 
-    <string name="students_title">Student Records</string>
+    <string name="students_title">Students</string>
+
+    <string name="student_records_title">Student Records</string>
 
     <string name="analysis_title">Item Analysis</string>
 
@@ -34,6 +36,10 @@
     <string name="edit_key">Select answer sheet to add key to correction</string>
 
     <string name="view_analysis">Select answer sheet to view item analysis</string>
+
+    <string name="add_classes">Get started by adding Class and students into it</string>
+
+    <string name="add_students">Add Students for this Class</string>
 
     <string name="back_button">Back</string>
 

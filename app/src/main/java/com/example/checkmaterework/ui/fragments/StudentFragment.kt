@@ -6,8 +6,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentStudentBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.StudentEntity
@@ -15,7 +18,7 @@ import com.example.checkmaterework.models.StudentViewModel
 import com.example.checkmaterework.models.StudentViewModelFactory
 import com.example.checkmaterework.ui.adapters.StudentAdapter
 
-class StudentFragment : Fragment() {
+class StudentFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var studentBinding: FragmentStudentBinding
     private lateinit var studentViewModel: StudentViewModel
@@ -95,6 +98,32 @@ class StudentFragment : Fragment() {
         fun newInstance(classId: Int) = StudentFragment().apply {
             arguments = Bundle().apply {
                 putInt(ARG_CLASS_ID, classId)
+            }
+        }
+    }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.students_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
             }
         }
     }

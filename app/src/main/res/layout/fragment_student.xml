@@ -11,10 +11,21 @@
         android:id="@+id/recyclerViewStudents"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_above="@id/buttonAddStudent"
+        android:layout_above="@id/textAddStudents"
         android:layout_alignParentTop="true"
         android:layout_marginVertical="16dp"
         tools:listitem="@layout/layout_added_students"/>
+
+    <TextView
+        android:id="@+id/textAddStudents"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonAddStudent"
+        android:layout_marginBottom="10dp"
+        android:text="@string/add_students"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="24sp" />
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/buttonAddStudent"
