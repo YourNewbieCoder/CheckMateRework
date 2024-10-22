@@ -10,7 +10,7 @@ import androidx.room.Update
 @Dao
 interface ClassDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addClass(classEntity: ClassEntity)
+    suspend fun addClass(newClass: ClassEntity): Long
 
     @Update
     suspend fun updateClass(classEntity: ClassEntity)

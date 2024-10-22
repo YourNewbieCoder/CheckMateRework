@@ -41,25 +41,25 @@ class AddClassesFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        existingClass?.let { classEntity ->
-            addClassesBinding.textInputClassName.setText(classEntity.className)
+        existingClass?.let {
+            addClassesBinding.textInputClassName.setText(it.className)
         }
 
         // Set up the save button click listener
         addClassesBinding.buttonSaveClass.setOnClickListener {
             val className = addClassesBinding.textInputClassName.text.toString()
 
-            if (className.isEmpty()) {
-                addClassesBinding.textInputClassName.error = "Please enter a class name"
-            } else {
-                val newClass = ClassEntity(className = className)
-                if (existingClass == null) {
-                    onClassAdded(newClass) // Pass the class name back to the parent fragment
+            if (className.isNotEmpty()) {
+                val updatedClass = existingClass?.copy(className = className) ?: ClassEntity(className = className)
+                if (existingClass != null) {
+                    onClassUpdated(updatedClass) // Updating existing sheet
                 } else {
-                    onClassUpdated(newClass) // Updating existing sheet
+                    onClassAdded(updatedClass) // Pass the class name back to the parent fragment
                 }
                 addClassesBinding.textInputClassName.setText("")
                 dismiss()
+            } else {
+                addClassesBinding.textInputClassName.error = "Please enter a class name"
             }
         }
     }

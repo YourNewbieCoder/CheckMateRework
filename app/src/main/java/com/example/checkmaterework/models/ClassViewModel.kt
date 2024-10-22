@@ -21,9 +21,10 @@ class ClassViewModel(private val classDao: ClassDAO) : ViewModel() {
     // Function to add a new class
     fun addClass(newClass: ClassEntity) {
         viewModelScope.launch {
-            classDao.addClass(newClass)
+            val insertedId = classDao.addClass(newClass)
+            val updatedClass = newClass.copy(classId = insertedId.toInt()) // Update the ID
             val currentClasses = _classList.value ?: mutableListOf()
-            currentClasses.add(newClass)
+            currentClasses.add(updatedClass)
             _classList.value = currentClasses
         }
     }

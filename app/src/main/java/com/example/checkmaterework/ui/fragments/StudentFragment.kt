@@ -26,7 +26,7 @@ class StudentFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            classId = it.getInt(ARG_CLASS_ID)
+            classId = it.getInt(ARG_CLASS_ID, 0)
         }
 
 //        // Initialize ViewModel with DAO
