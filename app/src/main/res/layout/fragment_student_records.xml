@@ -15,24 +15,24 @@
         android:orientation="horizontal"
         android:padding="20dp">
 
-        <TextView
-            android:id="@+id/textLastNameHeader"
-            style="@style/TextAppearance.AppCompat.Title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Last Name"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+        <!--        <TextView-->
+        <!--            android:id="@+id/textLastNameHeader"-->
+        <!--            style="@style/TextAppearance.AppCompat.Title"-->
+        <!--            android:layout_width="0dp"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_weight="2"-->
+        <!--            android:text="Last Name"-->
+        <!--            android:textColor="@color/black"-->
+        <!--            android:textSize="16sp"-->
+        <!--            android:textStyle="bold" />-->
 
         <TextView
-            android:id="@+id/textFirstNameHeader"
+            android:id="@+id/textStudentNameHeader"
             style="@style/TextAppearance.AppCompat.Title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:text="First Name"
+            android:text="Student Name"
             android:textColor="@color/black"
             android:textSize="16sp" />
 
@@ -50,41 +50,40 @@
 
     <!-- No Students Message -->
     <TextView
-        android:id="@+id/textViewNoStudents"
+        android:id="@+id/textViewNoStudentRecords"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/buttonAddStudent"
         android:layout_below="@+id/headerLayout"
         android:layout_marginVertical="16dp"
         android:gravity="center"
-        android:text="No Students Available"
+        android:text="No Students Records Available"
         android:textSize="20sp"
         android:visibility="gone" />
 
     <!-- RecyclerView for displaying the list of students -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewStudents"
+        android:id="@+id/recyclerViewStudentScores"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_above="@id/buttonAddStudent"
         android:layout_below="@+id/headerLayout"
+        android:layout_alignParentBottom="true"
         android:layout_marginVertical="16dp"
         android:clipToPadding="false"
         android:paddingBottom="16dp"
         tools:listitem="@layout/layout_view_students" />
 
-    <!-- Floating Action Button to add a new student -->
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/buttonAddStudent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="20dp"
-        android:backgroundTint="@color/blue"
-        android:text="Add Student"
-        android:textColor="@color/white"
-        app:icon="@drawable/baseline_add_24"
-        app:iconTint="@color/white" />
+<!--    &lt;!&ndash; Floating Action Button to add a new student &ndash;&gt;-->
+<!--    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton-->
+<!--        android:id="@+id/buttonAddStudent"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentEnd="true"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_margin="20dp"-->
+<!--        android:backgroundTint="@color/blue"-->
+<!--        android:text="Add Student"-->
+<!--        android:textColor="@color/white"-->
+<!--        app:icon="@drawable/baseline_add_24"-->
+<!--        app:iconTint="@color/white" />-->
 
 </RelativeLayout>

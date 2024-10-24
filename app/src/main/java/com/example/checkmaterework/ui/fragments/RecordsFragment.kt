@@ -40,13 +40,13 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
 
         recordsBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
 
-//        // Set up the adapter
-//        viewRecordsAdapter = ViewRecordsAdapter(
-//            mutableListOf(),
-//            onViewRecordsClick = { sheet -> openClassesFragment(sheet) }
-//        )
+        // Set up the adapter
+        viewRecordsAdapter = ViewRecordsAdapter(
+            mutableListOf(),
+            onViewRecordsClick = { sheet -> displayStudentRecords(sheet) }
+        )
 
-        viewRecordsAdapter = ViewRecordsAdapter(mutableListOf())
+//        viewRecordsAdapter = ViewRecordsAdapter(mutableListOf())
 
         recordsBinding.recyclerViewCreatedSheets.adapter = viewRecordsAdapter
 
@@ -55,17 +55,25 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         }
     }
 
-    private fun openStudentRecords(sheet: AnswerSheetEntity) {
-        val classId = sheet.id
-
-        // Navigate directly to StudentRecordsFragment, passing the classId
-        val studentRecordsFragment = StudentRecordsFragment(classId)
+    private fun displayStudentRecords(sheet: AnswerSheetEntity) {
+        val studentRecordsFragment = StudentRecordsFragment(sheet)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, studentRecordsFragment)
             .addToBackStack(null)
             .commit()
-
     }
+
+//    private fun openStudentRecords(sheet: AnswerSheetEntity) {
+//        val classId = sheet.id
+//
+//        // Navigate directly to StudentRecordsFragment, passing the classId
+//        val studentRecordsFragment = StudentRecordsFragment(classId)
+//        parentFragmentManager.beginTransaction()
+//            .replace(R.id.frameContainer, studentRecordsFragment)
+//            .addToBackStack(null)
+//            .commit()
+//
+//    }
 
 //    // Function to open ClassesFragment with the selected class entity
 //    private fun openClassesFragment(sheet: AnswerSheetEntity) {

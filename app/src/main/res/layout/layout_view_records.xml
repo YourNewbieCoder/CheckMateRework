@@ -21,7 +21,16 @@
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:backgroundTint="@color/blue"
-        android:text="View Records"
+        android:text="Records"
+        android:textColor="@color/white" />
+
+    <Button
+        android:id="@+id/buttonViewItemAnalysis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:backgroundTint="@color/blue"
+        android:text="Item Analysis"
         android:textColor="@color/white" />
 
 </LinearLayout>
