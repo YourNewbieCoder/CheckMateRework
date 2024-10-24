@@ -43,7 +43,8 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         // Set up the adapter
         viewRecordsAdapter = ViewRecordsAdapter(
             mutableListOf(),
-            onViewRecordsClick = { sheet -> displayStudentRecords(sheet) }
+            onViewRecordsClick = { sheet -> displayStudentRecords(sheet) },
+            onViewAnalysisClick = { sheet -> displayItemAnalysis(sheet) }
         )
 
 //        viewRecordsAdapter = ViewRecordsAdapter(mutableListOf())
@@ -59,6 +60,14 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         val studentRecordsFragment = StudentRecordsFragment(sheet)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, studentRecordsFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun displayItemAnalysis(sheet: AnswerSheetEntity) {
+        val analysisFragment = AnalysisFragment(sheet)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, analysisFragment)
             .addToBackStack(null)
             .commit()
     }
