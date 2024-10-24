@@ -124,12 +124,22 @@ class CreateSheetFragment(
             return
         }
 
-        val newSheet = AnswerSheetEntity(name = sheetName, items = numberOfItems, examTypesList = examTypesList)
+//        val newSheet = AnswerSheetEntity(name = sheetName, items = numberOfItems, examTypesList = examTypesList)
+//
+//        if (existingSheet == null) {
+//            onNewSheetAdded(newSheet) // Creating new sheet
+//        } else {
+//            onSheetUpdated(newSheet) // Updating existing sheet
+//        }
 
-        if (existingSheet == null) {
-            onNewSheetAdded(newSheet) // Creating new sheet
-        } else {
-            onSheetUpdated(newSheet) // Updating existing sheet
+        val newSheet = when (existingSheet) {
+            null -> AnswerSheetEntity(name = sheetName, items = numberOfItems, examTypesList = examTypesList)
+            else -> existingSheet.copy(name = sheetName, items = numberOfItems, examTypesList = examTypesList)
+        }
+
+        when (existingSheet) {
+            null -> onNewSheetAdded(newSheet)
+            else -> onSheetUpdated(newSheet)
         }
 
         // Clear input fields and dismiss the dialog
