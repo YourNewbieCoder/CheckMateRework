@@ -37,7 +37,7 @@ class AnalysisFragment(private val sheet: AnswerSheetEntity) : Fragment(), Toolb
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        analysisBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
+        analysisBinding.recyclerViewItemAnalysis.layoutManager = LinearLayoutManager(requireContext())
 
 //        // Set up the adapter
 //        viewAnalysisAdapter = ViewAnalysisAdapter(

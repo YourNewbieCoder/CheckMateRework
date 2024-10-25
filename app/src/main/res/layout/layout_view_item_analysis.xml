@@ -2,21 +2,12 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="horizontal"
     android:padding="20dp">
 
-<!--    <TextView-->
-<!--        android:id="@+id/textLastName"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_weight="2"-->
-<!--        android:textColor="@color/black"-->
-<!--        android:textSize="16sp"-->
-<!--        android:textStyle="bold" />-->
-
     <TextView
-        android:id="@+id/textStudentName"
+        android:id="@+id/textQuestionNumber"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="2"
@@ -24,7 +15,15 @@
         android:textSize="16sp" />
 
     <TextView
-        android:id="@+id/textScore"
+        android:id="@+id/textCorrectStudents"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/black"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textIncorrectStudents"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
