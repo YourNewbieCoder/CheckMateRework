@@ -19,6 +19,7 @@ import com.example.checkmaterework.models.ImageCaptureViewModel
 import com.example.checkmaterework.models.ReviewImageViewModel
 import com.example.checkmaterework.models.ReviewImageViewModelFactory
 import com.example.checkmaterework.models.StudentEntity
+import com.example.checkmaterework.models.StudentRecordEntity
 import kotlinx.coroutines.launch
 
 class ReviewImageFragment : Fragment() {
@@ -39,13 +40,16 @@ class ReviewImageFragment : Fragment() {
             recognizedText = it.getString(ARG_RECOGNIZED_TEXT) ?: ""
         }
 
-        val dao = AnswerSheetDatabase.getDatabase(requireContext()).imageCaptureDao()
-        val studentDao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
-        val classDao = AnswerSheetDatabase.getDatabase(requireContext()).classDao()
-        val answerSheetDao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
-        val answerKeyDao = AnswerSheetDatabase.getDatabase(requireContext()).answerKeyDao()
+        val database = AnswerSheetDatabase.getDatabase(requireContext())
 
-        reviewImageViewModel = ViewModelProvider(this, ReviewImageViewModelFactory(dao, studentDao, classDao, answerSheetDao))
+        val dao = database.imageCaptureDao()
+        val studentDao = database.studentDao()
+        val classDao = database.classDao()
+        val answerSheetDao = database.answerSheetDao()
+        val answerKeyDao = database.answerKeyDao()
+        val studentRecordDao = database.studentRecordDao()
+
+        reviewImageViewModel = ViewModelProvider(this, ReviewImageViewModelFactory(dao, studentDao, classDao, answerSheetDao, studentRecordDao))
             .get(ReviewImageViewModel::class.java)
 
         answerKeyViewModel = ViewModelProvider(this, AnswerKeyViewModelFactory(answerKeyDao))
@@ -64,29 +68,27 @@ class ReviewImageFragment : Fragment() {
 
         lifecycleScope.launch {
             val imageCapture = reviewImageViewModel.getImageCaptureById(imageCaptureId)
-//            val student = imageCapture?.studentId?.let { reviewImageViewModel.getStudentById(it) }
-//            val classEntity = imageCapture?.sectionId?.let { reviewImageViewModel.getClassById(it) }
+            val student = imageCapture?.studentId?.let { reviewImageViewModel.getStudentById(it) }
+            val classEntity = imageCapture?.sectionId?.let { reviewImageViewModel.getClassById(it) }
 
-//            student?.let {
-//                // Use student.lastName, student.firstName, etc.
-//                Log.d("Student Info", "Student Name: ${it.studentName}")
-//            }
+            student?.let {
+                // Use student.lastName, student.firstName, etc.
+                Log.d("Student Info", "Student Name: ${it.studentName}")
+            }
         }
 
         // Load captured image using Glide or similar library
         Glide.with(this).load(imagePath).into(reviewBinding.imageViewCaptured)
         reviewBinding.textViewRecognizedText.text = recognizedText
 
-        // Parse recognized text
+        // Parse recognized text and compare with answer key
         val parsedAnswers = parseRecognizedText(recognizedText)
         reviewBinding.textViewParsedAnswers.text = parsedAnswers.toString()
-
-        // Compare recognized answers with answer key
         compareAnswers(parsedAnswers)
 
         // Set save button listener
         reviewBinding.buttonSave.setOnClickListener {
-            saveImageCapture()
+            saveStudentRecord()
         }
     }
 
@@ -142,21 +144,87 @@ class ReviewImageFragment : Fragment() {
 //        return answerKeyViewModel.loadAnswerKeysForSheet(sheetId)
 //    }
 
-
-
-    private fun saveImageCapture() {
+    private fun saveStudentRecord() {
         val studentName = reviewBinding.textInputStudentName.text.toString()
         val sectionName = reviewBinding.textInputSection.text.toString()
         val score = reviewBinding.textInputScore.text.toString().toIntOrNull() ?: 0
 
-        // Step 1: Create or retrieve the StudentEntity
         lifecycleScope.launch {
 //            val classEntity = reviewImageViewModel.getClassByName(sectionName)
 //            val classId = classEntity?.classId ?: 0
 
-//            val student = StudentEntity(studentName = studentName, score = score, classId = classId)
+//            val student = StudentEntity(studentName = studentName, classId = classId)
 //            val studentId = reviewImageViewModel.insertStudent(student)
 
+            // Check if the class exists by name
+            val classEntity = reviewImageViewModel.getClassByName(sectionName)
+            if (classEntity == null) {
+                Log.d("SaveRecord", "Class with name '$sectionName' not found.")
+                return@launch
+            }
+            val classId = classEntity.classId
+            Log.d("SaveRecord", "Class found: ID = $classId, Name = ${classEntity.className}")
+
+            // Check if student exists by name and class ID
+            val existingStudent = reviewImageViewModel.getStudentByNameAndClass(studentName, classId)
+            val studentId: Long
+            if (existingStudent != null) {
+                studentId = existingStudent.studentId.toLong()
+                Log.d("SaveRecord", "Existing student found: ID = $studentId, Name = $studentName")
+            } else {
+                // Insert new student if not found
+                val newStudent = StudentEntity(studentName = studentName, classId = classId)
+                studentId = reviewImageViewModel.insertStudent(newStudent)
+                Log.d("SaveRecord", "New student created: ID = $studentId, Name = $studentName")
+            }
+
+            // Validate if the answer sheet ID is correct
+            val answerSheet = reviewImageViewModel.getAnswerSheetById(sheetId)
+            if (answerSheet == null) {
+                Log.d("SaveRecord", "Answer sheet with ID '$sheetId' not found.")
+                return@launch
+            }
+            Log.d("SaveRecord", "Answer sheet found: ID = $sheetId")
+//
+//            // Check if student exists
+//            val existingStudent = reviewImageViewModel.getStudentByNameAndClass(studentName, classId)
+//            val studentId: Long
+//
+//            if (existingStudent != null) {
+//                studentId = existingStudent.studentId.toLong()
+//            } else {
+//                // Insert new student if not found
+//                val newStudent = StudentEntity(studentName = studentName, classId = classId)
+//                studentId = reviewImageViewModel.insertStudent(newStudent)
+//            }
+
+            val studentRecord = StudentRecordEntity(
+                studentId = studentId.toInt(),
+                classId = classId,
+                answerSheetId = sheetId,
+                score = score
+//                examDate = getCurrentDate()
+            )
+            reviewImageViewModel.insertStudentRecord(studentRecord)
+            Log.d("SaveRecord", "Student record saved: StudentID = ${studentRecord.studentId}, ClassID = ${studentRecord.classId}, AnswerSheetID = ${studentRecord.answerSheetId}, Score = ${studentRecord.score}")
+
+            requireActivity().onBackPressed()
+        }
+    }
+
+//    private fun saveImageCapture() {
+//        val studentName = reviewBinding.textInputStudentName.text.toString()
+//        val sectionName = reviewBinding.textInputSection.text.toString()
+//        val score = reviewBinding.textInputScore.text.toString().toIntOrNull() ?: 0
+//
+//        // Step 1: Create or retrieve the StudentEntity
+//        lifecycleScope.launch {
+//            val classEntity = reviewImageViewModel.getClassByName(sectionName)
+//            val classId = classEntity?.classId ?: 0
+//
+//            val student = StudentEntity(studentName = studentName, score = score, classId = classId)
+//            val studentId = reviewImageViewModel.insertStudent(student)
+//
 //            // Step 2: Create and save ImageCaptureEntity
 //            val imageCapture = ImageCaptureEntity(
 //                sheetId = sheetId,
@@ -166,17 +234,17 @@ class ReviewImageFragment : Fragment() {
 //                score = score
 //            )
 //            reviewImageViewModel.insertImageCapture(imageCapture)
-
-            // Navigate back or show a success message
-            requireActivity().onBackPressed()
-        }
-
-//        val imageCapture = ImageCaptureEntity(sheetId = sheetId, imagePath = imagePath, lastName = lastName, firstName = firstName, score = score, section = section)
 //
-//        imageCaptureViewModel.insertImageCapture(imageCapture)
-//        // Navigate back or show a success message
-//        requireActivity().onBackPressed()
-    }
+//            // Navigate back or show a success message
+//            requireActivity().onBackPressed()
+//        }
+//
+////        val imageCapture = ImageCaptureEntity(sheetId = sheetId, imagePath = imagePath, lastName = lastName, firstName = firstName, score = score, section = section)
+////
+////        imageCaptureViewModel.insertImageCapture(imageCapture)
+////        // Navigate back or show a success message
+////        requireActivity().onBackPressed()
+//    }
 
     companion object {
         private const val ARG_SHEET_ID = "sheet_id"

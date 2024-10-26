@@ -24,13 +24,17 @@ interface StudentDAO {
 //    // Fetch all students
 //    @Query("SELECT * FROM students ORDER BY studentName ASC")
 //    suspend fun getAllStudents(): List<StudentEntity>
-//
-//    @Query("SELECT * FROM students WHERE studentId = :id")
-//    suspend fun getStudentById(id: Int): StudentEntity?
+
+    @Query("SELECT * FROM students WHERE studentId = :id")
+    suspend fun getStudentById(id: Int): StudentEntity?
 
 //    @Update
 //    suspend fun updateStudent(student: StudentEntity)
 
-//    @Insert
-//    suspend fun insertStudent(student: StudentEntity): Long
+    @Insert
+    suspend fun insertStudent(student: StudentEntity): Long
+
+    @Query("SELECT * FROM students WHERE studentName = :studentName AND classId = :classId LIMIT 1")
+    suspend fun getStudentByNameAndClass(studentName: String, classId: Int): StudentEntity?
+
 }

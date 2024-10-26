@@ -24,8 +24,8 @@ interface ClassDAO {
     @Query("SELECT * FROM classes WHERE classId = :classId LIMIT 1")
     suspend fun getClassById(classId: Int): ClassEntity?
 
-//    @Query("SELECT * FROM classes WHERE className = :className LIMIT 1")
-//    suspend fun getClassByName(className: String): ClassEntity?
+    @Query("SELECT * FROM classes WHERE className = :className LIMIT 1")
+    suspend fun getClassByName(className: String): ClassEntity?
 
 //    @Insert
 //    suspend fun insertClass(classEntity: ClassEntity): Long

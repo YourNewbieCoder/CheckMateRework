@@ -72,18 +72,4 @@
         android:paddingBottom="16dp"
         tools:listitem="@layout/layout_view_students" />
 
-<!--    &lt;!&ndash; Floating Action Button to add a new student &ndash;&gt;-->
-<!--    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton-->
-<!--        android:id="@+id/buttonAddStudent"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_alignParentEnd="true"-->
-<!--        android:layout_alignParentBottom="true"-->
-<!--        android:layout_margin="20dp"-->
-<!--        android:backgroundTint="@color/blue"-->
-<!--        android:text="Add Student"-->
-<!--        android:textColor="@color/white"-->
-<!--        app:icon="@drawable/baseline_add_24"-->
-<!--        app:iconTint="@color/white" />-->
-
 </RelativeLayout>
