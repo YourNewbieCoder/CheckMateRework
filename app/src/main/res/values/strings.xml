@@ -33,6 +33,8 @@
 
     <string name="view_records">Select answer sheet to view records</string>
 
+    <string name="view_class_records">Select class to view records or item analysis</string>
+
     <string name="edit_key">Select answer sheet to add key to correction</string>
 
     <string name="view_analysis">Select answer sheet to view item analysis</string>

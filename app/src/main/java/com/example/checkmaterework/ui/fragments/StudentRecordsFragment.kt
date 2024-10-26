@@ -7,18 +7,11 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentStudentRecordsBinding
-import com.example.checkmaterework.models.AnswerSheetDatabase
-import com.example.checkmaterework.models.AnswerSheetEntity
-import com.example.checkmaterework.models.StudentViewModel
-import com.example.checkmaterework.models.StudentViewModelFactory
-import com.example.checkmaterework.ui.adapters.StudentAdapter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.example.checkmaterework.models.ClassEntity
 
-class StudentRecordsFragment(private val selectedAnswerSheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
+class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var studentRecordsBinding: FragmentStudentRecordsBinding
 //    private lateinit var studentViewModel: StudentViewModel

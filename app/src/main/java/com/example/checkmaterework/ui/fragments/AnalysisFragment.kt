@@ -7,17 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentAnalysisBinding
-import com.example.checkmaterework.models.AnswerSheetDatabase
-import com.example.checkmaterework.models.AnswerSheetEntity
-import com.example.checkmaterework.models.AnswerSheetViewModel
-import com.example.checkmaterework.models.AnswerSheetViewModelFactory
-import com.example.checkmaterework.ui.adapters.ViewAnalysisAdapter
+import com.example.checkmaterework.models.ClassEntity
 
-class AnalysisFragment(private val sheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
+class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var analysisBinding: FragmentAnalysisBinding
 //    private lateinit var answerSheetViewModel: AnswerSheetViewModel

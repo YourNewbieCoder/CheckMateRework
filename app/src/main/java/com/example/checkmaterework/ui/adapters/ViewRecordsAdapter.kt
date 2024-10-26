@@ -13,13 +13,13 @@ import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter.CheckSheetView
 
 class ViewRecordsAdapter(
     private var createdSheets: MutableList<AnswerSheetEntity>,
-    private val onViewRecordsClick: (AnswerSheetEntity) -> Unit,
-    private val onViewAnalysisClick: (AnswerSheetEntity) -> Unit
+    private val onViewRecordsClick: (AnswerSheetEntity) -> Unit
+//    private val onViewAnalysisClick: (AnswerSheetEntity) -> Unit
 ): RecyclerView.Adapter<ViewRecordsAdapter.ViewRecordsViewHolder>() {
     class ViewRecordsViewHolder(createdSheetsView: View): RecyclerView.ViewHolder(createdSheetsView) {
         val createdSheetName: TextView = createdSheetsView.findViewById(R.id.createdSheetName)
         val buttonViewRecords: Button = createdSheetsView.findViewById(R.id.buttonViewRecords)
-        val buttonViewItemAnalysis: Button = createdSheetsView.findViewById(R.id.buttonViewItemAnalysis)
+//        val buttonViewItemAnalysis: Button = createdSheetsView.findViewById(R.id.buttonViewItemAnalysis)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewRecordsViewHolder {
@@ -40,9 +40,9 @@ class ViewRecordsAdapter(
             onViewRecordsClick(createdSheet)
         }
 
-        holder.buttonViewItemAnalysis.setOnClickListener {
-            onViewAnalysisClick(createdSheet)
-        }
+//        holder.buttonViewItemAnalysis.setOnClickListener {
+//            onViewAnalysisClick(createdSheet)
+//        }
     }
 
     @SuppressLint("NotifyDataSetChanged")

@@ -43,8 +43,8 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         // Set up the adapter
         viewRecordsAdapter = ViewRecordsAdapter(
             mutableListOf(),
-            onViewRecordsClick = { sheet -> displayStudentRecords(sheet) },
-            onViewAnalysisClick = { sheet -> displayItemAnalysis(sheet) }
+            onViewRecordsClick = { sheet -> displayClassRecords(sheet) }
+//            onViewAnalysisClick = { sheet -> displayItemAnalysis(sheet) }
         )
 
 //        viewRecordsAdapter = ViewRecordsAdapter(mutableListOf())
@@ -56,21 +56,21 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         }
     }
 
-    private fun displayStudentRecords(sheet: AnswerSheetEntity) {
-        val studentRecordsFragment = StudentRecordsFragment(sheet)
+    private fun displayClassRecords(sheet: AnswerSheetEntity) {
+        val viewClassRecordsFragment = ViewClassRecordsFragment(sheet)
         parentFragmentManager.beginTransaction()
-            .replace(R.id.frameContainer, studentRecordsFragment)
+            .replace(R.id.frameContainer, viewClassRecordsFragment)
             .addToBackStack(null)
             .commit()
     }
 
-    private fun displayItemAnalysis(sheet: AnswerSheetEntity) {
-        val analysisFragment = AnalysisFragment(sheet)
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.frameContainer, analysisFragment)
-            .addToBackStack(null)
-            .commit()
-    }
+//    private fun displayItemAnalysis(sheet: AnswerSheetEntity) {
+//        val analysisFragment = AnalysisFragment(sheet)
+//        parentFragmentManager.beginTransaction()
+//            .replace(R.id.frameContainer, analysisFragment)
+//            .addToBackStack(null)
+//            .commit()
+//    }
 
 //    private fun openStudentRecords(sheet: AnswerSheetEntity) {
 //        val classId = sheet.id
