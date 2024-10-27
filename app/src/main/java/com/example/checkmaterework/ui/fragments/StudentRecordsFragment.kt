@@ -27,8 +27,9 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
         super.onCreate(savedInstanceState)
 
         // Setup ViewModel
-        val studentRecordDAO  = AnswerSheetDatabase.getDatabase(requireContext()).studentRecordDao()
-        studentRecordViewModel = ViewModelProvider(this, StudentRecordViewModelFactory(studentRecordDAO))
+        val studentRecordDao  = AnswerSheetDatabase.getDatabase(requireContext()).studentRecordDao()
+        val studentDao  = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
+        studentRecordViewModel = ViewModelProvider(this, StudentRecordViewModelFactory(studentRecordDao, studentDao))
             .get(StudentRecordViewModel::class.java)
     }
 
@@ -58,8 +59,15 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
             } else {
                 studentRecordsBinding.textViewNoStudentRecords.visibility = View.GONE
                 studentRecordsBinding.recyclerViewStudentScores.visibility = View.VISIBLE
-                studentRecordAdapter.updateRecords(records.toMutableList())
+
+                val studentNames = studentRecordViewModel.studentNamesMap.value ?: emptyMap()
+                studentRecordAdapter.updateRecords(records.toMutableList(), studentNames)
             }
+        }
+
+        studentRecordViewModel.studentNamesMap.observe(viewLifecycleOwner) { namesMap ->
+            val records = studentRecordViewModel.studentRecordList.value ?: emptyList()
+            studentRecordAdapter.updateRecords(records.toMutableList(), namesMap)
         }
     }
 

@@ -10,7 +10,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.checkmaterework.R
 import com.example.checkmaterework.models.StudentRecordEntity
 
-class StudentRecordAdapter(private var records: MutableList<StudentRecordEntity>):
+class StudentRecordAdapter(
+    private var records: MutableList<StudentRecordEntity>,
+    private var studentNamesMap: Map<Int, String> = emptyMap()
+):
     RecyclerView.Adapter<StudentRecordAdapter.StudentRecordViewHolder>() {
     class StudentRecordViewHolder(studentRecordView: View): RecyclerView.ViewHolder(studentRecordView) {
         val textStudentName: TextView = studentRecordView.findViewById(R.id.textStudentName)
@@ -29,14 +32,15 @@ class StudentRecordAdapter(private var records: MutableList<StudentRecordEntity>
 
     override fun onBindViewHolder(holder: StudentRecordViewHolder, position: Int) {
         val record = records[position]
-//        holder.textStudentName.text = record.studentId
+        holder.textStudentName.text = studentNamesMap[record.studentId] ?: "Unknown"
         holder.textScore.text = record.score.toString()
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    fun updateRecords(newRecords: MutableList<StudentRecordEntity>) {
+    fun updateRecords(newRecords: MutableList<StudentRecordEntity>, newNamesMap: Map<Int, String>){
         records.clear()
         records.addAll(newRecords)
+        studentNamesMap = newNamesMap
         notifyDataSetChanged()
     }
 }

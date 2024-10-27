@@ -37,4 +37,7 @@ interface StudentDAO {
     @Query("SELECT * FROM students WHERE studentName = :studentName AND classId = :classId LIMIT 1")
     suspend fun getStudentByNameAndClass(studentName: String, classId: Int): StudentEntity?
 
+    @Query("SELECT * FROM students WHERE studentId IN (:studentIds)")
+    suspend fun getStudentNamesByIds(studentIds: List<Int>): List<StudentEntity>
+
 }
