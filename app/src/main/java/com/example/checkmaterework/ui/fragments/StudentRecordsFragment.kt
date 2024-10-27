@@ -7,29 +7,29 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentStudentRecordsBinding
+import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.ClassEntity
+import com.example.checkmaterework.models.StudentRecordViewModel
+import com.example.checkmaterework.models.StudentRecordViewModelFactory
+import com.example.checkmaterework.ui.adapters.StudentRecordAdapter
 
 class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var studentRecordsBinding: FragmentStudentRecordsBinding
-//    private lateinit var studentViewModel: StudentViewModel
-//    private lateinit var studentAdapter: StudentAdapter
+    private lateinit var studentRecordAdapter: StudentRecordAdapter
+    private lateinit var studentRecordViewModel: StudentRecordViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-//        // Setup ViewModel
-//        val dao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
-//        studentViewModel = ViewModelProvider(this, StudentViewModelFactory(dao))
-//            .get(StudentViewModel::class.java)
-
-//        // Setup ViewModel
-//        val studentDao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
-//        val classDao = AnswerSheetDatabase.getDatabase(requireContext()).classDao() // Add this line
-//        studentViewModel = ViewModelProvider(this, StudentViewModelFactory(studentDao, classDao))
-//            .get(StudentViewModel::class.java)
+        // Setup ViewModel
+        val studentRecordDAO  = AnswerSheetDatabase.getDatabase(requireContext()).studentRecordDao()
+        studentRecordViewModel = ViewModelProvider(this, StudentRecordViewModelFactory(studentRecordDAO))
+            .get(StudentRecordViewModel::class.java)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -41,44 +41,27 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
         super.onViewCreated(view, savedInstanceState)
 
         // Setup RecyclerView
-//        studentAdapter = StudentAdapter(mutableListOf())
+        studentRecordAdapter = StudentRecordAdapter(mutableListOf())
 
-//        studentRecordsBinding.recyclerViewStudents.apply {
-//            layoutManager = LinearLayoutManager(requireContext())
-//            adapter = studentAdapter
-//        }
+        studentRecordsBinding.recyclerViewStudentScores.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = studentRecordAdapter
+        }
 
-//        // Load students based on classId
-//        if (classId != null) {
-//            studentViewModel.loadStudentsByClass(classId) // Filter by class
-//        } else {
-//            studentViewModel.loadAllStudents() // Load all students if no classId is provided
-//        }
+        studentRecordViewModel.getRecordsByClassId(selectedClass.classId)
 
-//        // Observe the list of students
-//        studentViewModel.studentList.observe(viewLifecycleOwner) { students ->
-//            if (students.isEmpty()) {
-//                studentRecordsBinding.textViewNoStudents.visibility = View.VISIBLE
-//                studentRecordsBinding.recyclerViewStudents.visibility = View.GONE
-//            } else {
-//                studentRecordsBinding.textViewNoStudents.visibility = View.GONE
-//                studentRecordsBinding.recyclerViewStudents.visibility = View.VISIBLE
-//                studentAdapter.updateStudentList(students)
-//            }
-//        }
-
-//        // Handle add student button click
-//        studentRecordsBinding.buttonAddStudent.setOnClickListener {
-//            showAddStudentDialog()
-//        }
+        // Observe student records for the selected class
+        studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
+            if (records.isEmpty()) {
+                studentRecordsBinding.textViewNoStudentRecords.visibility = View.VISIBLE
+                studentRecordsBinding.recyclerViewStudentScores.visibility = View.GONE
+            } else {
+                studentRecordsBinding.textViewNoStudentRecords.visibility = View.GONE
+                studentRecordsBinding.recyclerViewStudentScores.visibility = View.VISIBLE
+                studentRecordAdapter.updateRecords(records.toMutableList())
+            }
+        }
     }
-
-//    private fun showAddStudentDialog() {
-//        val addStudentFragment = AddStudentFragment { student ->
-//            studentViewModel.addStudent(student.copy(classId = classId ?: 0)) // Ensure student is linked to the class
-//        }
-//        addStudentFragment.show(parentFragmentManager, addStudentFragment.tag)
-//    }
 
     override fun getFragmentTitle(): String {
         return getString(R.string.students_title)
