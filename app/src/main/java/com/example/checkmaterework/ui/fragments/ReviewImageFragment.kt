@@ -79,11 +79,23 @@ class ReviewImageFragment : Fragment() {
 
         // Load captured image using Glide or similar library
         Glide.with(this).load(imagePath).into(reviewBinding.imageViewCaptured)
-        reviewBinding.textViewRecognizedText.text = recognizedText
+
+        // Display recognized text or "No detected text" if empty
+        reviewBinding.textViewRecognizedText.text = recognizedText.ifEmpty {
+            "No detected text"
+        }
 
         // Parse recognized text and compare with answer key
         val parsedAnswers = parseRecognizedText(recognizedText)
-        reviewBinding.textViewParsedAnswers.text = parsedAnswers.toString()
+        val parsedAnswersText = if (parsedAnswers.isEmpty()) {
+            "No answers detected."
+        } else {
+            parsedAnswers.map { (question, answer) ->
+                "Q$question: ${answer.ifEmpty { "No detected answer" }}"
+            }.joinToString("\n")
+        }
+        reviewBinding.textViewParsedAnswers.text = parsedAnswersText
+
         compareAnswers(parsedAnswers)
 
         // Set save button listener
@@ -112,13 +124,24 @@ class ReviewImageFragment : Fragment() {
         answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { correctAnswers ->
             lifecycleScope.launch {
                 var score = 0
+                val itemAnalysis = StringBuilder("Item Analysis:\n")
+
+                // Compare student answers with correct answers and build analysis
                 for (question in correctAnswers) {
                     val studentAnswer = studentAnswers[question.questionNumber]
                     if (studentAnswer == question.answer) {
                         score++
+                        itemAnalysis.append("Q${question.questionNumber}: Correct\n")
+                    } else {
+                        itemAnalysis.append("Q${question.questionNumber}: Incorrect\n")
                     }
                 }
+
+                // Update the score
                 reviewBinding.textInputScore.setText("$score")
+
+                // Display item analysis
+                reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
             }
         }
     }

@@ -73,6 +73,18 @@
                     android:hint="Section" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Add a new TextView to show item-by-item analysis -->
+            <TextView
+                android:id="@+id/textViewItemAnalysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Item Analysis"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Question 1: Correct, Question 2: Incorrect, ..." />
+
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/ThemeOverlay.Material3.AutoCompleteTextView.OutlinedBox.Dense"
                 android:layout_width="match_parent"
