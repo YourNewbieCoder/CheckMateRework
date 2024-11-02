@@ -5,6 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
@@ -16,7 +18,7 @@ import com.example.checkmaterework.models.ClassViewModel
 import com.example.checkmaterework.models.ClassViewModelFactory
 import com.example.checkmaterework.ui.adapters.ViewClassRecordsAdapter
 
-class ViewClassRecordsFragment(sheet: AnswerSheetEntity) : Fragment() {
+class ViewClassRecordsFragment(sheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var binding: FragmentViewClassRecordsBinding
     private lateinit var classViewModel: ClassViewModel
@@ -73,6 +75,32 @@ class ViewClassRecordsFragment(sheet: AnswerSheetEntity) : Fragment() {
             .replace(R.id.frameContainer, analysisFragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.class_records_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
     }
 
 }

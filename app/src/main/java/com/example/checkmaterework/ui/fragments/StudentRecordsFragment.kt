@@ -83,7 +83,7 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
     }
 
     override fun getFragmentTitle(): String {
-        return getString(R.string.students_title)
+        return getString(R.string.student_records_title)
     }
 
     override fun onResume() {
