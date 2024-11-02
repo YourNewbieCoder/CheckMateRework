@@ -9,5 +9,6 @@ data class StudentRecordEntity(
     val studentId: Int,
     val classId: Int,
     val answerSheetId: Int,
-    val score: Int
+    val score: Int,
+    val itemAnalysis: String // New property to store item analysis
 )

@@ -1,6 +1,7 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.os.Bundle
+import android.text.Editable
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -31,6 +32,7 @@ class ReviewImageFragment : Fragment() {
     private var sheetId: Int = 0
     private lateinit var imagePath: String
     private lateinit var recognizedText: String
+    private var parsedAnswers: MutableList<ParsedAnswer> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,17 +88,18 @@ class ReviewImageFragment : Fragment() {
         }
 
         // Parse recognized text and compare with answer key
-        val parsedAnswers = parseRecognizedText(recognizedText)
-        val parsedAnswersText = if (parsedAnswers.isEmpty()) {
-            "No answers detected."
-        } else {
-            parsedAnswers.map { (question, answer) ->
-                "Q$question: ${answer.ifEmpty { "No detected answer" }}"
-            }.joinToString("\n")
+        parsedAnswers = parseRecognizedText(recognizedText)
+
+        // Display parsed answers with analysis
+        val parsedAnswersText = parsedAnswers.joinToString("\n") { parsedAnswer ->
+            "Q${parsedAnswer.questionNumber}: ${parsedAnswer.answer} - " +
+                    if (parsedAnswer.isCorrect) "Correct" else "Incorrect"
         }
         reviewBinding.textViewParsedAnswers.text = parsedAnswersText
 
-        compareAnswers(parsedAnswers)
+        // Pass parsed answers as a Map to compareAnswers
+        val studentAnswers = parsedAnswers.associate { it.questionNumber to it.answer }
+        compareAnswers(studentAnswers)
 
         // Set save button listener
         reviewBinding.buttonSave.setOnClickListener {
@@ -104,20 +107,44 @@ class ReviewImageFragment : Fragment() {
         }
     }
 
-    private fun parseRecognizedText(recognizedText: String): Map<Int, String> {
-        val answerMap = mutableMapOf<Int, String>()
-        val lines = recognizedText.split("\n")
-        val questionRegex = Regex("Q(\\d+):\\s*(\\w+)")
-        for (line in lines) {
-            val matchResult = questionRegex.find(line)
-            if (matchResult != null) {
-                val questionNumber = matchResult.groupValues[1].toInt()
-                val answer = matchResult.groupValues[2]
-                answerMap[questionNumber] = answer
+    data class ParsedAnswer(
+        val questionNumber: Int,
+        val answer: String,
+        var isCorrect: Boolean
+    )
+
+    private fun parseRecognizedText(recognizedText: String): MutableList<ParsedAnswer> {
+        val answersList = mutableListOf<ParsedAnswer>()
+
+        // Extract each question-answer pair from recognizedText
+        recognizedText.split("\n").forEach { line ->
+            val parts = line.split(":")
+            if (parts.size == 2) {
+                val questionNumber = parts[0].trim().removePrefix("Q").toIntOrNull()
+                val answer = parts[1].trim()
+
+                questionNumber?.let {
+                    answersList.add(ParsedAnswer(it, answer, false)) // Mark correct later in compareAnswers
+                }
             }
         }
-        return answerMap
+        return answersList
     }
+
+//    private fun parseRecognizedText(recognizedText: String): Map<Int, String> {
+//        val answerMap = mutableMapOf<Int, String>()
+//        val lines = recognizedText.split("\n")
+//        val questionRegex = Regex("Q(\\d+):\\s*(\\w+)")
+//        for (line in lines) {
+//            val matchResult = questionRegex.find(line)
+//            if (matchResult != null) {
+//                val questionNumber = matchResult.groupValues[1].toInt()
+//                val answer = matchResult.groupValues[2]
+//                answerMap[questionNumber] = answer
+//            }
+//        }
+//        return answerMap
+//    }
 
     private fun compareAnswers(studentAnswers: Map<Int, String>) {
         answerKeyViewModel.loadAnswerKeysForSheet(sheetId)
@@ -128,19 +155,20 @@ class ReviewImageFragment : Fragment() {
 
                 // Compare student answers with correct answers and build analysis
                 for (question in correctAnswers) {
-                    val studentAnswer = studentAnswers[question.questionNumber]
-                    if (studentAnswer == question.answer) {
-                        score++
-                        itemAnalysis.append("Q${question.questionNumber}: Correct\n")
-                    } else {
-                        itemAnalysis.append("Q${question.questionNumber}: Incorrect\n")
-                    }
+                    val studentAnswer = studentAnswers[question.questionNumber]?: "No detected answer"
+                    val isCorrect = studentAnswer.equals(question.answer, ignoreCase = true)
+                    if (isCorrect) score++
+
+                    // Update parsedAnswers with correctness
+                    parsedAnswers.find { it.questionNumber == question.questionNumber }?.isCorrect = isCorrect
+
+                    itemAnalysis.append("Q${question.questionNumber}: ${if (isCorrect) "Correct" else "Incorrect"}\n")
+
                 }
 
-                // Update the score
+                // Update the score and item analysis views
                 reviewBinding.textInputScore.setText("$score")
-
-                // Display item analysis
+//                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("Score: $score / ${correctAnswers.size}")
                 reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
             }
         }
@@ -171,6 +199,26 @@ class ReviewImageFragment : Fragment() {
         val studentName = reviewBinding.textInputStudentName.text.toString()
         val sectionName = reviewBinding.textInputSection.text.toString()
         val score = reviewBinding.textInputScore.text.toString().toIntOrNull() ?: 0
+
+        // Generate `itemAnalysis` if `parsedAnswers` is empty
+        val itemAnalysis: String
+        if (parsedAnswers.isEmpty()) {
+            Log.d("SaveRecord", "Parsed answers not initialized, generating item analysis directly.")
+
+            answerKeyViewModel.loadAnswerKeysForSheet(sheetId)
+            val correctAnswers = answerKeyViewModel.savedAnswerKeys.value ?: emptyList()
+
+            itemAnalysis = correctAnswers.joinToString("; ") { question ->
+                val studentAnswer = "" // Replace with logic to retrieve the student's answer if necessary
+                val isCorrect = studentAnswer.equals(question.answer, ignoreCase = true)
+                "Q${question.questionNumber}: ${if (isCorrect) "Correct" else "Incorrect"}"
+            }
+        } else {
+            // Use `parsedAnswers` if available
+            itemAnalysis = parsedAnswers.joinToString("; ") {
+                "Q${it.questionNumber}: ${if (it.isCorrect) "Correct" else "Incorrect"}"
+            }
+        }
 
         lifecycleScope.launch {
 //            val classEntity = reviewImageViewModel.getClassByName(sectionName)
@@ -225,11 +273,12 @@ class ReviewImageFragment : Fragment() {
                 studentId = studentId.toInt(),
                 classId = classId,
                 answerSheetId = sheetId,
-                score = score
+                score = score,
+                itemAnalysis = itemAnalysis // Set the new property
 //                examDate = getCurrentDate()
             )
             reviewImageViewModel.insertStudentRecord(studentRecord)
-            Log.d("SaveRecord", "Student record saved: StudentID = ${studentRecord.studentId}, ClassID = ${studentRecord.classId}, AnswerSheetID = ${studentRecord.answerSheetId}, Score = ${studentRecord.score}")
+            Log.d("SaveRecord", "Student record saved: StudentID = ${studentRecord.studentId}, ClassID = ${studentRecord.classId}, AnswerSheetID = ${studentRecord.answerSheetId}, Score = ${studentRecord.score}, Item Analysis = ${studentRecord.itemAnalysis}")
 
             requireActivity().onBackPressed()
         }

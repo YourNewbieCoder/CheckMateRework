@@ -14,7 +14,7 @@ import kotlinx.coroutines.internal.synchronized
     StudentEntity::class,
     ImageCaptureEntity::class,
     QuestionEntity::class,
-    StudentRecordEntity::class], version = 1, exportSchema = false)
+    StudentRecordEntity::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AnswerSheetDatabase: RoomDatabase() {
 
