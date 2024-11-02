@@ -12,7 +12,8 @@ import com.example.checkmaterework.models.StudentRecordEntity
 
 class StudentRecordAdapter(
     private var records: MutableList<StudentRecordEntity>,
-    private var studentNamesMap: Map<Int, String> = emptyMap()
+    private var studentNamesMap: Map<Int, String> = emptyMap(),
+    private val onRecordClick: (StudentRecordEntity) -> Unit,
 ):
     RecyclerView.Adapter<StudentRecordAdapter.StudentRecordViewHolder>() {
     class StudentRecordViewHolder(studentRecordView: View): RecyclerView.ViewHolder(studentRecordView) {
@@ -33,6 +34,9 @@ class StudentRecordAdapter(
     override fun onBindViewHolder(holder: StudentRecordViewHolder, position: Int) {
         val record = records[position]
         holder.textStudentName.text = studentNamesMap[record.studentId] ?: "Unknown"
+        holder.itemView.setOnClickListener {
+            onRecordClick(record)
+        }
         holder.textScore.text = record.score.toString()
     }
 

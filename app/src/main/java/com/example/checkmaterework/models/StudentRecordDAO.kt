@@ -14,4 +14,7 @@ interface StudentRecordDAO {
 
     @Query("SELECT * FROM student_records WHERE classId = :classId")
     suspend fun getRecordsByClassId(classId: Int): List<StudentRecordEntity>
+
+    @Query("SELECT * FROM student_records WHERE recordId = :recordId")
+    suspend fun getRecordById(recordId: Int): StudentRecordEntity?
 }

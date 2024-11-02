@@ -13,6 +13,7 @@ import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentStudentRecordsBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.ClassEntity
+import com.example.checkmaterework.models.StudentRecordEntity
 import com.example.checkmaterework.models.StudentRecordViewModel
 import com.example.checkmaterework.models.StudentRecordViewModelFactory
 import com.example.checkmaterework.ui.adapters.StudentRecordAdapter
@@ -42,7 +43,9 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
         super.onViewCreated(view, savedInstanceState)
 
         // Setup RecyclerView
-        studentRecordAdapter = StudentRecordAdapter(mutableListOf())
+        studentRecordAdapter = StudentRecordAdapter(mutableListOf()) { selectedRecord ->
+            navigateToStudentAnalysisFragment(selectedRecord)
+        }
 
         studentRecordsBinding.recyclerViewStudentScores.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -69,6 +72,14 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
             val records = studentRecordViewModel.studentRecordList.value ?: emptyList()
             studentRecordAdapter.updateRecords(records.toMutableList(), namesMap)
         }
+    }
+
+    private fun navigateToStudentAnalysisFragment(record: StudentRecordEntity) {
+        val fragment = StudentAnalysisFragment.newInstance(record.recordId)
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.frameContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun getFragmentTitle(): String {

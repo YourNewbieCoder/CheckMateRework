@@ -45,5 +45,7 @@
 
     <string name="back_button">Back</string>
 
+    <string name="no_analysis_found">No Analysis Found</string>
+
 
 </resources>

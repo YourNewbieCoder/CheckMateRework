@@ -29,4 +29,14 @@ class StudentRecordViewModel(
         }
     }
 
+    private val _studentRecord = MutableLiveData<StudentRecordEntity?>()
+    val studentRecord: LiveData<StudentRecordEntity?> get() = _studentRecord
+
+    fun getRecordById(recordId: Int) {
+        viewModelScope.launch {
+            val record = studentRecordDAO.getRecordById(recordId)
+            _studentRecord.postValue(record)
+        }
+    }
+
 }
