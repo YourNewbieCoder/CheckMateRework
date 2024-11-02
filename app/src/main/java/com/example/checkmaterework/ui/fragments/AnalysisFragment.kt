@@ -7,21 +7,30 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentAnalysisBinding
+import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.ClassEntity
+import com.example.checkmaterework.models.StudentRecordEntity
+import com.example.checkmaterework.models.StudentRecordViewModel
+import com.example.checkmaterework.models.StudentRecordViewModelFactory
+import com.example.checkmaterework.ui.adapters.ViewAnalysisAdapter
 
 class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), ToolbarTitleProvider {
 
     private lateinit var analysisBinding: FragmentAnalysisBinding
-//    private lateinit var answerSheetViewModel: AnswerSheetViewModel
-//    private lateinit var viewAnalysisAdapter: ViewAnalysisAdapter
+    private lateinit var studentRecordViewModel: StudentRecordViewModel
+    private lateinit var viewAnalysisAdapter: ViewAnalysisAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
-//        answerSheetViewModel = ViewModelProvider(this, AnswerSheetViewModelFactory(dao))
-//            .get(AnswerSheetViewModel::class.java)
+
+        // Setup ViewModel
+        val studentRecordDao  = AnswerSheetDatabase.getDatabase(requireContext()).studentRecordDao()
+        val studentDao  = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
+        studentRecordViewModel = ViewModelProvider(this, StudentRecordViewModelFactory(studentRecordDao, studentDao))
+            .get(StudentRecordViewModel::class.java)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -34,22 +43,48 @@ class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), Too
 
         analysisBinding.recyclerViewItemAnalysis.layoutManager = LinearLayoutManager(requireContext())
 
-//        // Set up the adapter
-//        viewAnalysisAdapter = ViewAnalysisAdapter(
-//            mutableListOf(),
-//            onViewAnalysisClick = { sheet -> openCameraToCheckSheet(sheet) }
-//        )
+        // Set up the adapter
+        viewAnalysisAdapter = ViewAnalysisAdapter(mutableListOf())
 
-//        analysisBinding.recyclerViewCreatedSheets.adapter = viewAnalysisAdapter
-//
-//        answerSheetViewModel.createdSheetList.observe(viewLifecycleOwner) { sheets ->
-//            viewAnalysisAdapter.updateSheetList(sheets)
-//        }
+        analysisBinding.recyclerViewItemAnalysis.adapter = viewAnalysisAdapter
+
+        studentRecordViewModel.getRecordsByClassId(selectedClass.classId)
+
+        studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
+            if (records.isNullOrEmpty()) {
+                analysisBinding.textViewNoItemAnalysis.visibility = View.VISIBLE
+            } else {
+                analysisBinding.textViewNoItemAnalysis.visibility = View.GONE
+                displayItemAnalysis(records)
+            }
+        }
     }
 
-//    private fun openCameraToCheckSheet(sheet: AnswerSheetEntity) {
-//
-//    }
+    private fun displayItemAnalysis(records: List<StudentRecordEntity>) {
+        val questionStats = mutableMapOf<String, Pair<Int, Int>>() // Map of "Qn" -> (correctCount, incorrectCount)
+
+        for (record in records) {
+            val analysisParts = record.itemAnalysis.split(";")
+            for (part in analysisParts) {
+                if (part.isNotBlank()) {
+                    val (question, status) = part.trim().split(":").map { it.trim() }
+                    val counts = questionStats.getOrDefault(question, 0 to 0)
+                    questionStats[question] = if (status.equals("Correct", ignoreCase = true)) {
+                        counts.first + 1 to counts.second
+                    } else {
+                        counts.first to counts.second + 1
+                    }
+                }
+            }
+        }
+
+        val itemAnalysisList = questionStats.map { (question, counts) ->
+            Triple(question, counts.first, counts.second)
+        }
+
+        viewAnalysisAdapter.submitList(itemAnalysisList)
+
+    }
 
     override fun getFragmentTitle(): String {
         return getString(R.string.students_title)
