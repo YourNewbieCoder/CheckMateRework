@@ -12,20 +12,23 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentViewClassRecordsBinding
 import com.example.checkmaterework.models.AnswerSheetDatabase
-import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.models.ClassViewModel
 import com.example.checkmaterework.models.ClassViewModelFactory
 import com.example.checkmaterework.ui.adapters.ViewClassRecordsAdapter
 
-class ViewClassRecordsFragment(sheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
+class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var binding: FragmentViewClassRecordsBinding
     private lateinit var classViewModel: ClassViewModel
     private lateinit var viewClassRecordsAdapter: ViewClassRecordsAdapter
+    private var answerSheetName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Retrieve the answer sheet name from arguments
+        answerSheetName = arguments?.getString("answerSheetName")
 
         // Setup ViewModel
         val dao = AnswerSheetDatabase.getDatabase(requireContext()).classDao()
@@ -78,7 +81,7 @@ class ViewClassRecordsFragment(sheet: AnswerSheetEntity) : Fragment(), ToolbarTi
     }
 
     override fun getFragmentTitle(): String {
-        return getString(R.string.class_records_title)
+        return getString(R.string.view_records_title, answerSheetName)
     }
 
     override fun onResume() {

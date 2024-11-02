@@ -44,10 +44,7 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         viewRecordsAdapter = ViewRecordsAdapter(
             mutableListOf(),
             onViewRecordsClick = { sheet -> displayClassRecords(sheet) }
-//            onViewAnalysisClick = { sheet -> displayItemAnalysis(sheet) }
         )
-
-//        viewRecordsAdapter = ViewRecordsAdapter(mutableListOf())
 
         recordsBinding.recyclerViewCreatedSheets.adapter = viewRecordsAdapter
 
@@ -57,43 +54,16 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun displayClassRecords(sheet: AnswerSheetEntity) {
-        val viewClassRecordsFragment = ViewClassRecordsFragment(sheet)
+        val viewClassRecordsFragment = ViewClassRecordsFragment().apply {
+            arguments = Bundle().apply {
+                putString("answerSheetName", sheet.name)
+            }
+        }
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, viewClassRecordsFragment)
             .addToBackStack(null)
             .commit()
     }
-
-//    private fun displayItemAnalysis(sheet: AnswerSheetEntity) {
-//        val analysisFragment = AnalysisFragment(sheet)
-//        parentFragmentManager.beginTransaction()
-//            .replace(R.id.frameContainer, analysisFragment)
-//            .addToBackStack(null)
-//            .commit()
-//    }
-
-//    private fun openStudentRecords(sheet: AnswerSheetEntity) {
-//        val classId = sheet.id
-//
-//        // Navigate directly to StudentRecordsFragment, passing the classId
-//        val studentRecordsFragment = StudentRecordsFragment(classId)
-//        parentFragmentManager.beginTransaction()
-//            .replace(R.id.frameContainer, studentRecordsFragment)
-//            .addToBackStack(null)
-//            .commit()
-//
-//    }
-
-//    // Function to open ClassesFragment with the selected class entity
-//    private fun openClassesFragment(sheet: AnswerSheetEntity) {
-//        val classesFragment = ClassesFragment(sheet)
-//
-//        // Replace the current fragment and add to back stack
-//        parentFragmentManager.beginTransaction()
-//            .replace(R.id.frameContainer, classesFragment)
-//            .addToBackStack(null)
-//            .commit()
-//    }
 
     override fun getFragmentTitle(): String {
         return getString(R.string.records_title)
@@ -120,5 +90,4 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
             }
         }
     }
-
 }

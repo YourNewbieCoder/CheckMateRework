@@ -15,7 +15,7 @@
 
     <string name="records_title">Records</string>
 
-    <string name="class_records_title">View Class Records</string>
+    <string name="view_records_title">View %1$s Records</string>
 
     <string name="classes_title">Classes</string>
 
