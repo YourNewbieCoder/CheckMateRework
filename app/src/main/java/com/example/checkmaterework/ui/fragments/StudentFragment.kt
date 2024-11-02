@@ -24,18 +24,15 @@ class StudentFragment : Fragment(), ToolbarTitleProvider {
     private lateinit var studentViewModel: StudentViewModel
     private lateinit var studentAdapter: StudentAdapter
     private var classId: Int = 0
+    private var className: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
             classId = it.getInt(ARG_CLASS_ID, 0)
+            className = it.getString(ARG_CLASS_NAME, "")
         }
-
-//        // Initialize ViewModel with DAO
-//        val dao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
-//        studentViewModel = ViewModelProvider(this, StudentViewModelFactory(dao))
-//            .get(StudentViewModel::class.java)
 
         // Setup ViewModel
         val studentDao = AnswerSheetDatabase.getDatabase(requireContext()).studentDao()
@@ -93,17 +90,20 @@ class StudentFragment : Fragment(), ToolbarTitleProvider {
 
     companion object {
         private const val ARG_CLASS_ID = "class_id"
+        private const val ARG_CLASS_NAME = "class_name"
 
         @JvmStatic
-        fun newInstance(classId: Int) = StudentFragment().apply {
+        fun newInstance(classId: Int, className: String) = StudentFragment().apply {
             arguments = Bundle().apply {
                 putInt(ARG_CLASS_ID, classId)
+                putString(ARG_CLASS_NAME, className)
             }
         }
     }
 
     override fun getFragmentTitle(): String {
-        return getString(R.string.students_title)
+//        return getString(R.string.students_title)
+        return "$className Students"
     }
 
     override fun onResume() {

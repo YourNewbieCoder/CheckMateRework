@@ -126,7 +126,7 @@ class ClassesFragment() : Fragment(), ToolbarTitleProvider {
     }
 
     private fun showViewStudentsFragment(classEntity: ClassEntity) {
-        val studentFragment = StudentFragment.newInstance(classEntity.classId)
+        val studentFragment = StudentFragment.newInstance(classEntity.classId, classEntity.className)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, studentFragment)
             .addToBackStack(null)
