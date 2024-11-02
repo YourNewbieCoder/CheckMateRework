@@ -65,7 +65,7 @@ class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun displayClassRecords(classEntity: ClassEntity) {
-        val studentRecordsFragment = StudentRecordsFragment(classEntity)
+        val studentRecordsFragment = StudentRecordsFragment.newInstance(classEntity, answerSheetName)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, studentRecordsFragment)
             .addToBackStack(null)

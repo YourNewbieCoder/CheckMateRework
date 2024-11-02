@@ -18,14 +18,20 @@ import com.example.checkmaterework.models.StudentRecordViewModel
 import com.example.checkmaterework.models.StudentRecordViewModelFactory
 import com.example.checkmaterework.ui.adapters.StudentRecordAdapter
 
-class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(), ToolbarTitleProvider {
+class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
 
     private lateinit var studentRecordsBinding: FragmentStudentRecordsBinding
     private lateinit var studentRecordAdapter: StudentRecordAdapter
     private lateinit var studentRecordViewModel: StudentRecordViewModel
+    private lateinit var className: String
+    private lateinit var answerSheetName: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        arguments?.let {
+            className = it.getString(ARG_CLASS_NAME) ?: ""
+            answerSheetName = it.getString(ARG_ANSWER_SHEET_NAME) ?: ""
+        }
 
         // Setup ViewModel
         val studentRecordDao  = AnswerSheetDatabase.getDatabase(requireContext()).studentRecordDao()
@@ -51,8 +57,14 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
             layoutManager = LinearLayoutManager(requireContext())
             adapter = studentRecordAdapter
         }
+        // Use the classId from the argument
+        val classId = arguments?.getInt(ARG_CLASS_ID)
+        if (classId != null) {
+            studentRecordViewModel.getRecordsByClassId(classId)
+        }
 
-        studentRecordViewModel.getRecordsByClassId(selectedClass.classId)
+
+//        studentRecordViewModel.getRecordsByClassId(selectedClass.classId)
 
         // Observe student records for the selected class
         studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
@@ -83,7 +95,7 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
     }
 
     override fun getFragmentTitle(): String {
-        return getString(R.string.student_records_title)
+        return "$className $answerSheetName Records"
     }
 
     override fun onResume() {
@@ -105,6 +117,23 @@ class StudentRecordsFragment(private val selectedClass: ClassEntity) : Fragment(
             activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
                 activity.onBackPressed()
             }
+        }
+    }
+
+    companion object {
+        private const val ARG_CLASS_NAME = "class_name"
+        private const val ARG_ANSWER_SHEET_NAME = "answer_sheet_name"
+        private const val ARG_CLASS_ID = "class_id" // Add this line
+
+        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?): StudentRecordsFragment {
+            val fragment = StudentRecordsFragment()
+            val bundle = Bundle().apply {
+                putString(ARG_CLASS_NAME, selectedClass.className)
+                putString(ARG_ANSWER_SHEET_NAME, answerSheetName)
+                putInt(ARG_CLASS_ID, selectedClass.classId) // Pass the class ID
+            }
+            fragment.arguments = bundle
+            return fragment
         }
     }
 }
