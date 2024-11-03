@@ -40,7 +40,7 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class CheckFragment : Fragment() {
+class CheckFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var checkBinding: FragmentCheckBinding
 
@@ -375,6 +375,32 @@ class CheckFragment : Fragment() {
                 startCamera()
             } else {
                 Toast.makeText(requireContext(), "Permissions not granted", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.check_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
             }
         }
     }

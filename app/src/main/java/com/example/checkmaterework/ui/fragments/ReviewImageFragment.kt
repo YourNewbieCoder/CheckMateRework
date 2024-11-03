@@ -7,9 +7,12 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.example.checkmaterework.R
 
 import com.example.checkmaterework.databinding.FragmentReviewImageBinding
 import com.example.checkmaterework.models.AnswerKeyViewModel
@@ -23,7 +26,7 @@ import com.example.checkmaterework.models.StudentEntity
 import com.example.checkmaterework.models.StudentRecordEntity
 import kotlinx.coroutines.launch
 
-class ReviewImageFragment : Fragment() {
+class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var reviewBinding: FragmentReviewImageBinding
     private lateinit var imageCaptureViewModel: ImageCaptureViewModel
@@ -317,6 +320,32 @@ class ReviewImageFragment : Fragment() {
 ////        // Navigate back or show a success message
 ////        requireActivity().onBackPressed()
 //    }
+
+    override fun getFragmentTitle(): String {
+        return getString(R.string.save_score_title)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setupToolbar()
+    }
+
+    private fun setupToolbar() {
+        val activity = requireActivity() as AppCompatActivity
+        activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
+
+        val canGoBack = parentFragmentManager.backStackEntryCount > 0
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(canGoBack)
+        activity.supportActionBar?.setDisplayShowHomeEnabled(canGoBack)
+
+        activity.supportActionBar?.title = getFragmentTitle()
+
+        if (canGoBack) {
+            activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
+                activity.onBackPressed()
+            }
+        }
+    }
 
     companion object {
         private const val ARG_SHEET_ID = "sheet_id"

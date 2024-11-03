@@ -13,6 +13,8 @@
 
     <string name="check_title">Check Sheet</string>
 
+    <string name="save_score_title">Save Student Score</string>
+
     <string name="records_title">Records</string>
 
     <string name="view_records_title">View %1$s Records</string>
