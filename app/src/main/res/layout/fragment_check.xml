@@ -43,7 +43,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/blue"
         android:text="Check Paper"
+        android:textColor="@color/white"
         android:visibility="gone" />
 
 </RelativeLayout>

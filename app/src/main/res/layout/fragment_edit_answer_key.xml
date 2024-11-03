@@ -29,7 +29,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:text="Add Key with Camera" />
+            android:backgroundTint="@color/blue"
+            android:text="Add Key with Camera"
+            android:textColor="@color/white" />
 
     </LinearLayout>
 
@@ -62,7 +64,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginVertical="10dp"
-                android:text="Save" />
+                android:backgroundTint="@color/blue"
+                android:text="Save"
+                android:textColor="@color/white" />
 
         </LinearLayout>
 
@@ -93,7 +97,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/blue"
         android:text="Scan Key"
+        android:textColor="@color/white"
         android:visibility="gone" />
 
     <ImageView
@@ -112,7 +118,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/blue"
         android:text="Proceed"
+        android:textColor="@color/white"
         android:visibility="gone" />
 
 

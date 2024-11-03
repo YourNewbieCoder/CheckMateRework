@@ -108,7 +108,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginVertical="10dp"
-                android:text="Save" />
+                android:backgroundTint="@color/blue"
+                android:text="Save"
+                android:textColor="@color/white" />
 
         </LinearLayout>
 
