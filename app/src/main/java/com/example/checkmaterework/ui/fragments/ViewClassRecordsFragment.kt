@@ -68,7 +68,6 @@ class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun displayClassRecords(classEntity: ClassEntity) {
-        val answerSheetId = arguments?.getInt("answerSheetId") ?: -1
         val studentRecordsFragment = StudentRecordsFragment.newInstance(classEntity, answerSheetName, answerSheetId)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, studentRecordsFragment)
@@ -77,7 +76,7 @@ class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun displayClassItemAnalysis(classEntity: ClassEntity) {
-        val analysisFragment = AnalysisFragment.newInstance(classEntity, answerSheetName)
+        val analysisFragment = AnalysisFragment.newInstance(classEntity, answerSheetName, answerSheetId)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, analysisFragment)
             .addToBackStack(null)

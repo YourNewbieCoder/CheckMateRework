@@ -56,10 +56,12 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
         viewAnalysisAdapter = ViewAnalysisAdapter(mutableListOf())
         analysisBinding.recyclerViewItemAnalysis.adapter = viewAnalysisAdapter
 
-        // Use the classId from the argument
+        // Retrieve `classId` and `answerSheetId` from arguments
         val classId = arguments?.getInt(ARG_CLASS_ID)
-        if (classId != null) {
-            studentRecordViewModel.getRecordsByClassId(classId)
+        val answerSheetId = arguments?.getInt(ARG_ANSWER_SHEET_ID)
+
+        if (classId != null && answerSheetId != null && answerSheetId != -1) {
+            studentRecordViewModel.getRecordsByClassAndAnswerSheet(classId, answerSheetId)
         }
 
         studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
@@ -128,13 +130,15 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
         private const val ARG_CLASS_NAME = "class_name"
         private const val ARG_ANSWER_SHEET_NAME = "answer_sheet_name"
         private const val ARG_CLASS_ID = "class_id"
+        private const val ARG_ANSWER_SHEET_ID = "answer_sheet_id" // Add this constant
 
-        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?): AnalysisFragment {
+        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?, answerSheetId: Int?): AnalysisFragment {
             val fragment = AnalysisFragment()
             val bundle = Bundle().apply {
                 putString(ARG_CLASS_NAME, selectedClass.className)
                 putString(ARG_ANSWER_SHEET_NAME, answerSheetName)
                 putInt(ARG_CLASS_ID, selectedClass.classId)
+                putInt(ARG_ANSWER_SHEET_ID, answerSheetId ?: -1) // Pass answerSheetId
             }
             fragment.arguments = bundle
             return fragment

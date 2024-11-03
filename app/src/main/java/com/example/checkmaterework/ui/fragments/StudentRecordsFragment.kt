@@ -26,14 +26,12 @@ class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
     private lateinit var studentRecordViewModel: StudentRecordViewModel
     private lateinit var className: String
     private lateinit var answerSheetName: String
-    private var answerSheetId: Int? = null // Add this property
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             className = it.getString(ARG_CLASS_NAME) ?: ""
             answerSheetName = it.getString(ARG_ANSWER_SHEET_NAME) ?: ""
-            answerSheetId = it.getInt(ARG_ANSWER_SHEET_ID, -1) // Retrieve the answerSheetId
         }
 
         // Setup ViewModel
@@ -130,13 +128,13 @@ class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
         private const val ARG_CLASS_ID = "class_id"
         private const val ARG_ANSWER_SHEET_ID = "answer_sheet_id" // New argument
 
-        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?, answerSheetId: Int): StudentRecordsFragment {
+        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?, answerSheetId: Int?): StudentRecordsFragment {
             val fragment = StudentRecordsFragment()
             val bundle = Bundle().apply {
                 putString(ARG_CLASS_NAME, selectedClass.className)
                 putString(ARG_ANSWER_SHEET_NAME, answerSheetName)
                 putInt(ARG_CLASS_ID, selectedClass.classId) // Pass the class ID
-                putInt(ARG_ANSWER_SHEET_ID, answerSheetId) // Pass the answer sheet ID
+                putInt(ARG_ANSWER_SHEET_ID, answerSheetId?: -1) // Pass the answer sheet ID
             }
             fragment.arguments = bundle
             return fragment
