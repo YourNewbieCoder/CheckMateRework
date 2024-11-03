@@ -15,7 +15,13 @@ interface StudentRecordDAO {
     @Query("SELECT * FROM student_records WHERE classId = :classId")
     suspend fun getRecordsByClassId(classId: Int): List<StudentRecordEntity>
 
-    @Query("SELECT * FROM student_records WHERE classId = :classId AND answerSheetId = :answerSheetId")
+    @Query("""
+    SELECT sr.* 
+    FROM student_records sr 
+    INNER JOIN students s ON sr.studentId = s.studentId
+    WHERE sr.classId = :classId AND sr.answerSheetId = :answerSheetId 
+    ORDER BY s.studentName ASC
+""")
     suspend fun getRecordsByClassAndAnswerSheet(classId: Int, answerSheetId: Int): List<StudentRecordEntity>
 
     @Query("SELECT * FROM student_records WHERE recordId = :recordId")
