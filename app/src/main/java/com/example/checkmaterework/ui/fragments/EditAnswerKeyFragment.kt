@@ -521,6 +521,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val numberTextView = TextView(requireContext()).apply {
             text = "$currentItemNumber: "
             textSize = 20f // Adjust text size as needed
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
         }
         container.addView(numberTextView)
 
@@ -544,7 +545,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.white)) // Selected text color
                     } else {
                         setChipBackgroundColorResource(R.color.white) // Custom color for unselected state
-                        setTextColor(ContextCompat.getColor(requireContext(), R.color.blue)) // Unselected text color
+                        setTextColor(ContextCompat.getColor(requireContext(), R.color.black)) // Unselected text color
                     }
                 }
             }
@@ -565,6 +566,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val numberTextView = TextView(requireContext()).apply {
             text = "$currentItemNumber : "
             textSize = 20f // Adjust text size as needed
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
         }
         questionLayout.addView(numberTextView)
 
@@ -589,6 +591,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val numberTextView = TextView(requireContext()).apply {
             text = "$currentItemNumber - ${currentItemNumber + 4} : "
             textSize = 20f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
         }
         questionLayout.addView(numberTextView)
 
