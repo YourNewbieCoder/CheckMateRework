@@ -57,6 +57,7 @@ class RecordsFragment : Fragment(), ToolbarTitleProvider {
         val viewClassRecordsFragment = ViewClassRecordsFragment().apply {
             arguments = Bundle().apply {
                 putString("answerSheetName", sheet.name)
+                putInt("answerSheetId", sheet.id) // Pass the answer sheet ID
             }
         }
         parentFragmentManager.beginTransaction()

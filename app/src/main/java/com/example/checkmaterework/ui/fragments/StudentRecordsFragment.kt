@@ -1,6 +1,7 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,12 +26,14 @@ class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
     private lateinit var studentRecordViewModel: StudentRecordViewModel
     private lateinit var className: String
     private lateinit var answerSheetName: String
+    private var answerSheetId: Int? = null // Add this property
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             className = it.getString(ARG_CLASS_NAME) ?: ""
             answerSheetName = it.getString(ARG_ANSWER_SHEET_NAME) ?: ""
+            answerSheetId = it.getInt(ARG_ANSWER_SHEET_ID, -1) // Retrieve the answerSheetId
         }
 
         // Setup ViewModel
@@ -57,14 +60,15 @@ class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = studentRecordAdapter
         }
-        // Use the classId from the argument
+
+        // Retrieve `classId` and `answerSheetId` from arguments
         val classId = arguments?.getInt(ARG_CLASS_ID)
-        if (classId != null) {
-            studentRecordViewModel.getRecordsByClassId(classId)
+        val answerSheetId = arguments?.getInt(ARG_ANSWER_SHEET_ID) // Add this line
+        Log.d("StudentRecordsFragment", "Received answerSheetId: $answerSheetId")
+
+        if (classId != null && answerSheetId != null) {
+            studentRecordViewModel.getRecordsByClassAndAnswerSheet(classId, answerSheetId)
         }
-
-
-//        studentRecordViewModel.getRecordsByClassId(selectedClass.classId)
 
         // Observe student records for the selected class
         studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
@@ -123,14 +127,16 @@ class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
     companion object {
         private const val ARG_CLASS_NAME = "class_name"
         private const val ARG_ANSWER_SHEET_NAME = "answer_sheet_name"
-        private const val ARG_CLASS_ID = "class_id" // Add this line
+        private const val ARG_CLASS_ID = "class_id"
+        private const val ARG_ANSWER_SHEET_ID = "answer_sheet_id" // New argument
 
-        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?): StudentRecordsFragment {
+        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?, answerSheetId: Int): StudentRecordsFragment {
             val fragment = StudentRecordsFragment()
             val bundle = Bundle().apply {
                 putString(ARG_CLASS_NAME, selectedClass.className)
                 putString(ARG_ANSWER_SHEET_NAME, answerSheetName)
                 putInt(ARG_CLASS_ID, selectedClass.classId) // Pass the class ID
+                putInt(ARG_ANSWER_SHEET_ID, answerSheetId) // Pass the answer sheet ID
             }
             fragment.arguments = bundle
             return fragment

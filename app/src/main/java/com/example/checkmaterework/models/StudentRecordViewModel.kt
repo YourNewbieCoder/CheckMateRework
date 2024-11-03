@@ -29,6 +29,18 @@ class StudentRecordViewModel(
         }
     }
 
+    fun getRecordsByClassAndAnswerSheet(classId: Int, answerSheetId: Int) {
+        viewModelScope.launch {
+            val records = studentRecordDAO.getRecordsByClassAndAnswerSheet(classId, answerSheetId)
+            _studentRecordList.postValue(records)
+
+            // Fetch names for each studentId in the records
+            val studentIds = records.map { it.studentId }
+            val namesMap = studentDAO.getStudentNamesByIds(studentIds).associate { it.studentId to it.studentName }
+            _studentNamesMap.postValue(namesMap)
+        }
+    }
+
     private val _studentRecord = MutableLiveData<StudentRecordEntity?>()
     val studentRecord: LiveData<StudentRecordEntity?> get() = _studentRecord
 

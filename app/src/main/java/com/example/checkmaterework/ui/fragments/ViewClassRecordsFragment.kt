@@ -1,6 +1,7 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -23,12 +24,14 @@ class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
     private lateinit var classViewModel: ClassViewModel
     private lateinit var viewClassRecordsAdapter: ViewClassRecordsAdapter
     private var answerSheetName: String? = null
+    private var answerSheetId: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Retrieve the answer sheet name from arguments
+        // Retrieve the answer sheet name and ID from arguments
         answerSheetName = arguments?.getString("answerSheetName")
+        answerSheetId = arguments?.getInt("answerSheetId")
 
         // Setup ViewModel
         val dao = AnswerSheetDatabase.getDatabase(requireContext()).classDao()
@@ -65,7 +68,8 @@ class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun displayClassRecords(classEntity: ClassEntity) {
-        val studentRecordsFragment = StudentRecordsFragment.newInstance(classEntity, answerSheetName)
+        val answerSheetId = arguments?.getInt("answerSheetId") ?: -1
+        val studentRecordsFragment = StudentRecordsFragment.newInstance(classEntity, answerSheetName, answerSheetId)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, studentRecordsFragment)
             .addToBackStack(null)
