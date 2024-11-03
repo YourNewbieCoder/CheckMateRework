@@ -73,7 +73,7 @@ class ViewClassRecordsFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun displayClassItemAnalysis(classEntity: ClassEntity) {
-        val analysisFragment = AnalysisFragment(classEntity)
+        val analysisFragment = AnalysisFragment.newInstance(classEntity, answerSheetName)
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, analysisFragment)
             .addToBackStack(null)

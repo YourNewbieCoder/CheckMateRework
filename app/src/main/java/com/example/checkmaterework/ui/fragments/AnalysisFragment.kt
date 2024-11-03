@@ -17,14 +17,23 @@ import com.example.checkmaterework.models.StudentRecordEntity
 import com.example.checkmaterework.models.StudentRecordViewModel
 import com.example.checkmaterework.models.StudentRecordViewModelFactory
 import com.example.checkmaterework.ui.adapters.ViewAnalysisAdapter
+import com.example.checkmaterework.ui.fragments.StudentRecordsFragment.Companion
 
-class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), ToolbarTitleProvider {
+class AnalysisFragment : Fragment(), ToolbarTitleProvider {
 
     private lateinit var analysisBinding: FragmentAnalysisBinding
     private lateinit var studentRecordViewModel: StudentRecordViewModel
     private lateinit var viewAnalysisAdapter: ViewAnalysisAdapter
+    private lateinit var className: String
+    private lateinit var answerSheetName: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        arguments?.let {
+            className = it.getString(ARG_CLASS_NAME) ?: ""
+            answerSheetName = it.getString(ARG_ANSWER_SHEET_NAME) ?: ""
+        }
 
         // Setup ViewModel
         val studentRecordDao  = AnswerSheetDatabase.getDatabase(requireContext()).studentRecordDao()
@@ -45,10 +54,13 @@ class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), Too
 
         // Set up the adapter
         viewAnalysisAdapter = ViewAnalysisAdapter(mutableListOf())
-
         analysisBinding.recyclerViewItemAnalysis.adapter = viewAnalysisAdapter
 
-        studentRecordViewModel.getRecordsByClassId(selectedClass.classId)
+        // Use the classId from the argument
+        val classId = arguments?.getInt(ARG_CLASS_ID)
+        if (classId != null) {
+            studentRecordViewModel.getRecordsByClassId(classId)
+        }
 
         studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
             if (records.isNullOrEmpty()) {
@@ -87,7 +99,7 @@ class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), Too
     }
 
     override fun getFragmentTitle(): String {
-        return getString(R.string.analysis_title)
+        return "$className $answerSheetName Item Analysis"
     }
 
     override fun onResume() {
@@ -109,6 +121,23 @@ class AnalysisFragment(private val selectedClass: ClassEntity) : Fragment(), Too
             activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
                 activity.onBackPressed()
             }
+        }
+    }
+
+    companion object {
+        private const val ARG_CLASS_NAME = "class_name"
+        private const val ARG_ANSWER_SHEET_NAME = "answer_sheet_name"
+        private const val ARG_CLASS_ID = "class_id"
+
+        fun newInstance(selectedClass: ClassEntity, answerSheetName: String?): AnalysisFragment {
+            val fragment = AnalysisFragment()
+            val bundle = Bundle().apply {
+                putString(ARG_CLASS_NAME, selectedClass.className)
+                putString(ARG_ANSWER_SHEET_NAME, answerSheetName)
+                putInt(ARG_CLASS_ID, selectedClass.classId)
+            }
+            fragment.arguments = bundle
+            return fragment
         }
     }
 }
