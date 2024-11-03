@@ -612,7 +612,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     }
 
     override fun getFragmentTitle(): String {
-        return getString(R.string.edit_key_title)
+        return "Edit ${answerSheet.name} Key"
     }
 
     private fun setupToolbar() {
