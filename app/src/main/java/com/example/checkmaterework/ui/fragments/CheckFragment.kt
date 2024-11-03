@@ -121,7 +121,7 @@ class CheckFragment : Fragment() {
         activity.supportActionBar?.setDisplayShowHomeEnabled(true)
 
         // Set the toolbar title if needed
-        activity.supportActionBar?.title = getString(R.string.check_title)
+        activity.supportActionBar?.title = "Check ${sheet.name}"
 
         // Set click listener for the back button
         activity.findViewById<Toolbar>(R.id.myToolbar).setNavigationOnClickListener {
@@ -341,6 +341,9 @@ class CheckFragment : Fragment() {
         // Hide the toolbar and back arrow
         val activity = requireActivity() as AppCompatActivity
         activity.supportActionBar?.setDisplayHomeAsUpEnabled(false)
+
+        // Set the toolbar title if needed
+        activity.supportActionBar?.title = getString(R.string.check_title)
     }
 
     // Check if camera permissions are granted
