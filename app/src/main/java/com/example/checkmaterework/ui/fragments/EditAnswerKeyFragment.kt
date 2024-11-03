@@ -529,10 +529,26 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             tag = currentItemNumber // Set the tag to the current question number
         }
         for (option in listOf("A", "B", "C", "D")) {
-            chipGroup.addView(Chip(requireContext()).apply {
+            val chip = Chip(requireContext()).apply {
                 text = option
                 isCheckable = true
-            })
+                isClickable = true
+                chipCornerRadius = 50f // Makes the chip rounded
+                setChipBackgroundColorResource(R.color.white) // Custom color for unselected state
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.black)) // Unselected text color
+
+                // Listener for changing styles when the chip is selected or unselected
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        setChipBackgroundColorResource(R.color.blue) // Custom color for selected state
+                        setTextColor(ContextCompat.getColor(requireContext(), R.color.white)) // Selected text color
+                    } else {
+                        setChipBackgroundColorResource(R.color.white) // Custom color for unselected state
+                        setTextColor(ContextCompat.getColor(requireContext(), R.color.blue)) // Unselected text color
+                    }
+                }
+            }
+            chipGroup.addView(chip)
         }
         container.addView(chipGroup)
     }
