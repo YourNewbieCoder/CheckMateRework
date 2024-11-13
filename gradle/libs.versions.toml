@@ -1,6 +1,7 @@
 [versions]
 agp = "8.7.2"
 cameraCore = "1.5.0-alpha03"
+generativeai = "0.9.0"
 glide = "4.15.0"
 gson = "2.11.0"
 kotlin = "2.0.0"
@@ -19,6 +20,7 @@ firebaseCrashlyticsBuildtools = "3.0.2"
 visionCommon = "17.3.0"
 playServicesMlkitTextRecognitionCommon = "19.1.0"
 playServicesMlkitTextRecognition = "19.0.1"
+googleAndroidLibrariesMapsplatformSecretsGradlePlugin = "2.0.1"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
@@ -34,6 +36,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
+generativeai = { module = "com.google.ai.client.generativeai:generativeai", version.ref = "generativeai" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -52,4 +55,5 @@ play-services-mlkit-text-recognition = { group = "com.google.android.gms", name 
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 jetbrains-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kapt" }  # Add this line
+google-android-libraries-mapsplatform-secrets-gradle-plugin = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "googleAndroidLibrariesMapsplatformSecretsGradlePlugin" }
 

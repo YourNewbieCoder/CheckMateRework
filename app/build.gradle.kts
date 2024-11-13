@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.kapt)
+    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
+
 }
 
 android {
@@ -14,6 +16,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "apiKey", "apiKey")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -21,6 +24,7 @@ android {
     buildFeatures {
         viewBinding = true
         dataBinding = true
+        buildConfig = true
     }
 
     buildTypes {
@@ -76,4 +80,6 @@ dependencies {
 
     implementation (libs.glide)
     kapt (libs.compiler) // For annotation processing
+
+    implementation(libs.generativeai)
 }
