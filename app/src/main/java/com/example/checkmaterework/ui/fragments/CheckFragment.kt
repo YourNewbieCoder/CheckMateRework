@@ -129,6 +129,26 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
                 Log.d("CheckFragment", "Answer key retrieved: ${questions.joinToString("\n")}")
                 // Optionally, show a Toast message to confirm
                 Toast.makeText(requireContext(), "Answer key retrieved successfully", Toast.LENGTH_SHORT).show()
+
+//                // Convert the answer key into a string format to include in the prompt
+//                val answerKeyText = questions.joinToString("\n") {
+//                    "Question ${it.questionNumber}: ${it.answer}"
+//                }
+//
+//                // Generate the feedback with Gemini and include the answer key
+//                generateFeedbackWithGemini(sheet, answerKeyText) { feedback ->
+//                    // Send the generated feedback and image to the ReviewImageFragment
+//                    val reviewImageFragment = ReviewImageFragment.newInstance(
+//                        sheet.id,
+//                        File(photoFile.absolutePath).absolutePath,
+//                        feedback
+//                    )
+//                    parentFragmentManager.beginTransaction()
+//                        .replace(R.id.frameContainer, reviewImageFragment)
+//                        .addToBackStack(null)
+//                        .commit()
+//                }
+
             } else {
                 Log.d("CheckFragment", "No answer key found for the selected sheet.")
             }
@@ -248,34 +268,93 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Prepare multimodal input content for Gemini
 //        val inputText = "This is a student's answer sheet. Evaluate the student's answers."
 
-        generateFeedbackWithGemini(bitmap) { feedback ->
-            // Send the generated feedback and image to the ReviewImageFragment
-            val reviewImageFragment = ReviewImageFragment.newInstance(
-                sheet.id,
-                photoFile.absolutePath,
-                feedback
-            )
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.frameContainer, reviewImageFragment)
-                .addToBackStack(null)
-                .commit()
+        // Fetch the answer key for the selected sheet
+        answerKeyViewModel.loadAnswerKeysForSheet(sheet.id)
+
+        answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
+            if (questions.isNotEmpty()) {
+                // Convert the answer key into a format suitable for inclusion in the prompt
+                val answerKeyText = questions.joinToString("\n") { "${it.questionNumber}: ${it.answer}" }
+
+                generateFeedbackWithGemini(bitmap, answerKeyText) { feedback ->
+                    // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
+                    val reviewImageFragment = ReviewImageFragment.newInstance(
+                        sheet.id,
+                        photoFile.absolutePath,
+                        feedback
+                    )
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.frameContainer, reviewImageFragment)
+                        .addToBackStack(null)
+                        .commit()
+                }
+            } else {
+                Log.d("CheckFragment", "No answer key found for the selected sheet.")
+            }
         }
     }
 
-    private fun generateFeedbackWithGemini(image: Bitmap, onFeedbackGenerated: (String) -> Unit) {
+    private fun generateFeedbackWithGemini(image: Bitmap, answerKeyText: String, onFeedbackGenerated: (String) -> Unit) {
+//        val chatHistory = listOf(
+//            content("user") {
+//                text("You are a helpful teacher who checks student answers and provides a table for the outputs")
+//            },
+//            content("model") {
+//                text("Please tell me what you're working on! I'm ready to help you check your answers and provide a table for the outputs. \n\nTell me:\n\n* **What is the problem you're solving?** (Give me the full problem statement.)\n* **What are the inputs?** (What are the values you're working with?)\n* **What are your answers?** (Tell me what you calculated or came up with.)\n\nI'll compare your answers to the correct solution and provide a table summarizing the inputs and outputs. Let's get started! \n")
+//            },
+//        )
+
         val chatHistory = listOf(
             content("user") {
-                text("You are a helpful teacher who checks student answers and provides a table for the outputs")
+                text("You are a checker and are assigned to check student papers images and list their answer for each number")
             },
             content("model") {
-                text("Please tell me what you're working on! I'm ready to help you check your answers and provide a table for the outputs. \n\nTell me:\n\n* **What is the problem you're solving?** (Give me the full problem statement.)\n* **What are the inputs?** (What are the values you're working with?)\n* **What are your answers?** (Tell me what you calculated or came up with.)\n\nI'll compare your answers to the correct solution and provide a table summarizing the inputs and outputs. Let's get started! \n")
+                text("Please provide me with the images of the student papers. I will then be able to check the answers and list them for each number. \n\nTo make the process easier, please tell me:\n\n* **What subject is the paper for?** (e.g., Math, English, Science)\n* **What are the specific questions being asked?** (e.g., Solve for X, Write a paragraph about...)\n\nOnce I have this information, I will be able to accurately check and list the answers. \n")
+            },
+            content("user") {
+                text("You are a test checker and assigned to check student answer sheet images and list their answer for each number ")
+            },
+            content("model") {
+                text("Please provide me with the images of the student answer sheets. I will then be able to check the answers and list them for each number. \n\nTo help me understand the context and provide accurate results, please tell me:\n\n* **What is the subject of the test?** (e.g., Math, English, Science)\n* **What type of test is it?** (e.g., Multiple choice, True/False, Fill-in-the-blank)\n* **Are there any specific instructions for how the answers should be recorded?** (e.g., Circle the correct answer, Write the answer in the blank) \n\nOnce I have this information, I can quickly and accurately check the answers and provide you with a list of the student's responses for each question. \n")
+            },
+            content("user") {
+                text("You are a test checker and are assigned to check student answer sheet images. You are tasked to list the student answer in each number and identify the type of exam (multiple choice, identification, or word problem) used ")
+            },
+            content("model") {
+                text("Please provide me with the images of the student answer sheets. I'll do my best to list the student's answers for each number and identify the type of exam used (multiple choice, identification, or word problem). \n\nTo help me understand the format of the test and accurately interpret the answers, please provide the following information:\n\n* **What is the subject of the test?** (e.g., Math, English, Science)\n* **Are there any specific instructions for how the answers should be recorded?** (e.g., Circle the correct answer, Write the answer in the blank, etc.) \n\nThe more information you provide, the more accurate and helpful my analysis will be. \n")
+            },
+            content("user") {
+                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. ")
+            },
+            content("model") {
+                text("Okay! I'm ready to check those math answer sheets. Please provide the images of the student answer sheets. I'll create a table with the following information:\n\n* **Question Number:**  The number of the question from the test.\n* **Student Answer:**  The answer provided by the student.\n* **Correct Answer:** The correct answer for the question. \n* **Points Awarded:**  If applicable, the number of points earned by the student for that question.\n\nTo help me accurately assess the answers, please provide the following information:\n\n* **What grade level is the test for?** This helps me understand the expected complexity of the math concepts.\n* **Are there any specific instructions for how answers should be recorded?** (e.g., Circle the correct answer, Write the answer in the blank, Show your work, etc.) \n* **Is there an answer key available?** This will be very helpful to ensure accurate grading.\n\nOnce I have this information, I can quickly create a clear and organized table of the student's answers for each question. \n")
+            },
+            content("user") {
+                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5 point number (1-5) ")
+            },
+            content("model") {
+                text("Okay, I'm ready to start checking those Grade 6 math answer sheets! Please provide me with the images of the student answer sheets, and I will create a table for the answers for each number. \n\nHere's how I will structure my tables for each type of question:\n\n**1. Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n**2. Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n**3. Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  |  Asked:  |   |  |  |\n|  | Given: |  |  |  |\n|  | Operation: |  |  |  |\n|  | Number Sentence: |  |  |  |\n|  | Solution/Answer: |  |  |  |\n\n**To help me accurately check the answers, please tell me:**\n\n* **What grade level is the test for?**  (You said Grade 6, but this helps confirm.)\n* **Is there an answer key available?**  This will be very helpful!\n* **For word problems, are there any specific guidelines for the \"Asked\" and \"Given\" sections?**  For example, do students need to write a complete sentence?\n\nOnce you provide me with the images and this information, I can get started creating the tables. \n")
+            },
+            content("user") {
+                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5-point number (1-5). The pointing system is 1 point for each number expect for Word Problem which is 5 points (1 pt for each component). You can consider if the answer is close to the answer for example in a word problem the answer for Asked is the number of fruits left, you can consider if the student's answer is fruit left")
+            },
+            content("model") {
+                text("Okay, I understand the grading system!  I'm ready to check those Grade 6 math answer sheets. Please provide me with the images of the student answer sheets, and I'll create a table for each question.\n\nHere's how I'll structure the tables and handle the grading:\n\n**1. Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**2. Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**3. Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  | 1. Asked:  |   |  |  1  |\n|  | 2. Given: |  |  |  1  |\n|  | 3. Operation: |  |  |  1  |\n|  | 4. Number Sentence: |  |  |  1  |\n|  | 5. Solution/Answer: |  |  |  1  |\n\n- **Points Awarded:** 1 point for each component correctly identified and answered.\n- **Partial credit:** I will consider partial credit for the \"Asked\" section of word problems if the student's answer reflects an understanding of the question's core concept, even if not perfectly phrased. For example, if the \"Asked\" is \"How many fruits are left?\" and the student writes \"Number of fruits left,\"  I will give them the point.\n\n**To make sure I grade accurately, please provide:**\n\n* **Images of the student answer sheets:** \n* **An answer key:**  This is essential!\n* **Any specific instructions about how to handle partial credit or special cases:** (For example, should I award points for work shown even if the final answer is incorrect?)\n\nI'm ready to get started! \n")
+            },
+            content("user") {
+                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5-point number (1-5). The pointing system is 1 point for each number except for Word Problem which is 5 points (1 pt for each component). You can consider if the answer is close to the answer for example in a word problem the answer for Asked is the number of fruits left, you can consider if the student's answer is fruit left or in the final answer you can consider it there is no unit but don't check it if the answer is 84 but the student's final is 36 ")
+            },
+            content("model") {
+                text("Okay, I'm ready to check those Grade 6 math answer sheets! I'll be very careful to follow your specific instructions about grading and partial credit. \n\nHere's a summary of how I'll approach the grading:\n\n**Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  | 1. Asked:  |   |  |  1  |\n|  | 2. Given: |  |  |  1  |\n|  | 3. Operation: |  |  |  1  |\n|  | 4. Number Sentence: |  |  |  1  |\n|  | 5. Solution/Answer: |  |  |  1  |\n\n- **Points Awarded:** 1 point for each component correctly identified and answered.\n- **Partial credit for \"Asked\":** I'll give 1 point if the student's answer reflects the core concept of the question, even if not perfectly phrased. For example, \"Number of fruits left\" would get credit for \"How many fruits are left?\"\n- **Partial credit for \"Solution/Answer\":** \n    - I'll give 1 point if the answer is close, but missing a unit (e.g., \"84\" instead of \"84 apples\"). \n    - I will NOT give credit if the answer is significantly off (e.g., \"36\" instead of \"84\").\n\n**To get started, please provide:**\n\n* **Images of the student answer sheets:** \n* **An answer key:** This is crucial for accurate grading!\n* **Any additional guidance:**  Are there any specific instructions about how to handle other types of partial credit or errors? \n\nI'm ready to analyze those answer sheets and provide you with the results.  \n")
             },
         )
 
         // Prepare the input content (image and text)
         val inputContent = content {
             image(image) // Include the captured image
-            text("This is my student paper, list down all of the answers")
+            text("This is the student paper, identify first the exam type and then create the table for answers in each number, compare that to the answer key I provided and give a score considering the closeness of student answer to the answer key.")
+            text("Answer Key:\n$answerKeyText") // Include the answer key
+
 //            text("This is a sample image can you describe what things do you see?")
         }
 
@@ -284,11 +363,9 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Call from a coroutine to send the request to Gemini and collect the response
         lifecycleScope.launch {
             try {
-                chat.sendMessageStream(inputContent).collect { chunk ->
-                    // Log and pass the generated feedback back to the callback
-                    Log.d(TAG, "Gemini response chunk: ${chunk.text}")
-                    onFeedbackGenerated(chunk.text ?: "No feedback available.")
-                }
+                val response = chat.sendMessage(inputContent)
+                val feedback = response.text?: "No feedback generated."
+                onFeedbackGenerated(feedback)
             } catch (e: Exception) {
                 Log.e(TAG, "Error generating feedback", e)
                 onFeedbackGenerated("Error generating feedback.")

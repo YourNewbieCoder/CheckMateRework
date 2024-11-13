@@ -116,21 +116,40 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         var isCorrect: Boolean
     )
 
+//    private fun parseRecognizedText(recognizedText: String): MutableList<ParsedAnswer> {
+//        val answersList = mutableListOf<ParsedAnswer>()
+//
+//        // Extract each question-answer pair from recognizedText
+//        recognizedText.split("\n").forEach { line ->
+//            val parts = line.split("|")
+//            if (parts.size == 2) {
+//                val questionNumber = parts[0].trim().removePrefix("|").toIntOrNull()
+//                val answer = parts[1].trim()
+//
+//                questionNumber?.let {
+//                    answersList.add(ParsedAnswer(it, answer, false)) // Mark correct later in compareAnswers
+//                }
+//            }
+//        }
+//        return answersList
+//    }
+
     private fun parseRecognizedText(recognizedText: String): MutableList<ParsedAnswer> {
         val answersList = mutableListOf<ParsedAnswer>()
+        val lines = recognizedText.split("\n") // Split lines
 
-        // Extract each question-answer pair from recognizedText
-        recognizedText.split("\n").forEach { line ->
-            val parts = line.split(":")
-            if (parts.size == 2) {
-                val questionNumber = parts[0].trim().removePrefix("Q").toIntOrNull()
-                val answer = parts[1].trim()
+//        val pattern = Regex("""(\d+)\|\s*(.*)""") // Matches "1. answer"
+        val pattern = Regex("""\|\s*(\d+)\s*\|\s*(.*?)\s*\|""") // Matches "| 1 | answer |"
 
-                questionNumber?.let {
-                    answersList.add(ParsedAnswer(it, answer, false)) // Mark correct later in compareAnswers
-                }
+        for (line in lines) {
+            val match = pattern.find(line)
+            if (match != null) {
+                val questionNumber = match.groupValues[1].toIntOrNull() ?: continue
+                val answer = match.groupValues[2].trim()
+                answersList.add(ParsedAnswer(questionNumber, answer, false))
             }
         }
+
         return answersList
     }
 
