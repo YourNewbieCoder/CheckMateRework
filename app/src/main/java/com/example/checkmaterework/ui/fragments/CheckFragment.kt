@@ -21,7 +21,9 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.checkmaterework.BuildConfig
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentCheckBinding
 import com.example.checkmaterework.models.AnswerKeyViewModel
@@ -33,9 +35,13 @@ import com.example.checkmaterework.models.AnswerSheetViewModelFactory
 import com.example.checkmaterework.models.ImageCaptureViewModel
 import com.example.checkmaterework.models.ImageCaptureViewModelFactory
 import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -54,6 +60,8 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
+    private lateinit var generativeModel: GenerativeModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
@@ -69,6 +77,20 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
             .get(ImageCaptureViewModel::class.java)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+
+
+        generativeModel = GenerativeModel(
+            "gemini-1.5-flash",
+            BuildConfig.apiKey,
+            generationConfig = generationConfig {
+                temperature = 1f
+                topK = 40
+                topP = 0.95f
+                maxOutputTokens = 8192
+                responseMimeType = "text/plain"
+            },
+        )
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -223,38 +245,55 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Apply any preprocessing steps (optional)
 //        val processedImage = preprocessImage(imageBitmap)
 
-        val image = InputImage.fromBitmap(bitmap, 0)
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                val recognizedText = visionText.text
-                Log.d("CheckFragment", "Recognized text: $recognizedText")
-                val reviewImageFragment = ReviewImageFragment.newInstance(sheet.id, photoFile.absolutePath, recognizedText)
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.frameContainer, reviewImageFragment)
-                    .addToBackStack(null)
-                    .commit()
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Text recognition failed", e)
-            }
+        // Prepare multimodal input content for Gemini
+//        val inputText = "This is a student's answer sheet. Evaluate the student's answers."
 
-//        // Perform text recognition
-//        recognizeTextFromImage(imageBitmap) { recognizedText ->
-//            // Parse the recognized text
-//            val parsedAnswers = parseRecognizedText(recognizedText)
-//
-////            // Match answers with the stored answer key
-////            answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { answerKeys ->
-////                val results = matchAnswers(parsedAnswers, answerKeys)
-////
-////                // Show results in UI or proceed to the next step (e.g., saving, review)
-////                showResults(results)
-////            }
-//
-//            // Compare the answers with the correct answer key
-//            compareAnswers(sheet.id, parsedAnswers)
-//        }
+        generateFeedbackWithGemini(bitmap) { feedback ->
+            // Send the generated feedback and image to the ReviewImageFragment
+            val reviewImageFragment = ReviewImageFragment.newInstance(
+                sheet.id,
+                photoFile.absolutePath,
+                feedback
+            )
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.frameContainer, reviewImageFragment)
+                .addToBackStack(null)
+                .commit()
+        }
+    }
+
+    private fun generateFeedbackWithGemini(image: Bitmap, onFeedbackGenerated: (String) -> Unit) {
+        val chatHistory = listOf(
+            content("user") {
+                text("You are a helpful teacher who checks student answers and provides a table for the outputs")
+            },
+            content("model") {
+                text("Please tell me what you're working on! I'm ready to help you check your answers and provide a table for the outputs. \n\nTell me:\n\n* **What is the problem you're solving?** (Give me the full problem statement.)\n* **What are the inputs?** (What are the values you're working with?)\n* **What are your answers?** (Tell me what you calculated or came up with.)\n\nI'll compare your answers to the correct solution and provide a table summarizing the inputs and outputs. Let's get started! \n")
+            },
+        )
+
+        // Prepare the input content (image and text)
+        val inputContent = content {
+            image(image) // Include the captured image
+            text("This is my student paper, list down all of the answers")
+//            text("This is a sample image can you describe what things do you see?")
+        }
+
+        val chat = generativeModel.startChat(chatHistory)
+
+        // Call from a coroutine to send the request to Gemini and collect the response
+        lifecycleScope.launch {
+            try {
+                chat.sendMessageStream(inputContent).collect { chunk ->
+                    // Log and pass the generated feedback back to the callback
+                    Log.d(TAG, "Gemini response chunk: ${chunk.text}")
+                    onFeedbackGenerated(chunk.text ?: "No feedback available.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating feedback", e)
+                onFeedbackGenerated("Error generating feedback.")
+            }
+        }
     }
 
 //    private fun recognizeTextFromImage(imageBitmap: Bitmap, onTextRecognized: (String) -> Unit) {
