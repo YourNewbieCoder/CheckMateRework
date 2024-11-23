@@ -1,5 +1,6 @@
 package com.example.checkmaterework.ui.fragments
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
 import android.util.Log
@@ -7,6 +8,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TableRow
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
@@ -20,6 +23,7 @@ import com.example.checkmaterework.models.AnswerKeyViewModelFactory
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.ImageCaptureEntity
 import com.example.checkmaterework.models.ImageCaptureViewModel
+import com.example.checkmaterework.models.QuestionEntity
 import com.example.checkmaterework.models.ReviewImageViewModel
 import com.example.checkmaterework.models.ReviewImageViewModelFactory
 import com.example.checkmaterework.models.StudentEntity
@@ -192,7 +196,50 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 reviewBinding.textInputScore.setText("$score")
 //                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("Score: $score / ${correctAnswers.size}")
                 reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
+
+                // Display the answer key in the table
+                displayAnswerKeyInTable(correctAnswers)
             }
+        }
+    }
+
+    private fun displayAnswerKeyInTable(answerKeyList: List<QuestionEntity>?) {
+        // Clear the table first (if it's already populated)
+        reviewBinding.answerKeyTable.removeAllViews()
+
+        // Add table header
+        val headerRow = TableRow(context)
+        val questionHeader = TextView(context).apply {
+            text = "Q#"
+            setPadding(16, 16, 16, 16)
+            setTypeface(null, Typeface.BOLD)
+        }
+        val answerHeader = TextView(context).apply {
+            text = "Correct Answer"
+            setPadding(16, 16, 16, 16)
+            setTypeface(null, Typeface.BOLD)
+        }
+
+        headerRow.addView(questionHeader)
+        headerRow.addView(answerHeader)
+        reviewBinding.answerKeyTable.addView(headerRow)
+
+        // Add each answer key as a row
+        for (answerKey in answerKeyList ?: emptyList()) {
+            val tableRow  = TableRow(context)
+            val questionNumberView  = TextView(context).apply {
+                text = answerKey.questionNumber.toString()
+                setPadding(16, 16, 16, 16)
+            }
+
+            val answerView  = TextView(context).apply {
+                text = answerKey.answer
+                setPadding(16, 16, 16, 16)
+            }
+
+            tableRow.addView(questionNumberView)
+            tableRow.addView(answerView)
+            reviewBinding.answerKeyTable.addView(tableRow)
         }
     }
 

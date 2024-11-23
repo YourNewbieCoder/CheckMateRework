@@ -21,8 +21,9 @@
                 android:id="@+id/imageViewCaptured"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
+                android:contentDescription="Captured Image"
                 android:scaleType="centerCrop"
-                android:contentDescription="Captured Image"/>
+                android:visibility="gone" />
 
             <!-- Recognized text from OCR -->
             <TextView
@@ -34,6 +35,16 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 tools:text="Sample recognized text from the captured image"/>
+
+            <TableLayout
+                android:id="@+id/answerKeyTable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="@color/white"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:stretchColumns="1" />
 
             <!-- Parsed answers from recognized text -->
             <TextView
