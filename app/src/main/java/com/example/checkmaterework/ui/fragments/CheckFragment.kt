@@ -1,6 +1,7 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -36,6 +37,8 @@ import com.example.checkmaterework.models.ImageCaptureViewModel
 import com.example.checkmaterework.models.ImageCaptureViewModelFactory
 import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.Content
+import com.google.ai.client.generativeai.type.Tool
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.google.mlkit.vision.common.InputImage
@@ -271,97 +274,190 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Fetch the answer key for the selected sheet
         answerKeyViewModel.loadAnswerKeysForSheet(sheet.id)
 
-        answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
-            if (questions.isNotEmpty()) {
-                // Convert the answer key into a format suitable for inclusion in the prompt
-                val answerKeyText = questions.joinToString("\n") { "${it.questionNumber}: ${it.answer}" }
+//        answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
+//            if (questions.isNotEmpty()) {
+//                // Convert the answer key into a format suitable for inclusion in the prompt
+//                val answerKeyText = questions.joinToString("\n") { "${it.questionNumber}: ${it.answer}" }
+//
+//                generateFeedbackWithGemini(bitmap, answerKeyText) { feedback ->
+//                    // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
+//                    val reviewImageFragment = ReviewImageFragment.newInstance(
+//                        sheet.id,
+//                        photoFile.absolutePath,
+//                        feedback
+//                    )
+//                    parentFragmentManager.beginTransaction()
+//                        .replace(R.id.frameContainer, reviewImageFragment)
+//                        .addToBackStack(null)
+//                        .commit()
+//                }
+//            } else {
+//                Log.d("CheckFragment", "No answer key found for the selected sheet.")
+//            }
+//        }
 
-                generateFeedbackWithGemini(bitmap, answerKeyText) { feedback ->
-                    // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
-                    val reviewImageFragment = ReviewImageFragment.newInstance(
-                        sheet.id,
-                        photoFile.absolutePath,
-                        feedback
-                    )
-                    parentFragmentManager.beginTransaction()
-                        .replace(R.id.frameContainer, reviewImageFragment)
-                        .addToBackStack(null)
-                        .commit()
-                }
-            } else {
-                Log.d("CheckFragment", "No answer key found for the selected sheet.")
-            }
+        generateFeedbackWithGemini(bitmap) { feedback ->
+            // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
+            val reviewImageFragment = ReviewImageFragment.newInstance(
+                sheet.id,
+                photoFile.absolutePath,
+                feedback
+            )
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.frameContainer, reviewImageFragment)
+                .addToBackStack(null)
+                .commit()
         }
     }
 
-    private fun generateFeedbackWithGemini(image: Bitmap, answerKeyText: String, onFeedbackGenerated: (String) -> Unit) {
-//        val chatHistory = listOf(
-//            content("user") {
-//                text("You are a helpful teacher who checks student answers and provides a table for the outputs")
-//            },
-//            content("model") {
-//                text("Please tell me what you're working on! I'm ready to help you check your answers and provide a table for the outputs. \n\nTell me:\n\n* **What is the problem you're solving?** (Give me the full problem statement.)\n* **What are the inputs?** (What are the values you're working with?)\n* **What are your answers?** (Tell me what you calculated or came up with.)\n\nI'll compare your answers to the correct solution and provide a table summarizing the inputs and outputs. Let's get started! \n")
-//            },
-//        )
+    val modelResponses = listOf(
+        """
+    Name: Ayumu Uehara
+    Class/Section: 6-Sampaguita
 
-        val chatHistory = listOf(
-            content("user") {
-                text("You are a checker and are assigned to check student papers images and list their answer for each number")
-            },
+    1. (No answer provided)
+    2. A
+    3. D
+    4. (No answer provided)
+    5. B
+    6. (No answer provided)
+    7. 235.20
+    8. 4/20
+    9. (No answer provided)
+    10. 15/20
+    11. (No answer provided)
+    12. d908
+    13. 2730
+    14. 284°
+    15. 9/8
+    16. Addition
+    17. Sur 99
+    18. (No answer provided)
+    19. (No answer provided)
+    20. (No answer provided)
+    """,
+        """
+    **Name:** Chisato Araoshi
+    **Class/Section:** 6-Jade
+
+    **1-5.**
+    **Asked (A):** How many chairs is taken away or left
+    **Given (G):** 19 chairs, 12 chairs
+    **Operation (O):** (No answer provided)
+    **Number Sentence (N):** (No answer provided)
+    **Solution/Answer (A):** 19 - 12 = 7 chairs
+    There are 7 chairs left in the auditorium.
+
+    **6-10.**
+    **Asked (A):** (No answer provided)
+    **Given (G):** (No answer provided)
+    **Operation (O):** Division
+    **Number Sentence (N):** 81 / 9 = N
+    **Solution/Answer (A):** 81 ÷ 9 = 9
+    There are 9 tables needed to collect all the fruits baskets.
+    """,
+        """
+    **Name:** Karin Asaka
+    **Class/Section:** Ilang-Ilang
+    **Date:** July 4, 1989
+
+    1.  (No answer provided)
+    2.  D
+    3.  (No answer provided)
+    4.  B
+    5.  (No answer provided)
+    6.  150%
+    7.  54
+    8.  10 ½
+    9.  63 ²/₁₀
+    10. (No answer provided)
+    11. 90²
+    12. 4⁶
+    13. (No answer provided)
+    14. 3 x 3 x 3
+    15. 1021
+    16. (No answer provided)
+    17. 0193
+    18. 9321
+    19. (No answer provided)
+    20. 3451
+    """
+        // Add more responses as needed
+    )
+
+    val imageResourceIds = listOf(
+        R.drawable.uehara_4th_summative_test,
+        R.drawable.arashi_1st_seatwork,
+        R.drawable.asaka_4th_summative_test
+    )
+
+    // Function to decode an image resource into a Bitmap
+    fun decodeImageResource(context: Context?, resId: Int): Bitmap? {
+        return context?.let { BitmapFactory.decodeResource(it.resources, resId) }
+    }
+
+    fun generateChatHistoryWithResponses(context: Context?): List<Content> {
+        val chatHistory = mutableListOf<Content>()
+
+        // Initial user input
+        chatHistory.add(content("user") {
+            text(
+                """
+                You are a math test checker assigned to check grade 6 student answer sheet images and map the answers in each number. 
+                There are three types of examination you will check (multiple choice, identification, and word problems). 
+                If the test paper is Multiple Choice, you will map the shaded answers to each number. 
+                If it is Identification, you will map the answers in the box to each number. 
+                If it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map it like this:
+                
+                1.
+                Asked: HOW MANY KILOGRAMS OF POTATOES REMAIN?
+                Given: Potatoes = 850 and 320
+                Operation: SUBTRACTION
+                Number Sentence: 850 - 320
+                Solution: 850 - 320 = 530
+                530 kgs. OF POTATOES REMAIN.
+
+                After that, identify the student's name and section (clue: "Name:" for name, and "Class/Section:" for the section) 
+                of the student paper and map it like this:
+                
+                Name: 
+                Class/Section:
+                """
+            )
+        })
+
+        // Initial model response
+        chatHistory.add(
             content("model") {
-                text("Please provide me with the images of the student papers. I will then be able to check the answers and list them for each number. \n\nTo make the process easier, please tell me:\n\n* **What subject is the paper for?** (e.g., Math, English, Science)\n* **What are the specific questions being asked?** (e.g., Solve for X, Write a paragraph about...)\n\nOnce I have this information, I will be able to accurately check and list the answers. \n")
-            },
-            content("user") {
-                text("You are a test checker and assigned to check student answer sheet images and list their answer for each number ")
-            },
-            content("model") {
-                text("Please provide me with the images of the student answer sheets. I will then be able to check the answers and list them for each number. \n\nTo help me understand the context and provide accurate results, please tell me:\n\n* **What is the subject of the test?** (e.g., Math, English, Science)\n* **What type of test is it?** (e.g., Multiple choice, True/False, Fill-in-the-blank)\n* **Are there any specific instructions for how the answers should be recorded?** (e.g., Circle the correct answer, Write the answer in the blank) \n\nOnce I have this information, I can quickly and accurately check the answers and provide you with a list of the student's responses for each question. \n")
-            },
-            content("user") {
-                text("You are a test checker and are assigned to check student answer sheet images. You are tasked to list the student answer in each number and identify the type of exam (multiple choice, identification, or word problem) used ")
-            },
-            content("model") {
-                text("Please provide me with the images of the student answer sheets. I'll do my best to list the student's answers for each number and identify the type of exam used (multiple choice, identification, or word problem). \n\nTo help me understand the format of the test and accurately interpret the answers, please provide the following information:\n\n* **What is the subject of the test?** (e.g., Math, English, Science)\n* **Are there any specific instructions for how the answers should be recorded?** (e.g., Circle the correct answer, Write the answer in the blank, etc.) \n\nThe more information you provide, the more accurate and helpful my analysis will be. \n")
-            },
-            content("user") {
-                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. ")
-            },
-            content("model") {
-                text("Okay! I'm ready to check those math answer sheets. Please provide the images of the student answer sheets. I'll create a table with the following information:\n\n* **Question Number:**  The number of the question from the test.\n* **Student Answer:**  The answer provided by the student.\n* **Correct Answer:** The correct answer for the question. \n* **Points Awarded:**  If applicable, the number of points earned by the student for that question.\n\nTo help me accurately assess the answers, please provide the following information:\n\n* **What grade level is the test for?** This helps me understand the expected complexity of the math concepts.\n* **Are there any specific instructions for how answers should be recorded?** (e.g., Circle the correct answer, Write the answer in the blank, Show your work, etc.) \n* **Is there an answer key available?** This will be very helpful to ensure accurate grading.\n\nOnce I have this information, I can quickly create a clear and organized table of the student's answers for each question. \n")
-            },
-            content("user") {
-                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5 point number (1-5) ")
-            },
-            content("model") {
-                text("Okay, I'm ready to start checking those Grade 6 math answer sheets! Please provide me with the images of the student answer sheets, and I will create a table for the answers for each number. \n\nHere's how I will structure my tables for each type of question:\n\n**1. Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n**2. Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n**3. Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  |  Asked:  |   |  |  |\n|  | Given: |  |  |  |\n|  | Operation: |  |  |  |\n|  | Number Sentence: |  |  |  |\n|  | Solution/Answer: |  |  |  |\n\n**To help me accurately check the answers, please tell me:**\n\n* **What grade level is the test for?**  (You said Grade 6, but this helps confirm.)\n* **Is there an answer key available?**  This will be very helpful!\n* **For word problems, are there any specific guidelines for the \"Asked\" and \"Given\" sections?**  For example, do students need to write a complete sentence?\n\nOnce you provide me with the images and this information, I can get started creating the tables. \n")
-            },
-            content("user") {
-                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5-point number (1-5). The pointing system is 1 point for each number expect for Word Problem which is 5 points (1 pt for each component). You can consider if the answer is close to the answer for example in a word problem the answer for Asked is the number of fruits left, you can consider if the student's answer is fruit left")
-            },
-            content("model") {
-                text("Okay, I understand the grading system!  I'm ready to check those Grade 6 math answer sheets. Please provide me with the images of the student answer sheets, and I'll create a table for each question.\n\nHere's how I'll structure the tables and handle the grading:\n\n**1. Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**2. Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**3. Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  | 1. Asked:  |   |  |  1  |\n|  | 2. Given: |  |  |  1  |\n|  | 3. Operation: |  |  |  1  |\n|  | 4. Number Sentence: |  |  |  1  |\n|  | 5. Solution/Answer: |  |  |  1  |\n\n- **Points Awarded:** 1 point for each component correctly identified and answered.\n- **Partial credit:** I will consider partial credit for the \"Asked\" section of word problems if the student's answer reflects an understanding of the question's core concept, even if not perfectly phrased. For example, if the \"Asked\" is \"How many fruits are left?\" and the student writes \"Number of fruits left,\"  I will give them the point.\n\n**To make sure I grade accurately, please provide:**\n\n* **Images of the student answer sheets:** \n* **An answer key:**  This is essential!\n* **Any specific instructions about how to handle partial credit or special cases:** (For example, should I award points for work shown even if the final answer is incorrect?)\n\nI'm ready to get started! \n")
-            },
-            content("user") {
-                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5-point number (1-5). The pointing system is 1 point for each number except for Word Problem which is 5 points (1 pt for each component). You can consider if the answer is close to the answer for example in a word problem the answer for Asked is the number of fruits left, you can consider if the student's answer is fruit left or in the final answer you can consider it there is no unit but don't check it if the answer is 84 but the student's final is 36 ")
-            },
-            content("model") {
-                text("Okay, I'm ready to check those Grade 6 math answer sheets! I'll be very careful to follow your specific instructions about grading and partial credit. \n\nHere's a summary of how I'll approach the grading:\n\n**Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n- **Points Awarded:** 1 point for each correct answer.\n\n**Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  | 1. Asked:  |   |  |  1  |\n|  | 2. Given: |  |  |  1  |\n|  | 3. Operation: |  |  |  1  |\n|  | 4. Number Sentence: |  |  |  1  |\n|  | 5. Solution/Answer: |  |  |  1  |\n\n- **Points Awarded:** 1 point for each component correctly identified and answered.\n- **Partial credit for \"Asked\":** I'll give 1 point if the student's answer reflects the core concept of the question, even if not perfectly phrased. For example, \"Number of fruits left\" would get credit for \"How many fruits are left?\"\n- **Partial credit for \"Solution/Answer\":** \n    - I'll give 1 point if the answer is close, but missing a unit (e.g., \"84\" instead of \"84 apples\"). \n    - I will NOT give credit if the answer is significantly off (e.g., \"36\" instead of \"84\").\n\n**To get started, please provide:**\n\n* **Images of the student answer sheets:** \n* **An answer key:** This is crucial for accurate grading!\n* **Any additional guidance:**  Are there any specific instructions about how to handle other types of partial credit or errors? \n\nI'm ready to analyze those answer sheets and provide you with the results.  \n")
-            },
-            content("user") {
-                text("You are a math test checker assigned to check grade 6 student answer sheet images and create the table for answers in each number. There are three types of examination you will check (multiple choice, identification, and word problems). If the test paper is Multiple choice, you will map the shaded answers to each number. If it is Identification you will map the answers in the box to each number and if it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map each component to the 5-point number (1-5). The pointing system is 1 point for each number except for Word Problem which is 5 points (1 pt for each component). You can consider if the answer is close to the answer for example in a word problem the answer for Asked is the number of fruits left, you can consider if the student's answer is fruit left or in the final answer you can consider it there is no unit but don't check it if the answer is 84 but the student's final is 36. After that identify the student's name and section (clue: \"Name:\" for name, and \"Class/Section:\" for the section) of the student paper and create another table for records and assign the score they got.")
-            },
-            content("model") {
-                text("Okay, I'm ready to check those Grade 6 math answer sheets! I'll carefully follow your instructions about grading and partial credit, and I'll create tables for both the answers and the student records.\n\n**Here's the breakdown:**\n\n**1. Answer Tables:**\n\n**Multiple Choice:**\n\n| Question Number | Shaded Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n**Identification:**\n\n| Question Number | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|\n\n**Word Problem:**\n\n| Question Number | Component | Student Answer | Correct Answer | Points Awarded |\n|---|---|---|---|---|\n|  | 1. Asked:  |   |  |  1  |\n|  | 2. Given: |  |  |  1  |\n|  | 3. Operation: |  |  |  1  |\n|  | 4. Number Sentence: |  |  |  1  |\n|  | 5. Solution/Answer: |  |  |  1  |\n\n**2. Student Records Table:**\n\n| Student Name | Class/Section | Total Score |\n|---|---|---|\n\n**Grading Criteria:**\n\n* **Multiple Choice & Identification:** 1 point per correct answer.\n* **Word Problem:** 1 point per correctly answered component (\"Asked,\" \"Given,\" \"Operation,\" \"Number Sentence,\" \"Solution/Answer\"). \n* **Partial Credit for \"Asked\":** 1 point if the student's answer reflects the core concept, even if not perfectly phrased.\n* **Partial Credit for \"Solution/Answer\":** 1 point if the answer is close, but missing a unit. No credit if the answer is significantly off.\n\n**To get started, please provide:**\n\n1. **Images of the student answer sheets:** \n2. **An answer key:**  Essential for accurate grading!\n3. **Any additional guidance:**  Specific instructions about handling partial credit or other errors? \n\n**Once I have all this information, I'll create the tables, analyze the answer sheets, and calculate the scores. I'll then summarize the student records in the \"Student Records Table.\"** \n")
-            },
+                text("Please provide the images of the student answer sheets. I need to see the images to extract the answers, name, and section. I will then format the output as requested.")
+            }
         )
+
+        // Loop through images and generate corresponding chat content
+        imageResourceIds.forEachIndexed { index, resId ->
+            val imageBitmap  = decodeImageResource(context, resId)
+
+            // Add the image content
+            chatHistory.add(content("user") {
+                imageBitmap?.let { image(it) }
+            })
+
+            // Add the corresponding model response
+            chatHistory.add(content("model") {
+                text(modelResponses[index])
+            })
+        }
+
+        return chatHistory
+    }
+
+    private fun generateFeedbackWithGemini(image: Bitmap, onFeedbackGenerated: (String) -> Unit) {
+
+        val chatHistory = generateChatHistoryWithResponses(context)
 
         // Prepare the input content (image and text)
         val inputContent = content {
             image(image) // Include the captured image
-            text("This is the student paper, identify first the exam type and then create the table for answers in each number, compare that to the answer key I provided and give a score considering the closeness of student answer to the answer key. After that provide the table for records with the identified name, section and the score this student get.")
-            text("Answer Key:\n$answerKeyText") // Include the answer key
-
-//            text("This is a sample image can you describe what things do you see?")
         }
 
         val chat = generativeModel.startChat(chatHistory)
