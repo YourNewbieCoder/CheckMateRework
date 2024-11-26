@@ -86,7 +86,7 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
             "gemini-1.5-flash",
             BuildConfig.apiKey,
             generationConfig = generationConfig {
-                temperature = 1f
+                temperature = 0.4f
                 topK = 40
                 topP = 0.95f
                 maxOutputTokens = 8192
@@ -432,6 +432,597 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
                 text("Please provide the images of the student answer sheets. I need to see the images to extract the answers, name, and section. I will then format the output as requested.")
             }
         )
+
+//        // Pair image resources and their corresponding responses
+//        val pairedData = listOf(
+//            R.drawable.emmanuel_esplana to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Emmanuel Geoffrey G. Esplana
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 09/28/2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                (7 x 2) / (9 x 3) = 14/27
+//                14/27 is the part of class who joined camping
+//            """,
+//            R.drawable.kim_ortiz to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Kim Ortiz
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                Kg of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.aj_pangas to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: AJ Panggas
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 09-24-27
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.cleoford_crispo to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Cleoford Crispo
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 09/27/24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.kristelle_joy to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Kristelle Joy Garcia
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kg of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.ricky_mirano to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Ricky Mirano
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.elaiza_bajaro to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Elaiza J. Bajao
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: September 28, 2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of the class who joined the camping are girls.
+//                Given (G):
+//                7/9 of class are girls
+//                4/3 of girls joined Girls Scout
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of the class who joined the camping are girls.
+//
+//                6-10.
+//                Asked (A):
+//                Kilograms of sugar Jessa used for cooking puto.
+//                Given (G):
+//                3/4 kg of sugar, 1/4 of it used to cook puto.
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar Jessa used for cooking puto.
+//            """,
+//            R.drawable.elena_castillo to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Elena R. Castilo
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: September 28, 2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping.
+//                Given (G):
+//                7/4, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping.
+//
+//                6-10.
+//                Asked (A):
+//                Kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.michelle_panday to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Michelle Panday
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping (Multiplication fraction)
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kg of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.jaybee_sucal to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Jaybee Sucal
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.joyce_villa to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Joyce Villa
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kg of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.christine_tamondong to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Christine Tamondong
+//                Class/Section: CS1
+//                Teacher: Almonte, Regina
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kg of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.caryl_hores to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Carly Hores
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: 9-27-24
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = N
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping
+//
+//                6-10.
+//                Asked (A):
+//                kg of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = N
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.ryan_bardilla to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Ryan A. Bardilla
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: September 28, 2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of the class who joined the camping are girls.
+//                Given (G):
+//                7/9 of class are girls
+//                2/3 of girls joined Girl Scout
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of the class who joined the camping are girls
+//
+//                6-10.
+//                Asked (A):
+//                Kilograms of sugar Jessa used for cooking puto.
+//                Given (G):
+//                3/4 kg of sugar, 1/4 of it used to cook puto
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar Jessa used for cooking puto.
+//            """,
+//            R.drawable.luisa_flores to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Luisa T. Flores
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: September 28, 2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of the class who joined the camping are girls.
+//                Given (G):
+//                7/9 of class are girls
+//                4/3 of girls joined Girl Scout
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of the class who joined the camping are girls
+//
+//                6-10.
+//                Asked (A):
+//                Kilogram of sugar Jessa used for cooking puto.
+//                Given (G):
+//                3/4 kg of sugar, 1/4 of it used to cook puto.
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar Jessa used for cooking puto.
+//            """,
+//            R.drawable.nagena_ariola to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Nagene Ariola
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: September 28, 2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping.
+//
+//                6-10.
+//                Asked (A):
+//                Kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """,
+//            R.drawable.noriel_zubiri to """
+//                Answer Sheet Name: Seatwork 1
+//                Name: Noriel C. Zubiri
+//                Class/Section: CS1
+//                Teacher: Regina Almonte
+//                Date: September 28, 2024
+//
+//                1-5.
+//                Asked (A):
+//                Part of class who joined camping
+//                Given (G):
+//                7/9, 2/3
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                7/9 x 2/3 = N
+//                Solution/Answer (A):
+//                7/9 x 2/3 = 14/27
+//                14/27 is the part of class who joined camping.
+//
+//                6-10.
+//                Asked (A):
+//                Kilograms of sugar used
+//                Given (G):
+//                3/4 kg, 1/4
+//                Operation (O):
+//                Multiplication
+//                Number Sentence (N):
+//                3/4 x 1/4 = N
+//                Solution/Answer (A):
+//                3/4 x 1/4 = 3/16
+//                3/16 kg of sugar was used
+//            """
+//        )
+
+//        // Loop through each image and generate content
+//        pairedData.forEach { (imageResId, responseText) ->
+//            val imageBitmap = decodeImageResource(context, imageResId)
+//
+//            // Add user content with the image
+//            chatHistory.add(content("user") {
+//                imageBitmap?.let { image(it) }
+//            })
+//
+//            // Add model response content
+//            chatHistory.add(content("model") {
+//                text(responseText)
+//            })
+//        }
 
         // Loop through images and generate corresponding chat content
         imageResourceIds.forEachIndexed { index, resId ->

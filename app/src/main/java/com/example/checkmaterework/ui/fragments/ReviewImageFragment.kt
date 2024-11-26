@@ -1,5 +1,6 @@
 package com.example.checkmaterework.ui.fragments
 
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
@@ -142,8 +143,9 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         val answersList = mutableListOf<ParsedAnswer>()
         val lines = recognizedText.split("\n") // Split lines
 
+        val pattern = Regex("""(\d+)\.\s*(.*)""") // Matches "1. answer"
 //        val pattern = Regex("""(\d+)\|\s*(.*)""") // Matches "1. answer"
-        val pattern = Regex("""\|\s*(\d+)\s*\|\s*(.*?)\s*\|""") // Matches "| 1 | answer |"
+//        val pattern = Regex("""\|\s*(\d+)\s*\|\s*(.*?)\s*\|""") // Matches "| 1 | answer |"
 
         for (line in lines) {
             val match = pattern.find(line)
@@ -198,12 +200,12 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
 
                 // Display the answer key in the table
-                displayAnswerKeyInTable(correctAnswers)
+                displayAnswerKeyInTable(correctAnswers, parsedAnswers)
             }
         }
     }
 
-    private fun displayAnswerKeyInTable(answerKeyList: List<QuestionEntity>?) {
+    private fun displayAnswerKeyInTable(answerKeyList: List<QuestionEntity>?, parsedAnswers: List<ParsedAnswer>) {
         // Clear the table first (if it's already populated)
         reviewBinding.answerKeyTable.removeAllViews()
 
@@ -219,26 +221,48 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
             setPadding(16, 16, 16, 16)
             setTypeface(null, Typeface.BOLD)
         }
+        val studentAnswerHeader = TextView(context).apply {
+            text = "Student's Answer"
+            setPadding(16, 16, 16, 16)
+            setTypeface(null, Typeface.BOLD)
+        }
 
         headerRow.addView(questionHeader)
         headerRow.addView(answerHeader)
+        headerRow.addView(studentAnswerHeader)
         reviewBinding.answerKeyTable.addView(headerRow)
+
+        // Create a map of parsed answers for quick lookup
+        val parsedAnswersMap = parsedAnswers.associateBy { it.questionNumber }
 
         // Add each answer key as a row
         for (answerKey in answerKeyList ?: emptyList()) {
             val tableRow  = TableRow(context)
+
             val questionNumberView  = TextView(context).apply {
                 text = answerKey.questionNumber.toString()
                 setPadding(16, 16, 16, 16)
             }
 
-            val answerView  = TextView(context).apply {
+            val correctAnswerView   = TextView(context).apply {
                 text = answerKey.answer
                 setPadding(16, 16, 16, 16)
             }
 
+            val studentAnswerView = TextView(context).apply {
+                val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer ?: "N/A"
+                text = studentAnswer
+                setPadding(16, 16, 16, 16)
+
+                // Optional: Highlight if the student's answer is correct or incorrect
+                setTextColor(
+                    if (studentAnswer == answerKey.answer) Color.GREEN else Color.RED
+                )
+            }
+
             tableRow.addView(questionNumberView)
-            tableRow.addView(answerView)
+            tableRow.addView(correctAnswerView)
+            tableRow.addView(studentAnswerView)
             reviewBinding.answerKeyTable.addView(tableRow)
         }
     }
