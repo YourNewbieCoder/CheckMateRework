@@ -4,11 +4,14 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
+import android.text.InputType
 import android.util.Log
+import android.view.Gravity
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -226,10 +229,22 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
             setPadding(16, 16, 16, 16)
             setTypeface(null, Typeface.BOLD)
         }
+        val remarksHeader = TextView(context).apply {
+            text = "Remarks"
+            setPadding(16, 16, 16, 16)
+            setTypeface(null, Typeface.BOLD)
+        }
+        val pointsHeader = TextView(context).apply {
+            text = "Points"
+            setPadding(16, 16, 16, 16)
+            setTypeface(null, Typeface.BOLD)
+        }
 
         headerRow.addView(questionHeader)
         headerRow.addView(answerHeader)
         headerRow.addView(studentAnswerHeader)
+        headerRow.addView(remarksHeader)
+        headerRow.addView(pointsHeader)
         reviewBinding.answerKeyTable.addView(headerRow)
 
         // Create a map of parsed answers for quick lookup
@@ -239,20 +254,26 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         for (answerKey in answerKeyList ?: emptyList()) {
             val tableRow  = TableRow(context)
 
+            // Question Number column
             val questionNumberView  = TextView(context).apply {
                 text = answerKey.questionNumber.toString()
                 setPadding(16, 16, 16, 16)
+                gravity = Gravity.CENTER
             }
 
+            // Correct Answer column
             val correctAnswerView   = TextView(context).apply {
                 text = answerKey.answer
                 setPadding(16, 16, 16, 16)
+                gravity = Gravity.CENTER
             }
 
+            // Student's Answer column
             val studentAnswerView = TextView(context).apply {
                 val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer ?: "N/A"
                 text = studentAnswer
                 setPadding(16, 16, 16, 16)
+                gravity = Gravity.CENTER
 
                 // Optional: Highlight if the student's answer is correct or incorrect
                 setTextColor(
@@ -260,9 +281,32 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 )
             }
 
+            // Remarks column
+            val remarksView = TextView(context).apply {
+                val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer
+                text = if (studentAnswer == answerKey.answer) "Correct" else "Incorrect"
+                setPadding(16, 16, 16, 16)
+                gravity = Gravity.CENTER
+                setTextColor(
+                    if (text == "Correct") Color.GREEN else Color.RED
+                )
+            }
+
+            // Points column with an editable EditText
+            val pointsEditText = EditText(context).apply {
+                setText(
+                    if (parsedAnswersMap[answerKey.questionNumber]?.isCorrect == true) "1" else "0"
+                )
+                setPadding(16, 16, 16, 16)
+                inputType = InputType.TYPE_CLASS_NUMBER
+                gravity = Gravity.CENTER
+            }
+
             tableRow.addView(questionNumberView)
             tableRow.addView(correctAnswerView)
             tableRow.addView(studentAnswerView)
+            tableRow.addView(remarksView)
+            tableRow.addView(pointsEditText)
             reviewBinding.answerKeyTable.addView(tableRow)
         }
     }
