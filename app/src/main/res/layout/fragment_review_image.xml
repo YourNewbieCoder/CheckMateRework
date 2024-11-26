@@ -9,7 +9,7 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,16 +47,23 @@
                 android:textSize="16sp"
                 android:visibility="gone"
                 tools:text="Parsed answers will be shown here" />
-
-            <TableLayout
-                android:id="@+id/answerKeyTable"
+            
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:background="@color/white"
-                android:elevation="4dp"
-                android:padding="16dp"
-                android:stretchColumns="1" />
+                android:scrollbars="horizontal">
+
+                <TableLayout
+                    android:id="@+id/answerKeyTable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:background="@color/white"
+                    android:elevation="4dp"
+                    android:padding="16dp"
+                    android:stretchColumns="1" />
+
+            </HorizontalScrollView>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/ThemeOverlay.Material3.AutoCompleteTextView.OutlinedBox.Dense"

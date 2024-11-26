@@ -16,6 +16,7 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -198,8 +199,9 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 }
 
                 // Update the score and item analysis views
-                reviewBinding.textInputScore.setText("$score")
+//                reviewBinding.textInputScore.setText("$score")
 //                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("Score: $score / ${correctAnswers.size}")
+                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("$score")
                 reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
 
                 // Display the answer key in the table
@@ -213,102 +215,95 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         reviewBinding.answerKeyTable.removeAllViews()
 
         // Add table header
-        val headerRow = TableRow(context)
-        val questionHeader = TextView(context).apply {
-            text = "Q#"
-            setPadding(16, 16, 16, 16)
-            setTypeface(null, Typeface.BOLD)
+        val headerRow = TableRow(context).apply {
+            addView(createHeaderTextView("Q#"))
+            addView(createHeaderTextView("Correct Answer"))
+            addView(createHeaderTextView("Student's Answer"))
+            addView(createHeaderTextView("Remarks"))
+            addView(createHeaderTextView("Points"))
         }
-        val answerHeader = TextView(context).apply {
-            text = "Correct Answer"
-            setPadding(16, 16, 16, 16)
-            setTypeface(null, Typeface.BOLD)
-        }
-        val studentAnswerHeader = TextView(context).apply {
-            text = "Student's Answer"
-            setPadding(16, 16, 16, 16)
-            setTypeface(null, Typeface.BOLD)
-        }
-        val remarksHeader = TextView(context).apply {
-            text = "Remarks"
-            setPadding(16, 16, 16, 16)
-            setTypeface(null, Typeface.BOLD)
-        }
-        val pointsHeader = TextView(context).apply {
-            text = "Points"
-            setPadding(16, 16, 16, 16)
-            setTypeface(null, Typeface.BOLD)
-        }
-
-        headerRow.addView(questionHeader)
-        headerRow.addView(answerHeader)
-        headerRow.addView(studentAnswerHeader)
-        headerRow.addView(remarksHeader)
-        headerRow.addView(pointsHeader)
         reviewBinding.answerKeyTable.addView(headerRow)
 
         // Create a map of parsed answers for quick lookup
         val parsedAnswersMap = parsedAnswers.associateBy { it.questionNumber }
 
+        // Initialize the total score
+        var totalScore = 0
+
         // Add each answer key as a row
         for (answerKey in answerKeyList ?: emptyList()) {
             val tableRow  = TableRow(context)
 
-            // Question Number column
-            val questionNumberView  = TextView(context).apply {
-                text = answerKey.questionNumber.toString()
-                setPadding(16, 16, 16, 16)
-                gravity = Gravity.CENTER
+            // Question Number
+            tableRow.addView(createTextView(answerKey.questionNumber.toString()))
+
+            // Correct Answer
+            tableRow.addView(createTextView(answerKey.answer))
+
+            // Student's Answer
+            val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer ?: "N/A"
+            val studentAnswerView = createTextView(studentAnswer).apply {
+                setTextColor(if (studentAnswer.equals(answerKey.answer, ignoreCase = true)) Color.GREEN else Color.RED)
             }
-
-            // Correct Answer column
-            val correctAnswerView   = TextView(context).apply {
-                text = answerKey.answer
-                setPadding(16, 16, 16, 16)
-                gravity = Gravity.CENTER
-            }
-
-            // Student's Answer column
-            val studentAnswerView = TextView(context).apply {
-                val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer ?: "N/A"
-                text = studentAnswer
-                setPadding(16, 16, 16, 16)
-                gravity = Gravity.CENTER
-
-                // Optional: Highlight if the student's answer is correct or incorrect
-                setTextColor(
-                    if (studentAnswer == answerKey.answer) Color.GREEN else Color.RED
-                )
-            }
-
-            // Remarks column
-            val remarksView = TextView(context).apply {
-                val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer
-                text = if (studentAnswer == answerKey.answer) "Correct" else "Incorrect"
-                setPadding(16, 16, 16, 16)
-                gravity = Gravity.CENTER
-                setTextColor(
-                    if (text == "Correct") Color.GREEN else Color.RED
-                )
-            }
-
-            // Points column with an editable EditText
-            val pointsEditText = EditText(context).apply {
-                setText(
-                    if (parsedAnswersMap[answerKey.questionNumber]?.isCorrect == true) "1" else "0"
-                )
-                setPadding(16, 16, 16, 16)
-                inputType = InputType.TYPE_CLASS_NUMBER
-                gravity = Gravity.CENTER
-            }
-
-            tableRow.addView(questionNumberView)
-            tableRow.addView(correctAnswerView)
             tableRow.addView(studentAnswerView)
+
+            // Remarks
+            val isCorrect = studentAnswer.equals(answerKey.answer, ignoreCase = true)
+            val remarksView = createTextView(if (isCorrect) "Correct" else "Incorrect").apply {
+                setTextColor(if (isCorrect) Color.GREEN else Color.RED)
+            }
             tableRow.addView(remarksView)
-            tableRow.addView(pointsEditText)
+
+            // Points (editable field)
+            val pointsInput = EditText(context).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER
+                val initialPoints = if (isCorrect) 1 else 0
+                setText("$initialPoints")
+                setPadding(16, 16, 16, 16)
+                gravity = Gravity.CENTER
+
+                // Add text change listener to dynamically update the total score
+                addTextChangedListener { text ->
+                    val enteredPoints = text.toString().toIntOrNull() ?: 0
+
+                    // Calculate the total score dynamically
+                    val currentPoints = (tag as? Int) ?: 0 // Retrieve previously stored points
+                    totalScore += enteredPoints - currentPoints // Adjust total based on change
+                    tag = enteredPoints // Update tag with new points
+
+                    // Update the total score display
+                    updateTotalScore(totalScore)
+                }
+                tag = initialPoints
+            }
+
+            tableRow.addView(pointsInput)
             reviewBinding.answerKeyTable.addView(tableRow)
+
+            // Add the initial points to the total score
+            totalScore += if (isCorrect) 1 else 0
         }
+
+        // Initialize the total score display
+        updateTotalScore(totalScore)
+    }
+
+    private fun createHeaderTextView(text: String) = TextView(context).apply {
+        this.text = text
+        setPadding(16, 16, 16, 16)
+        setTypeface(null, Typeface.BOLD)
+        gravity = Gravity.CENTER
+    }
+
+    private fun createTextView(text: String) = TextView(context).apply {
+        this.text = text
+        setPadding(16, 16, 16, 16)
+        gravity = Gravity.CENTER
+    }
+
+    private fun updateTotalScore(totalScore: Int) {
+        // Update the score field
+        reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("$totalScore")
     }
 
 //    private fun compareAnswers(sheetId: Int, recognizedText: String) {
@@ -420,40 +415,6 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
             requireActivity().onBackPressed()
         }
     }
-
-//    private fun saveImageCapture() {
-//        val studentName = reviewBinding.textInputStudentName.text.toString()
-//        val sectionName = reviewBinding.textInputSection.text.toString()
-//        val score = reviewBinding.textInputScore.text.toString().toIntOrNull() ?: 0
-//
-//        // Step 1: Create or retrieve the StudentEntity
-//        lifecycleScope.launch {
-//            val classEntity = reviewImageViewModel.getClassByName(sectionName)
-//            val classId = classEntity?.classId ?: 0
-//
-//            val student = StudentEntity(studentName = studentName, score = score, classId = classId)
-//            val studentId = reviewImageViewModel.insertStudent(student)
-//
-//            // Step 2: Create and save ImageCaptureEntity
-//            val imageCapture = ImageCaptureEntity(
-//                sheetId = sheetId,
-//                studentId = studentId.toInt(),
-//                imagePath = imagePath,
-//                sectionId = classId,
-//                score = score
-//            )
-//            reviewImageViewModel.insertImageCapture(imageCapture)
-//
-//            // Navigate back or show a success message
-//            requireActivity().onBackPressed()
-//        }
-//
-////        val imageCapture = ImageCaptureEntity(sheetId = sheetId, imagePath = imagePath, lastName = lastName, firstName = firstName, score = score, section = section)
-////
-////        imageCaptureViewModel.insertImageCapture(imageCapture)
-////        // Navigate back or show a success message
-////        requireActivity().onBackPressed()
-//    }
 
     override fun getFragmentTitle(): String {
         return getString(R.string.save_score_title)
