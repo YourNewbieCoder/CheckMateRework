@@ -2,10 +2,13 @@ package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -38,12 +41,8 @@ import com.example.checkmaterework.models.ImageCaptureViewModelFactory
 import com.example.checkmaterework.ui.adapters.CheckSheetsAdapter
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
-import com.google.ai.client.generativeai.type.Tool
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -109,7 +108,7 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Set up the adapter
         checkSheetsAdapter = CheckSheetsAdapter(
             mutableListOf(),
-            onCheckClick = { sheet -> onSheetSelected(sheet) }
+            onCheckClick = { sheet -> showImageSourceOptionsDialog(sheet) }
         )
 
         checkBinding.recyclerViewCreatedSheets.adapter = checkSheetsAdapter
@@ -122,6 +121,61 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         requestCameraPermission()
     }
 
+    private fun showImageSourceOptionsDialog(sheet: AnswerSheetEntity) {
+        val options = arrayOf("Camera", "Gallery")
+        val builder = android.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Choose an Option").setItems(options) { _, which ->
+            when (which) {
+                0 -> checkCameraPermissionAndStart(sheet)
+                1 -> openImagePicker(sheet)
+            }
+        }
+        builder.show()
+    }
+
+    private fun checkCameraPermissionAndStart(sheet: AnswerSheetEntity) {
+        if (allPermissionsGranted()) {
+            onSheetSelected(sheet)
+        } else {
+            requestCameraPermission()
+        }
+    }
+
+    private fun openImagePicker(sheet: AnswerSheetEntity) {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        imagePickerLauncher.launch(intent)
+    }
+
+    private val imagePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == AppCompatActivity.RESULT_OK && result.data != null) {
+            val selectedImageUri = result.data?.data
+            if (selectedImageUri != null) {
+                processGalleryImage(selectedImageUri)
+            } else {
+                Toast.makeText(requireContext(), "No image selected", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun processGalleryImage(imageUri: Uri) {
+        try {
+            val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            if (bitmap != null) {
+                processCapturedImage(bitmap, null, null)
+            } else {
+                Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading image from gallery", e)
+            Toast.makeText(requireContext(), "Error loading image", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun onSheetSelected(sheet: AnswerSheetEntity) {
         // Load the answer keys from the database for the selected sheet
         answerKeyViewModel.loadAnswerKeysForSheet(sheet.id)
@@ -132,26 +186,6 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
                 Log.d("CheckFragment", "Answer key retrieved: ${questions.joinToString("\n")}")
                 // Optionally, show a Toast message to confirm
                 Toast.makeText(requireContext(), "Answer key retrieved successfully", Toast.LENGTH_SHORT).show()
-
-//                // Convert the answer key into a string format to include in the prompt
-//                val answerKeyText = questions.joinToString("\n") {
-//                    "Question ${it.questionNumber}: ${it.answer}"
-//                }
-//
-//                // Generate the feedback with Gemini and include the answer key
-//                generateFeedbackWithGemini(sheet, answerKeyText) { feedback ->
-//                    // Send the generated feedback and image to the ReviewImageFragment
-//                    val reviewImageFragment = ReviewImageFragment.newInstance(
-//                        sheet.id,
-//                        File(photoFile.absolutePath).absolutePath,
-//                        feedback
-//                    )
-//                    parentFragmentManager.beginTransaction()
-//                        .replace(R.id.frameContainer, reviewImageFragment)
-//                        .addToBackStack(null)
-//                        .commit()
-//                }
-
             } else {
                 Log.d("CheckFragment", "No answer key found for the selected sheet.")
             }
@@ -234,7 +268,7 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    private fun capturePhoto(sheet: AnswerSheetEntity) {
+    private fun capturePhoto(sheet: AnswerSheetEntity?) {
         val imageCapture = imageCapture ?: return
         val photoFile = File(requireContext().filesDir, "image_${System.currentTimeMillis()}.jpg")
 
@@ -248,13 +282,6 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
 
                     // Process the image for text recognition
                     processCapturedImage(bitmap, sheet, photoFile)
-
-                    // Send recognized text to ReviewImageFragment
-//                    val reviewImageFragment = ReviewImageFragment.newInstance(sheet.id, photoFile.absolutePath)
-//                    parentFragmentManager.beginTransaction()
-//                        .replace(R.id.frameContainer, reviewImageFragment)
-//                        .addToBackStack(null)
-//                        .commit()
                 }
 
                 override fun onError(exc: ImageCaptureException) {
@@ -264,43 +291,12 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         )
     }
 
-    private fun processCapturedImage(bitmap: Bitmap, sheet: AnswerSheetEntity, photoFile: File) {
-        // Apply any preprocessing steps (optional)
-//        val processedImage = preprocessImage(imageBitmap)
-
-        // Prepare multimodal input content for Gemini
-//        val inputText = "This is a student's answer sheet. Evaluate the student's answers."
-
-        // Fetch the answer key for the selected sheet
-        answerKeyViewModel.loadAnswerKeysForSheet(sheet.id)
-
-//        answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
-//            if (questions.isNotEmpty()) {
-//                // Convert the answer key into a format suitable for inclusion in the prompt
-//                val answerKeyText = questions.joinToString("\n") { "${it.questionNumber}: ${it.answer}" }
-//
-//                generateFeedbackWithGemini(bitmap, answerKeyText) { feedback ->
-//                    // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
-//                    val reviewImageFragment = ReviewImageFragment.newInstance(
-//                        sheet.id,
-//                        photoFile.absolutePath,
-//                        feedback
-//                    )
-//                    parentFragmentManager.beginTransaction()
-//                        .replace(R.id.frameContainer, reviewImageFragment)
-//                        .addToBackStack(null)
-//                        .commit()
-//                }
-//            } else {
-//                Log.d("CheckFragment", "No answer key found for the selected sheet.")
-//            }
-//        }
-
+    private fun processCapturedImage(bitmap: Bitmap, sheet: AnswerSheetEntity?, photoFile: File?) {
         generateFeedbackWithGemini(bitmap) { feedback ->
             // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
             val reviewImageFragment = ReviewImageFragment.newInstance(
-                sheet.id,
-                photoFile.absolutePath,
+                sheet!!.id,
+                photoFile!!.absolutePath,
                 feedback
             )
             parentFragmentManager.beginTransaction()
@@ -310,7 +306,7 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         }
     }
 
-    val modelResponses = listOf(
+    private val modelResponses = listOf(
         """
     Name: Ayumu Uehara
     Class/Section: 6-Sampaguita
@@ -385,7 +381,7 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Add more responses as needed
     )
 
-    val imageResourceIds = listOf(
+    private val imageResourceIds = listOf(
         R.drawable.uehara_4th_summative_test,
         R.drawable.arashi_1st_seatwork,
         R.drawable.asaka_4th_summative_test
@@ -396,7 +392,7 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         return context?.let { BitmapFactory.decodeResource(it.resources, resId) }
     }
 
-    fun generateChatHistoryWithResponses(context: Context?): List<Content> {
+    private fun generateChatHistoryWithResponses(context: Context?): List<Content> {
         val chatHistory = mutableListOf<Content>()
 
         // Initial user input
@@ -432,597 +428,6 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
                 text("Please provide the images of the student answer sheets. I need to see the images to extract the answers, name, and section. I will then format the output as requested.")
             }
         )
-
-//        // Pair image resources and their corresponding responses
-//        val pairedData = listOf(
-//            R.drawable.emmanuel_esplana to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Emmanuel Geoffrey G. Esplana
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 09/28/2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                (7 x 2) / (9 x 3) = 14/27
-//                14/27 is the part of class who joined camping
-//            """,
-//            R.drawable.kim_ortiz to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Kim Ortiz
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                Kg of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.aj_pangas to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: AJ Panggas
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 09-24-27
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.cleoford_crispo to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Cleoford Crispo
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 09/27/24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.kristelle_joy to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Kristelle Joy Garcia
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kg of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.ricky_mirano to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Ricky Mirano
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.elaiza_bajaro to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Elaiza J. Bajao
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: September 28, 2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of the class who joined the camping are girls.
-//                Given (G):
-//                7/9 of class are girls
-//                4/3 of girls joined Girls Scout
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of the class who joined the camping are girls.
-//
-//                6-10.
-//                Asked (A):
-//                Kilograms of sugar Jessa used for cooking puto.
-//                Given (G):
-//                3/4 kg of sugar, 1/4 of it used to cook puto.
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar Jessa used for cooking puto.
-//            """,
-//            R.drawable.elena_castillo to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Elena R. Castilo
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: September 28, 2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping.
-//                Given (G):
-//                7/4, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping.
-//
-//                6-10.
-//                Asked (A):
-//                Kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.michelle_panday to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Michelle Panday
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping (Multiplication fraction)
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kg of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.jaybee_sucal to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Jaybee Sucal
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.joyce_villa to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Joyce Villa
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kg of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.christine_tamondong to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Christine Tamondong
-//                Class/Section: CS1
-//                Teacher: Almonte, Regina
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kg of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.caryl_hores to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Carly Hores
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: 9-27-24
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = N
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping
-//
-//                6-10.
-//                Asked (A):
-//                kg of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = N
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.ryan_bardilla to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Ryan A. Bardilla
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: September 28, 2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of the class who joined the camping are girls.
-//                Given (G):
-//                7/9 of class are girls
-//                2/3 of girls joined Girl Scout
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of the class who joined the camping are girls
-//
-//                6-10.
-//                Asked (A):
-//                Kilograms of sugar Jessa used for cooking puto.
-//                Given (G):
-//                3/4 kg of sugar, 1/4 of it used to cook puto
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar Jessa used for cooking puto.
-//            """,
-//            R.drawable.luisa_flores to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Luisa T. Flores
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: September 28, 2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of the class who joined the camping are girls.
-//                Given (G):
-//                7/9 of class are girls
-//                4/3 of girls joined Girl Scout
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of the class who joined the camping are girls
-//
-//                6-10.
-//                Asked (A):
-//                Kilogram of sugar Jessa used for cooking puto.
-//                Given (G):
-//                3/4 kg of sugar, 1/4 of it used to cook puto.
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar Jessa used for cooking puto.
-//            """,
-//            R.drawable.nagena_ariola to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Nagene Ariola
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: September 28, 2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping.
-//
-//                6-10.
-//                Asked (A):
-//                Kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """,
-//            R.drawable.noriel_zubiri to """
-//                Answer Sheet Name: Seatwork 1
-//                Name: Noriel C. Zubiri
-//                Class/Section: CS1
-//                Teacher: Regina Almonte
-//                Date: September 28, 2024
-//
-//                1-5.
-//                Asked (A):
-//                Part of class who joined camping
-//                Given (G):
-//                7/9, 2/3
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                7/9 x 2/3 = N
-//                Solution/Answer (A):
-//                7/9 x 2/3 = 14/27
-//                14/27 is the part of class who joined camping.
-//
-//                6-10.
-//                Asked (A):
-//                Kilograms of sugar used
-//                Given (G):
-//                3/4 kg, 1/4
-//                Operation (O):
-//                Multiplication
-//                Number Sentence (N):
-//                3/4 x 1/4 = N
-//                Solution/Answer (A):
-//                3/4 x 1/4 = 3/16
-//                3/16 kg of sugar was used
-//            """
-//        )
-
-//        // Loop through each image and generate content
-//        pairedData.forEach { (imageResId, responseText) ->
-//            val imageBitmap = decodeImageResource(context, imageResId)
-//
-//            // Add user content with the image
-//            chatHistory.add(content("user") {
-//                imageBitmap?.let { image(it) }
-//            })
-//
-//            // Add model response content
-//            chatHistory.add(content("model") {
-//                text(responseText)
-//            })
-//        }
 
         // Loop through images and generate corresponding chat content
         imageResourceIds.forEachIndexed { index, resId ->
@@ -1065,75 +470,6 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
             }
         }
     }
-
-//    private fun recognizeTextFromImage(imageBitmap: Bitmap, onTextRecognized: (String) -> Unit) {
-//        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-//        val inputImage = InputImage.fromBitmap(imageBitmap, 0)
-//
-//        recognizer.process(inputImage)
-//            .addOnSuccessListener { visionText ->
-//                val recognizedText = visionText.text
-//                onTextRecognized(recognizedText)
-//            }
-//            .addOnFailureListener { e ->
-//                Log.e(TAG, "Error recognizing text: ", e)
-//            }
-//    }
-
-//    private fun matchAnswers(recognizedAnswers: Map<Int, String>, answerKeys: List<QuestionEntity>): List<Pair<Int, Boolean>> {
-//        val results = mutableListOf<Pair<Int, Boolean>>()
-//
-//        for (question in answerKeys) {
-//            val recognizedAnswer = recognizedAnswers[question.questionNumber]
-//            val isCorrect = recognizedAnswer == question.answer
-//            results.add(Pair(question.questionNumber, isCorrect))
-//        }
-//
-//        return results
-//    }
-//
-//    private fun showResults(results: List<Pair<Int, Boolean>>) {
-//        val resultString = results.joinToString("\n") { (question, isCorrect) ->
-//            "Q$question: ${if (isCorrect) "Correct" else "Incorrect"}"
-//        }
-//        Toast.makeText(requireContext(), resultString, Toast.LENGTH_LONG).show()
-//    }
-
-//    private fun processCapturedImage(imageBitmap: Bitmap): String {
-//        // Step 1: Apply any image preprocessing (e.g., grayscale, resizing, rotation, etc.)
-//        val processedImage = preprocessImage(imageBitmap)
-//
-//        // Step 2: Perform text recognition using ML Kit or other OCR library
-//        val recognizedText = recognizeTextFromImage(processedImage)
-//
-//        // Step 3: Parse the recognized text
-////        return parseRecognizedText(recognizedText)
-//        return recognizedText
-//    }
-
-//    private fun preprocessImage(imageBitmap: Bitmap): Bitmap {
-//        // Example: convert to grayscale
-//        // You can also apply OpenCV transformations here
-//        return imageBitmap // Adjust the image as per requirement
-//    }
-
-//    private fun recognizeTextFromImage(imageBitmap: Bitmap): String {
-//        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-//        val image = InputImage.fromBitmap(imageBitmap, 0) // 0 is the default rotation
-//
-//        var recognizedText = ""
-//        recognizer.process(image)
-//            .addOnSuccessListener { visionText ->
-//                recognizedText = visionText.text
-//            }
-//            .addOnFailureListener { e ->
-//                // Handle error
-//                Log.e("OCR", "Error recognizing text: ", e)
-//            }
-//
-//        return recognizedText // Ensure this is handled correctly in real-time
-//    }
-
 
     private fun closeCameraAndReturn() {
         // Unbind all use cases to stop the camera
