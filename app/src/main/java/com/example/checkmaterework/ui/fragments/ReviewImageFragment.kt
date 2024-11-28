@@ -451,11 +451,10 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         private const val ARG_RECOGNIZED_TEXT = "recognized_text"
 
         @JvmStatic
-        fun newInstance(sheetId: Int, imagePath: String, recognizedText: String): ReviewImageFragment =
+        fun newInstance(sheetId: Int, recognizedText: String): ReviewImageFragment =
             ReviewImageFragment().apply {
                 arguments = Bundle().apply {
                     putInt(ARG_SHEET_ID, sheetId)
-                    putString(ARG_IMAGE_PATH, imagePath)
                     putString(ARG_RECOGNIZED_TEXT, recognizedText)
                 }
             }

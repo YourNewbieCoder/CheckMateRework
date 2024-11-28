@@ -25,6 +25,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -70,7 +71,6 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
     private lateinit var buttonCheckPaper: Button
 
     private var selectedSheet: AnswerSheetEntity? = null
-    private var capturedPhotoFile: File? = null
 
     private lateinit var generativeModel: GenerativeModel
 
@@ -185,11 +185,6 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
 
-            capturedPhotoFile = File(requireContext().cacheDir, "gallery_image_${System.currentTimeMillis()}.jpg")
-            capturedPhotoFile?.outputStream()?.use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
-            }
-
             if (bitmap != null) {
                 showImagePreview(bitmap)
             } else {
@@ -289,31 +284,68 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
 
     private fun capturePhoto(sheet: AnswerSheetEntity?) {
         val imageCapture = imageCapture ?: return
-        val photoFile = File(requireContext().filesDir, "image_${System.currentTimeMillis()}.jpg")
 
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
         imageCapture.takePicture(
-            outputOptions, ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    // Decode the captured image as a Bitmap
-                    val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
-                    capturedPhotoFile = photoFile // Store the photo file
+            ContextCompat.getMainExecutor(requireContext()),
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    try {
+                        // Convert ImageProxy to Bitmap and handle rotation
+                        val rotationDegrees = image.imageInfo.rotationDegrees
+                        val bitmap = image.toBitmap().rotate(rotationDegrees)
 
-                    if (bitmap != null) {
-                        // Display the captured image
+                        // Display the rotated Bitmap
                         showImagePreview(bitmap)
-                    } else {
-                        Toast.makeText(requireContext(), "Failed to capture image", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error processing captured image", e)
+                        Toast.makeText(requireContext(), "Failed to process image", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        // Close the ImageProxy to free resources
+                        image.close()
                     }
                 }
 
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Image capture failed", exc)
+                    Toast.makeText(requireContext(), "Failed to capture image: ${exc.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         )
     }
+
+    private fun Bitmap.rotate(degrees: Int): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(degrees.toFloat())
+        return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    }
+
+//    private fun capturePhoto(sheet: AnswerSheetEntity?) {
+//        val imageCapture = imageCapture ?: return
+//        val photoFile = File(requireContext().filesDir, "image_${System.currentTimeMillis()}.jpg")
+//
+//        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+//        imageCapture.takePicture(
+//            outputOptions, ContextCompat.getMainExecutor(requireContext()),
+//            object : ImageCapture.OnImageSavedCallback {
+//                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+//                    // Decode the captured image as a Bitmap
+//                    val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+//                    capturedPhotoFile = photoFile // Store the photo file
+//
+//                    if (bitmap != null) {
+//                        // Display the captured image
+//                        showImagePreview(bitmap)
+//                    } else {
+//                        Toast.makeText(requireContext(), "Failed to capture image", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//
+//                override fun onError(exc: ImageCaptureException) {
+//                    Log.e(TAG, "Image capture failed", exc)
+//                }
+//            }
+//        )
+//    }
 
     private fun showImagePreview(bitmap: Bitmap) {
         checkBinding.imageViewSelected.apply {
@@ -335,10 +367,9 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         val bitmap = (imageViewSelected.drawable as? BitmapDrawable)?.bitmap
         if (bitmap != null) {
             val sheet = selectedSheet
-            val photoFile = capturedPhotoFile
 
             if (sheet != null) {
-                processCapturedImage(bitmap, sheet, photoFile)
+                processCapturedImage(bitmap, sheet)
             } else {
                 Toast.makeText(requireContext(), "No answer sheet selected", Toast.LENGTH_SHORT).show()
             }
@@ -347,12 +378,11 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         }
     }
 
-    private fun processCapturedImage(bitmap: Bitmap, sheet: AnswerSheetEntity?, photoFile: File?) {
+    private fun processCapturedImage(bitmap: Bitmap, sheet: AnswerSheetEntity?) {
         generateFeedbackWithGemini(bitmap) { feedback ->
             // Send the generated feedback, including the answer key and image, to the ReviewImageFragment
             val reviewImageFragment = ReviewImageFragment.newInstance(
                 sheet!!.id,
-                photoFile!!.absolutePath,
                 feedback
             )
             parentFragmentManager.beginTransaction()
