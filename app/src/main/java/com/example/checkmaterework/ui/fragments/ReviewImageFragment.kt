@@ -240,24 +240,29 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
             // Correct Answer
             tableRow.addView(createTextView(answerKey.answer))
 
-            // Student's Answer
+            // Student's Answer (editable field)
             val studentAnswer = parsedAnswersMap[answerKey.questionNumber]?.answer ?: "N/A"
-            val studentAnswerView = createTextView(studentAnswer).apply {
+            val studentAnswerView = EditText(context).apply {
+                setText(studentAnswer)
+                setPadding(16, 16, 16, 16)
+                setTextColor(Color.BLACK)
+                gravity = Gravity.CENTER
+                setBackgroundResource(android.R.drawable.edit_text)
+
+                // Set the text color based on whether the answer is correct or not
                 setTextColor(if (studentAnswer.equals(answerKey.answer, ignoreCase = true)) Color.GREEN else Color.RED)
             }
-            tableRow.addView(studentAnswerView)
 
             // Remarks
             val isCorrect = studentAnswer.equals(answerKey.answer, ignoreCase = true)
             val remarksView = createTextView(if (isCorrect) "Correct" else "Incorrect").apply {
                 setTextColor(if (isCorrect) Color.GREEN else Color.RED)
             }
-            tableRow.addView(remarksView)
 
             // Points (editable field)
             val pointsInput = EditText(context).apply {
                 inputType = InputType.TYPE_CLASS_NUMBER
-                val initialPoints = if (isCorrect) 1 else 0
+                val initialPoints = if (studentAnswer.equals(answerKey.answer, ignoreCase = true)) 1 else 0
                 setText("$initialPoints")
                 setPadding(16, 16, 16, 16)
                 setTextColor(Color.BLACK)
@@ -278,11 +283,41 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 tag = initialPoints
             }
 
+            // Add text change listener to dynamically update Remarks, Points, and total score
+            studentAnswerView.addTextChangedListener { text ->
+                val updatedAnswer = text.toString()
+
+                // Update the color based on whether the updated answer is correct or not
+                studentAnswerView.setTextColor(if (updatedAnswer.equals(answerKey.answer, ignoreCase = true)) Color.GREEN else Color.RED)
+
+                // Update Remarks
+                val isUpdatedCorrect = updatedAnswer.equals(answerKey.answer, ignoreCase = true)
+                remarksView.text = if (isUpdatedCorrect) "Correct" else "Incorrect"
+                remarksView.setTextColor(if (isUpdatedCorrect) Color.GREEN else Color.RED)
+
+                // Update Points
+                val points = if (isUpdatedCorrect) 1 else 0
+                pointsInput.setText("$points")
+
+                // Update the total score dynamically
+                val currentPoints = (pointsInput.tag as? Int) ?: 0 // Retrieve previously stored points
+                totalScore += points - currentPoints // Adjust total based on change
+                pointsInput.tag = points // Update tag with new points
+
+                // Update the total score display
+                updateTotalScore(totalScore)
+            }
+
+            // Add views to the table row
+            tableRow.addView(studentAnswerView)
+            tableRow.addView(remarksView)
             tableRow.addView(pointsInput)
+
+            // Add the row to the table
             reviewBinding.answerKeyTable.addView(tableRow)
 
             // Add the initial points to the total score
-            totalScore += if (isCorrect) 1 else 0
+            totalScore += if (studentAnswer.equals(answerKey.answer, ignoreCase = true)) 1 else 0
         }
 
         // Initialize the total score display

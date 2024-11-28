@@ -419,29 +419,29 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
     20. (No answer provided)
     """,
         """
-    **Name:** Chisato Araoshi
-    **Class/Section:** 6-Jade
+    Name: Chisato Araoshi
+    Class/Section: 6-Jade
 
-    **1-5.**
-    **Asked (A):** How many chairs is taken away or left
-    **Given (G):** 19 chairs, 12 chairs
-    **Operation (O):** (No answer provided)
-    **Number Sentence (N):** (No answer provided)
-    **Solution/Answer (A):** 19 - 12 = 7 chairs
+    1-5.
+    Asked (A): How many chairs is taken away or left
+    Given (G): 19 chairs, 12 chairs
+    Operation (O): (No answer provided)
+    Number Sentence (N): (No answer provided)
+    Solution/Answer (A): 19 - 12 = 7 chairs
     There are 7 chairs left in the auditorium.
 
-    **6-10.**
-    **Asked (A):** (No answer provided)
-    **Given (G):** (No answer provided)
-    **Operation (O):** Division
-    **Number Sentence (N):** 81 / 9 = N
-    **Solution/Answer (A):** 81 ÷ 9 = 9
+    6-10.
+    Asked (A): (No answer provided)
+    Given (G): (No answer provided)
+    Operation (O): Division
+    Number Sentence (N): 81 / 9 = N
+    Solution/Answer (A): 81 ÷ 9 = 9
     There are 9 tables needed to collect all the fruits baskets.
     """,
         """
-    **Name:** Karin Asaka
-    **Class/Section:** Ilang-Ilang
-    **Date:** July 4, 1989
+    Name: Karin Asaka
+    Class/Section: Ilang-Ilang
+    Date: July 4, 1989
 
     1.  (No answer provided)
     2.  D

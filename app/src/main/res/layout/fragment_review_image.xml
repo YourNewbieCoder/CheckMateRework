@@ -48,23 +48,6 @@
                 android:textSize="16sp"
                 android:visibility="gone"
                 tools:text="Parsed answers will be shown here" />
-            
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="horizontal">
-
-                <TableLayout
-                    android:id="@+id/answerKeyTable"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:background="@color/white"
-                    android:elevation="4dp"
-                    android:padding="16dp"
-                    android:stretchColumns="1" />
-
-            </HorizontalScrollView>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/ThemeOverlay.Material3.AutoCompleteTextView.OutlinedBox.Dense"
@@ -94,19 +77,6 @@
                     android:hint="Section" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Add a new TextView to show item-by-item analysis -->
-            <TextView
-                android:id="@+id/textViewItemAnalysis"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Item Analysis"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="Question 1: Correct, Question 2: Incorrect, ..." />
-
-
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/ThemeOverlay.Material3.AutoCompleteTextView.OutlinedBox.Dense"
                 android:layout_width="match_parent"
@@ -121,6 +91,36 @@
                     android:hint="Score"
                     android:inputType="number"/>
             </com.google.android.material.textfield.TextInputLayout>
+
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="horizontal">
+
+                <TableLayout
+                    android:id="@+id/answerKeyTable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:background="@color/white"
+                    android:elevation="4dp"
+                    android:padding="16dp"
+                    android:stretchColumns="1" />
+
+            </HorizontalScrollView>
+
+            <!-- Add a new TextView to show item-by-item analysis -->
+            <TextView
+                android:id="@+id/textViewItemAnalysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Item Analysis"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Question 1: Correct, Question 2: Incorrect, ..." />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonSave"
