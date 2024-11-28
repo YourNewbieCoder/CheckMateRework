@@ -102,6 +102,25 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         // Parse recognized text and compare with answer key
         parsedAnswers = parseRecognizedText(recognizedText)
 
+        // Parse name and section from recognized text
+        val (studentName, studentSection) = parseNameAndSection(recognizedText)
+
+        // Populate the input fields with the parsed data
+        reviewBinding.textInputStudentName.setText(studentName)
+        reviewBinding.textInputSection.setText(studentSection)
+
+        if (studentName != null) {
+            Log.d("Student Info", "Name: $studentName")
+        } else {
+            Log.d("Student Info", "Name not detected")
+        }
+
+        if (studentSection != null) {
+            Log.d("Student Info", "Section: $studentSection")
+        } else {
+            Log.d("Student Info", "Section not detected")
+        }
+
         // Display parsed answers with analysis
         val parsedAnswersText = parsedAnswers.joinToString("\n") { parsedAnswer ->
             "Q${parsedAnswer.questionNumber}: ${parsedAnswer.answer} - " +
@@ -161,6 +180,42 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         }
 
         return answersList
+    }
+
+    private fun parseNameAndSection(recognizedText: String): Pair<String?, String?> {
+        var name: String? = null
+        var section: String? = null
+
+        // Split the recognized text into lines
+        val lines = recognizedText.split("\n")
+
+        // Define regex patterns for name and section
+        val namePattern = Regex("""(?i)name\s*[:\-]\s*(.+)""") // Matches "Name: John Doe"
+        val sectionPattern = Regex("""(?i)section\s*[:\-]\s*(.+)""") // Matches "Section: 10-A"
+
+        for (line in lines) {
+            val trimmedLine = line.trim()
+
+            // Match name
+            if (name == null) {
+                val nameMatch = namePattern.find(trimmedLine)
+                if (nameMatch != null) {
+                    name = nameMatch.groupValues[1].trim()
+                }
+            }
+
+            // Match section
+            if (section == null) {
+                val sectionMatch = sectionPattern.find(trimmedLine)
+                if (sectionMatch != null) {
+                    section = sectionMatch.groupValues[1].trim()
+                }
+            }
+
+            // Stop searching if both values are found
+            if (name != null && section != null) break
+        }
+        return Pair(name, section)
     }
 
 //    private fun parseRecognizedText(recognizedText: String): Map<Int, String> {
@@ -279,6 +334,11 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
 
                     // Update the total score display
                     updateTotalScore(totalScore)
+
+                    // Update remarks based on entered points
+                    val remarks = if (enteredPoints > 0) "Correct" else "Incorrect"
+                    remarksView.text = remarks
+                    remarksView.setTextColor(if (enteredPoints > 0) Color.GREEN else Color.RED)
                 }
                 tag = initialPoints
             }
