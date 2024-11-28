@@ -29,12 +29,34 @@
         android:textColor="@color/black"
         android:textSize="25sp" />
 
+    <!-- Add ImageView to display the selected image -->
+    <ImageView
+        android:id="@+id/imageViewSelected"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/recyclerViewCreatedSheets"
+        android:scaleType="fitCenter"
+        android:visibility="gone" /> <!-- Initially hidden -->
+
     <!-- Add PreviewView for CameraX here -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"/> <!-- Initially hidden -->
+
+    <Button
+        android:id="@+id/buttonScan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/blue"
+        android:text="Scan Paper"
+        android:textColor="@color/white"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/buttonCheck"

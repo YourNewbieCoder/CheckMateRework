@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -14,8 +15,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.camera.core.CameraSelector
@@ -62,24 +66,19 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
+    private lateinit var imageViewSelected: ImageView
+    private lateinit var buttonCheckPaper: Button
+
+    private var selectedSheet: AnswerSheetEntity? = null
+    private var capturedPhotoFile: File? = null
+
     private lateinit var generativeModel: GenerativeModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerSheetDao()
-        answerSheetViewModel = ViewModelProvider(this, AnswerSheetViewModelFactory(dao))
-            .get(AnswerSheetViewModel::class.java)
-
-        val answerKeyDao = AnswerSheetDatabase.getDatabase(requireContext()).answerKeyDao()
-        answerKeyViewModel = ViewModelProvider(this, AnswerKeyViewModelFactory(answerKeyDao))
-            .get(AnswerKeyViewModel::class.java)
-
-        val imageCaptureDao = AnswerSheetDatabase.getDatabase(requireContext()).imageCaptureDao()
-        imageCaptureViewModel = ViewModelProvider(this, ImageCaptureViewModelFactory(imageCaptureDao))
-            .get(ImageCaptureViewModel::class.java)
+        initializeViewModels()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-
 
         generativeModel = GenerativeModel(
             "gemini-1.5-flash",
@@ -102,28 +101,52 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupRecyclerView()
 
-        checkBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
+        // Initialize the ImageView and "Check Paper" button
+        imageViewSelected = view.findViewById(R.id.imageViewSelected)
+        buttonCheckPaper = view.findViewById(R.id.buttonCheck)
 
-        // Set up the adapter
-        checkSheetsAdapter = CheckSheetsAdapter(
-            mutableListOf(),
-            onCheckClick = { sheet -> showImageSourceOptionsDialog(sheet) }
-        )
+        // Initially hide the image view and button
+        imageViewSelected.visibility = View.GONE
+        buttonCheckPaper.visibility = View.GONE
 
-        checkBinding.recyclerViewCreatedSheets.adapter = checkSheetsAdapter
-
-        answerSheetViewModel.createdSheetList.observe(viewLifecycleOwner) { sheets ->
-            checkSheetsAdapter.updateSheetList(sheets)
-        }
+        buttonCheckPaper.setOnClickListener { checkPaper() }
 
         // Request camera permissions
         requestCameraPermission()
     }
 
+    private fun initializeViewModels() {
+        val database = AnswerSheetDatabase.getDatabase(requireContext())
+        answerSheetViewModel = ViewModelProvider(this, AnswerSheetViewModelFactory(database.answerSheetDao()))
+            .get(AnswerSheetViewModel::class.java)
+
+        answerKeyViewModel = ViewModelProvider(this, AnswerKeyViewModelFactory(database.answerKeyDao()))
+            .get(AnswerKeyViewModel::class.java)
+
+        imageCaptureViewModel = ViewModelProvider(this, ImageCaptureViewModelFactory(database.imageCaptureDao()))
+            .get(ImageCaptureViewModel::class.java)
+    }
+
+    private fun setupRecyclerView() {
+        checkBinding.recyclerViewCreatedSheets.layoutManager = LinearLayoutManager(requireContext())
+
+        // Set up the adapter
+        checkSheetsAdapter = CheckSheetsAdapter(mutableListOf(),
+            onCheckClick = { sheet -> showImageSourceOptionsDialog(sheet) }
+        )
+        checkBinding.recyclerViewCreatedSheets.adapter = checkSheetsAdapter
+
+        answerSheetViewModel.createdSheetList.observe(viewLifecycleOwner) { sheets ->
+            checkSheetsAdapter.updateSheetList(sheets)
+        }
+    }
+
     private fun showImageSourceOptionsDialog(sheet: AnswerSheetEntity) {
+        selectedSheet = sheet
         val options = arrayOf("Camera", "Gallery")
-        val builder = android.app.AlertDialog.Builder(requireContext())
+        val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Choose an Option").setItems(options) { _, which ->
             when (which) {
                 0 -> checkCameraPermissionAndStart(sheet)
@@ -134,11 +157,8 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
     }
 
     private fun checkCameraPermissionAndStart(sheet: AnswerSheetEntity) {
-        if (allPermissionsGranted()) {
-            onSheetSelected(sheet)
-        } else {
-            requestCameraPermission()
-        }
+        if (allPermissionsGranted()) onSheetSelected(sheet)
+        else requestCameraPermission()
     }
 
     private fun openImagePicker(sheet: AnswerSheetEntity) {
@@ -165,8 +185,13 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
 
+            capturedPhotoFile = File(requireContext().cacheDir, "gallery_image_${System.currentTimeMillis()}.jpg")
+            capturedPhotoFile?.outputStream()?.use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            }
+
             if (bitmap != null) {
-                processCapturedImage(bitmap, null, null)
+                showImagePreview(bitmap)
             } else {
                 Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
             }
@@ -183,14 +208,18 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         // Observe the savedAnswerKeys LiveData to see if the correct data is retrieved
         answerKeyViewModel.savedAnswerKeys.observe(viewLifecycleOwner) { questions ->
             if (questions.isNotEmpty()) {
-                Log.d("CheckFragment", "Answer key retrieved: ${questions.joinToString("\n")}")
-                // Optionally, show a Toast message to confirm
+//                Log.d("CheckFragment", "Answer key retrieved: ${questions.joinToString("\n")}")
                 Toast.makeText(requireContext(), "Answer key retrieved successfully", Toast.LENGTH_SHORT).show()
             } else {
-                Log.d("CheckFragment", "No answer key found for the selected sheet.")
+//                Log.d("CheckFragment", "No answer key found for the selected sheet.")
+                Toast.makeText(requireContext(), "No answer key found for the selected sheet.", Toast.LENGTH_SHORT).show()
             }
         }
 
+        showCameraPreview(sheet)
+    }
+
+    private fun showCameraPreview(sheet: AnswerSheetEntity) {
         // Show the back arrow and toolbar
         val activity = requireActivity() as AppCompatActivity
         activity.setSupportActionBar(activity.findViewById(R.id.myToolbar))
@@ -218,22 +247,12 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         checkBinding.recyclerViewCreatedSheets.visibility = View.GONE
 
         // Show the "Take Picture" button
-        checkBinding.buttonCheck.apply {
+        checkBinding.buttonScan.apply {
             visibility = View.VISIBLE
             setOnClickListener { capturePhoto(sheet) }
         }
 
-        openCameraToCheckSheet(sheet)
-
-    }
-
-    private fun openCameraToCheckSheet(sheet: AnswerSheetEntity) {
-        // Make sure camera permissions are granted
-        if (allPermissionsGranted()) {
-            startCamera()
-        } else {
-            requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-        }
+        startCamera()
     }
 
     private fun startCamera() {
@@ -244,8 +263,8 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
             cameraProvider = cameraProviderFeature.get()
 
             //Preview
-            val preview = Preview.Builder().build().also {
-                it.surfaceProvider = checkBinding.viewFinder.surfaceProvider
+            val preview = Preview.Builder().build().apply {
+                surfaceProvider = checkBinding.viewFinder.surfaceProvider
             }
 
             //ImageCapture
@@ -279,9 +298,14 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     // Decode the captured image as a Bitmap
                     val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+                    capturedPhotoFile = photoFile // Store the photo file
 
-                    // Process the image for text recognition
-                    processCapturedImage(bitmap, sheet, photoFile)
+                    if (bitmap != null) {
+                        // Display the captured image
+                        showImagePreview(bitmap)
+                    } else {
+                        Toast.makeText(requireContext(), "Failed to capture image", Toast.LENGTH_SHORT).show()
+                    }
                 }
 
                 override fun onError(exc: ImageCaptureException) {
@@ -289,6 +313,38 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
                 }
             }
         )
+    }
+
+    private fun showImagePreview(bitmap: Bitmap) {
+        checkBinding.imageViewSelected.apply {
+            setImageBitmap(bitmap)
+            visibility = View.VISIBLE
+        }
+        checkBinding.buttonCheck.visibility = View.VISIBLE
+
+        // Hide the camera preview and button
+        checkBinding.viewFinder.visibility = View.GONE
+        checkBinding.buttonScan.visibility = View.GONE
+
+        // Hide the RecyclerView
+        checkBinding.recyclerViewCreatedSheets.visibility = View.GONE
+        checkBinding.textCheckSheet.visibility = View.GONE
+    }
+
+    private fun checkPaper() {
+        val bitmap = (imageViewSelected.drawable as? BitmapDrawable)?.bitmap
+        if (bitmap != null) {
+            val sheet = selectedSheet
+            val photoFile = capturedPhotoFile
+
+            if (sheet != null) {
+                processCapturedImage(bitmap, sheet, photoFile)
+            } else {
+                Toast.makeText(requireContext(), "No answer sheet selected", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(requireContext(), "No image to process", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun processCapturedImage(bitmap: Bitmap, sheet: AnswerSheetEntity?, photoFile: File?) {

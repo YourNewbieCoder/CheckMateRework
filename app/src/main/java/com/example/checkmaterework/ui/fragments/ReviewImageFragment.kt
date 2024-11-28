@@ -260,6 +260,7 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 val initialPoints = if (isCorrect) 1 else 0
                 setText("$initialPoints")
                 setPadding(16, 16, 16, 16)
+                setTextColor(Color.BLACK)
                 gravity = Gravity.CENTER
 
                 // Add text change listener to dynamically update the total score
@@ -292,12 +293,14 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         this.text = text
         setPadding(16, 16, 16, 16)
         setTypeface(null, Typeface.BOLD)
+        setTextColor(Color.BLACK)
         gravity = Gravity.CENTER
     }
 
     private fun createTextView(text: String) = TextView(context).apply {
         this.text = text
         setPadding(16, 16, 16, 16)
+        setTextColor(Color.BLACK)
         gravity = Gravity.CENTER
     }
 

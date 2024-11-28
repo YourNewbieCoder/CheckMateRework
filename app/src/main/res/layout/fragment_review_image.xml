@@ -33,9 +33,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Recognized Text"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                tools:text="Sample recognized text from the captured image"/>
+                tools:text="Sample recognized text from the captured image" />
 
             <!-- Parsed answers from recognized text -->
             <TextView
