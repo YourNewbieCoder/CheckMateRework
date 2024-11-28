@@ -45,6 +45,7 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
     private lateinit var imagePath: String
     private lateinit var recognizedText: String
     private var parsedAnswers: MutableList<ParsedAnswer> = mutableListOf()
+    private val questionPointsMap = mutableMapOf<Int, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -244,7 +245,11 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 for (question in correctAnswers) {
                     val studentAnswer = studentAnswers[question.questionNumber]?: "No detected answer"
                     val isCorrect = studentAnswer.equals(question.answer, ignoreCase = true)
-                    if (isCorrect) score++
+                    val points = if (isCorrect) 1 else 0
+//                    if (isCorrect) score++
+
+                    // Initialize questionPointsMap
+                    questionPointsMap[question.questionNumber] = points
 
                     // Update parsedAnswers with correctness
                     parsedAnswers.find { it.questionNumber == question.questionNumber }?.isCorrect = isCorrect
@@ -256,7 +261,7 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 // Update the score and item analysis views
 //                reviewBinding.textInputScore.setText("$score")
 //                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("Score: $score / ${correctAnswers.size}")
-                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("$score")
+//                reviewBinding.textInputScore.text = Editable.Factory.getInstance().newEditable("$score")
                 reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
 
                 // Display the answer key in the table
@@ -323,9 +328,15 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 setTextColor(Color.BLACK)
                 gravity = Gravity.CENTER
 
+                // Initialize points for this question
+                questionPointsMap[answerKey.questionNumber] = initialPoints
+
                 // Add text change listener to dynamically update the total score
                 addTextChangedListener { text ->
                     val enteredPoints = text.toString().toIntOrNull() ?: 0
+
+                    // Update the map with the new points
+                    questionPointsMap[answerKey.questionNumber] = enteredPoints
 
                     // Calculate the total score dynamically
                     val currentPoints = (tag as? Int) ?: 0 // Retrieve previously stored points
@@ -339,6 +350,9 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                     val remarks = if (enteredPoints > 0) "Correct" else "Incorrect"
                     remarksView.text = remarks
                     remarksView.setTextColor(if (enteredPoints > 0) Color.GREEN else Color.RED)
+
+                    // Update item analysis dynamically
+                    updateItemAnalysis()
                 }
                 tag = initialPoints
             }
@@ -382,6 +396,18 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
 
         // Initialize the total score display
         updateTotalScore(totalScore)
+    }
+
+    private fun updateItemAnalysis() {
+        val itemAnalysis = StringBuilder("Item Analysis:\n")
+
+        for ((questionNumber, points) in questionPointsMap) {
+            val status = if (points > 0) "Correct" else "Incorrect"
+            itemAnalysis.append("Q$questionNumber: $status\n")
+        }
+
+        // Update the item analysis view
+        reviewBinding.textViewItemAnalysis.text = itemAnalysis.toString()
     }
 
     private fun createHeaderTextView(text: String) = TextView(context).apply {
@@ -445,18 +471,16 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
             }
         } else {
             // Use `parsedAnswers` if available
-            itemAnalysis = parsedAnswers.joinToString("; ") {
-                "Q${it.questionNumber}: ${if (it.isCorrect) "Correct" else "Incorrect"}"
+//            itemAnalysis = parsedAnswers.joinToString("; ") {
+//                "Q${it.questionNumber}: ${if (it.isCorrect) "Correct" else "Incorrect"}"
+//            }
+            itemAnalysis = questionPointsMap.entries.joinToString("; ") { (questionNumber, points) ->
+                "Q$questionNumber: ${if (points > 0) "Correct" else "Incorrect"}"
             }
+
         }
 
         lifecycleScope.launch {
-//            val classEntity = reviewImageViewModel.getClassByName(sectionName)
-//            val classId = classEntity?.classId ?: 0
-
-//            val student = StudentEntity(studentName = studentName, classId = classId)
-//            val studentId = reviewImageViewModel.insertStudent(student)
-
             // Check if the class exists by name
             val classEntity = reviewImageViewModel.getClassByName(sectionName)
             if (classEntity == null) {
@@ -486,17 +510,9 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 return@launch
             }
             Log.d("SaveRecord", "Answer sheet found: ID = $sheetId")
-//
-//            // Check if student exists
-//            val existingStudent = reviewImageViewModel.getStudentByNameAndClass(studentName, classId)
-//            val studentId: Long
-//
-//            if (existingStudent != null) {
-//                studentId = existingStudent.studentId.toLong()
-//            } else {
-//                // Insert new student if not found
-//                val newStudent = StudentEntity(studentName = studentName, classId = classId)
-//                studentId = reviewImageViewModel.insertStudent(newStudent)
+
+//            val itemAnalysis = questionPointsMap.entries.joinToString("; ") { (questionNumber, points) ->
+//                "Q$questionNumber: ${if (points > 0) "Correct" else "Incorrect"}"
 //            }
 
             val studentRecord = StudentRecordEntity(
@@ -505,7 +521,6 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
                 answerSheetId = sheetId,
                 score = score,
                 itemAnalysis = itemAnalysis // Set the new property
-//                examDate = getCurrentDate()
             )
             reviewImageViewModel.insertStudentRecord(studentRecord)
             Log.d("SaveRecord", "Student record saved: StudentID = ${studentRecord.studentId}, ClassID = ${studentRecord.classId}, AnswerSheetID = ${studentRecord.answerSheetId}, Score = ${studentRecord.score}, Item Analysis = ${studentRecord.itemAnalysis}")
