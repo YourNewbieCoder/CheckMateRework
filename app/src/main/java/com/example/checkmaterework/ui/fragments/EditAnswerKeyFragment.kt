@@ -41,6 +41,7 @@ import com.example.checkmaterework.models.AnswerKeyViewModelFactory
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerType
+import com.example.checkmaterework.models.ParsedAnswer
 import com.example.checkmaterework.models.QuestionEntity
 import com.example.checkmaterework.models.TextRecognitionViewModel
 import com.example.checkmaterework.network.AnswerSheetHelper
@@ -373,7 +374,9 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
                 // Set click listener on the "Proceed" button
                 editAnswerKeyBinding.buttonProceedWithImage.setOnClickListener {
-                    recognizeTextFromBitmap(bitmap) // Call text recognition here
+                    generateFeedbackWithGemini(bitmap) { feedback ->
+                        handleFeedback(feedback)
+                    }
                 }
             }
         }
@@ -447,13 +450,135 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
     private fun handleFeedback(feedback: String) {
         if (feedback.isNotBlank()) {
-            // Display or process the feedback
-            textRecognitionViewModel.setRecognizedText(feedback)
-            navigateToScannedKeyFragment(feedback)
+            // Parse the feedback
+            val parsedAnswers = parseRecognizedAnswers(feedback)
+
+            // Display the parsed answers in the UI (pass it to the ScannedKeyFragment)
+            val parsedText = parsedAnswers.joinToString("\n") { parsedAnswer ->
+                when {
+                    parsedAnswer.questionNumber != null -> {
+                        // For multiple-choice or identification questions
+                        "Q${parsedAnswer.questionNumber}: ${parsedAnswer.answer}"
+                    }
+                    parsedAnswer.asked != null -> {
+                        // For word problem type questions
+                        """
+                            Word Problem:
+                            ${parsedAnswer.asked}
+                            ${parsedAnswer.given}
+                            ${parsedAnswer.operation}
+                            ${parsedAnswer.numberSentence}
+                            ${parsedAnswer.solution}       
+                        """.trimIndent()
+                    }
+                    else -> {
+                        // For unrecognized or general text
+                        parsedAnswer.answer
+                    }
+                }
+            }
+
+            // Pass the parsed text to the ScannedKeyFragment
+            textRecognitionViewModel.setRecognizedText(parsedText)
+            navigateToScannedKeyFragment(parsedText)
+
         } else {
             showToast("No feedback received. Please try again.")
         }
     }
+
+    private fun parseRecognizedAnswers(recognizedText: String): List<ParsedAnswer> {
+        val parsedAnswers = mutableListOf<ParsedAnswer>()
+
+        // Split the text by lines or by specific markers
+        val lines = recognizedText.split("\n")
+
+        // Temporary variables for word problem parts
+        var asked: String? = null
+        var given: String? = null
+        var operation: String? = null
+        var numberSentence: String? = null
+        var solution: String? = null
+
+        // Iterate through the lines and parse the data based on patterns
+        for (line in lines) {
+            when {
+                line.contains("Asked") -> {
+                    asked = line.substringAfter("Asked:").trim()
+                }
+                line.contains("Given") -> {
+                    given = line.substringAfter("Given:").trim()
+                }
+                line.contains("Operation") -> {
+                    operation = line.substringAfter("Operation:").trim()
+                }
+                line.contains("Number Sentence") -> {
+                    numberSentence = line.substringAfter("Number Sentence:").trim()
+                }
+                line.contains("Solution/Answer") -> {
+                    solution = line.substringAfter("Solution/Answer:").trim()
+                }
+                line.matches(Regex("""\d+\.\s[A-D]""")) -> {
+                    // This matches multiple choice answers like 1. A, 2. B
+                    val (questionNumber, answer) = parseMultipleChoice(line)
+                    parsedAnswers.add(ParsedAnswer(questionNumber = questionNumber, answer = answer))
+                }
+                line.matches(Regex("""\d+\.\s.*""")) -> {
+                    // Handle identification type answers
+                    val (questionNumber, answer) = parseIdentification(line)
+                    parsedAnswers.add(ParsedAnswer(questionNumber = questionNumber, answer = answer))
+                }
+                else -> {
+                    // Handle word problem if all parts are detected
+                    if (asked != null && given != null && operation != null && numberSentence != null && solution != null) {
+                        parsedAnswers.add(ParsedAnswer(
+                            answer = "Word Problem",
+                            asked = asked,
+                            given = given,
+                            operation = operation,
+                            numberSentence = numberSentence,
+                            solution = solution
+                        ))
+                        // Reset variables for the next word problem
+                        asked = null
+                        given = null
+                        operation = null
+                        numberSentence = null
+                        solution = null
+                    }
+                }
+            }
+        }
+
+        // In case there was a word problem without the final part but with the first parts collected
+        if (asked != null && given != null && operation != null && numberSentence != null && solution != null) {
+            parsedAnswers.add(ParsedAnswer(
+                answer = "Word Problem",
+                asked = asked,
+                given = given,
+                operation = operation,
+                numberSentence = numberSentence,
+                solution = solution
+            ))
+        }
+
+        return parsedAnswers
+    }
+
+    private fun parseMultipleChoice(line: String): Pair<Int, String> {
+        val parts = line.split(".").map { it.trim() }
+        val questionNumber = parts[0].toIntOrNull() ?: -1
+        val answer = parts.getOrElse(1) { "" }
+        return Pair(questionNumber, answer)
+    }
+
+    private fun parseIdentification(line: String): Pair<Int, String> {
+        val parts = line.split(".").map { it.trim() }
+        val questionNumber = parts[0].toIntOrNull() ?: -1
+        val answer = parts.getOrElse(1) { "" }
+        return Pair(questionNumber, answer)
+    }
+
 
     private fun recognizeTextFromBitmap(bitmap: Bitmap?) {
         val image = bitmap?.let { InputImage.fromBitmap(it, 0) }
