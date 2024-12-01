@@ -5,23 +5,33 @@
     android:layout_height="match_parent"
     tools:context=".ui.fragments.ScannedKeyFragment">
 
-    <TextView
-        android:id="@+id/textViewRecognizedText"
-        android:layout_width="wrap_content"
+    <ScrollView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="Scanned text will appear here"
-        android:textSize="20sp" />
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/textViewSavedAnswers"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/textViewRecognizedText"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"
-        android:text="Saved answers will appear here"
-        android:textColor="@android:color/black"
-        android:textSize="18sp" />
+        <TextView
+            android:id="@+id/textViewRecognizedText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Scanned text will appear here"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Sample recognized text from the captured image" />
+
+    </ScrollView>
+
+<!--    <TextView-->
+<!--        android:id="@+id/textViewSavedAnswers"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_below="@id/textViewRecognizedText"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_margin="16dp"-->
+<!--        android:text="Saved answers will appear here"-->
+<!--        android:textColor="@android:color/black"-->
+<!--        android:textSize="18sp" />-->
 
 </RelativeLayout>

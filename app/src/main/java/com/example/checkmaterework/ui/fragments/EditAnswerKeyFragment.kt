@@ -1,6 +1,7 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.Manifest
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -30,6 +31,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import com.example.checkmaterework.BuildConfig
 import com.example.checkmaterework.R
 import com.example.checkmaterework.databinding.FragmentEditAnswerKeyBinding
 import com.example.checkmaterework.models.Answer
@@ -40,6 +43,10 @@ import com.example.checkmaterework.models.AnswerSheetEntity
 import com.example.checkmaterework.models.AnswerType
 import com.example.checkmaterework.models.QuestionEntity
 import com.example.checkmaterework.models.TextRecognitionViewModel
+import com.example.checkmaterework.network.AnswerSheetHelper
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
@@ -47,6 +54,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 
 class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragment(), ToolbarTitleProvider {
@@ -61,6 +69,10 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
     private lateinit var textRecognitionViewModel: TextRecognitionViewModel
 
     private lateinit var answerKeyViewModel: AnswerKeyViewModel
+
+    private lateinit var generativeModel: GenerativeModel
+
+    private lateinit var answerSheetHelper: AnswerSheetHelper
 
     // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
@@ -87,6 +99,20 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val dao = AnswerSheetDatabase.getDatabase(requireContext()).answerKeyDao()
         answerKeyViewModel = ViewModelProvider(this, AnswerKeyViewModelFactory(dao))
             .get(AnswerKeyViewModel::class.java)
+
+        generativeModel = GenerativeModel(
+            "gemini-1.5-flash",
+            BuildConfig.apiKey,
+            generationConfig = generationConfig {
+                temperature = 0.4f
+                topK = 40
+                topP = 0.95f
+                maxOutputTokens = 8192
+                responseMimeType = "text/plain"
+            },
+        )
+
+        answerSheetHelper = AnswerSheetHelper()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -386,10 +412,46 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
             // Set click listener on the "Proceed" button
             editAnswerKeyBinding.buttonProceedWithImage.setOnClickListener {
-                recognizeTextFromBitmap(bitmap) // Call text recognition here
+                generateFeedbackWithGemini(bitmap) { feedback ->
+                    handleFeedback(feedback)
+                }
             }
         } catch (e: FileNotFoundException) {
             showToast("File not found: ${e.message}")
+        }
+    }
+
+    private fun generateFeedbackWithGemini(image: Bitmap, onFeedbackGenerated: (String) -> Unit) {
+        // Prepare chat history based on requirements
+        val chatHistory = answerSheetHelper.generateChatHistoryWithResponses(context)
+
+        // Prepare the input content (image and text)
+        val inputContent = content {
+            image(image) // Include the captured image
+        }
+
+        val chat = generativeModel.startChat(chatHistory)
+
+        // Use coroutine to handle Gemini API response
+        lifecycleScope.launch {
+            try {
+                val response = chat.sendMessage(inputContent)
+                val feedback = response.text ?: "No feedback generated."
+                onFeedbackGenerated(feedback)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating feedback", e)
+                onFeedbackGenerated("Error generating feedback.")
+            }
+        }
+    }
+
+    private fun handleFeedback(feedback: String) {
+        if (feedback.isNotBlank()) {
+            // Display or process the feedback
+            textRecognitionViewModel.setRecognizedText(feedback)
+            navigateToScannedKeyFragment(feedback)
+        } else {
+            showToast("No feedback received. Please try again.")
         }
     }
 
