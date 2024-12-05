@@ -1,10 +1,12 @@
 package com.example.checkmaterework.ui.fragments
 
 import android.os.Bundle
+import android.os.Environment
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
@@ -18,6 +20,9 @@ import com.example.checkmaterework.models.StudentRecordViewModel
 import com.example.checkmaterework.models.StudentRecordViewModelFactory
 import com.example.checkmaterework.ui.adapters.ViewAnalysisAdapter
 import com.example.checkmaterework.ui.fragments.StudentRecordsFragment.Companion
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 
 class AnalysisFragment : Fragment(), ToolbarTitleProvider {
 
@@ -72,7 +77,58 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
                 displayItemAnalysis(records)
             }
         }
+
+        analysisBinding.buttonExportCSV.setOnClickListener {
+            studentRecordViewModel.studentRecordList.observe(viewLifecycleOwner) { records ->
+                if (records.isNullOrEmpty()) {
+                    Toast.makeText(requireContext(), "No records available to export", Toast.LENGTH_SHORT).show()
+                } else {
+                    exportToCSV(records)
+                }
+            }
+        }
+
     }
+
+    private fun exportToCSV(records: List<StudentRecordEntity>) {
+        // Prepare the CSV file data
+        val csvHeader = "Question Number,Correct Students,Incorrect Students\n"
+        val csvData = StringBuilder(csvHeader)
+
+        records.forEach { record ->
+            val analysisParts = record.itemAnalysis.split(";")
+            analysisParts.forEach { part ->
+                if (part.isNotBlank()) {
+                    val (question, status) = part.trim().split(":").map { it.trim() }
+                    val correctCount = if (status.equals("Correct", ignoreCase = true)) 1 else 0
+                    val incorrectCount = if (status.equals("Incorrect", ignoreCase = true)) 1 else 0
+                    csvData.append("$question,$correctCount,$incorrectCount\n")
+                }
+            }
+        }
+
+        // Save the CSV to a file
+        try {
+            val fileName = "${className.replace(" ", "_")}_${answerSheetName.replace(" ", "_")}_item_analysis_${System.currentTimeMillis()}.csv"
+            val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "CheckMate Rework")
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+            val file = File(directory, fileName)
+
+            FileOutputStream(file).use { fos ->
+                OutputStreamWriter(fos).use { writer ->
+                    writer.write(csvData.toString())
+                }
+            }
+
+            // Notify the user
+            Toast.makeText(requireContext(), "CSV exported successfully to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Error exporting CSV: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
 
     private fun displayItemAnalysis(records: List<StudentRecordEntity>) {
         val questionStats = mutableMapOf<String, Pair<Int, Int>>() // Map of "Qn" -> (correctCount, incorrectCount)
