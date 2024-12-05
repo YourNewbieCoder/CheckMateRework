@@ -29,6 +29,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.core.view.forEach
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -169,24 +170,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                         }
                     }
                 }
-//                is LinearLayout -> {
-//                    // For Identification Questions
-//                    for (j in 0 until view.childCount) {
-//                        val child = view.getChildAt(j)
-//                        if (child is TextInputLayout) {
-//                            val questionNumber = child.tag as? Int
-//                            if (questionNumber != null) {
-//                                val answerText = child.editText?.text.toString().trim()
-//                                if (answerText.isNotEmpty()) {
-//                                    answers.add(Answer.Identification(questionNumber, answerText))
-//                                    Log.d("EditAnswerKeyFragment", "Question $questionNumber: $answerText")
-//                                } else {
-//                                    Log.d("EditAnswerKeyFragment", "No answer entered for question $questionNumber.")
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
+
                 is LinearLayout -> {
                     val wordProblemAnswers = mutableMapOf<String, String>()
                     var wordProblemNumber: Int? = null // To track the question number for word problems
@@ -452,28 +436,18 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         if (feedback.isNotBlank()) {
             // Parse the feedback
             val parsedAnswers = parseRecognizedAnswers(feedback)
+            answerKeyViewModel.saveParsedAnswersToDatabase(answerSheet.id, parsedAnswers)
+
+            // Update the UI or navigate if necessary
+            showToast("Parsed answers saved successfully!")
 
             // Display the parsed answers in the UI (pass it to the ScannedKeyFragment)
             val parsedText = parsedAnswers.joinToString("\n") { parsedAnswer ->
                 when {
-                    parsedAnswer.questionNumber != null -> {
-                        // For multiple-choice or identification questions
-                        "Q${parsedAnswer.questionNumber}: ${parsedAnswer.answer}"
-                    }
-                    parsedAnswer.asked != null -> {
-                        // For word problem type questions
-                        """
-                            Word Problem:
-                            ${parsedAnswer.asked}
-                            ${parsedAnswer.given}
-                            ${parsedAnswer.operation}
-                            ${parsedAnswer.numberSentence}
-                            ${parsedAnswer.solution}       
-                        """.trimIndent()
-                    }
+
                     else -> {
-                        // For unrecognized or general text
-                        parsedAnswer.answer
+                        // For multiple-choice or identification questions
+                        "${parsedAnswer.questionNumber}: ${parsedAnswer.answer}"
                     }
                 }
             }
@@ -494,6 +468,7 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         val lines = recognizedText.split("\n")
 
         // Temporary variables for word problem parts
+        var currentQuestionRange: Pair<Int, Int>? = null
         var asked: String? = null
         var given: String? = null
         var operation: String? = null
@@ -503,6 +478,14 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
         // Iterate through the lines and parse the data based on patterns
         for (line in lines) {
             when {
+                // Match question range (e.g., 1-5.)
+                line.matches(Regex("""\d+-\d+\.\s*""")) -> {
+                    // Extract the range
+                    val rangeParts = line.substringBefore(".").split("-").mapNotNull { it.toIntOrNull() }
+                    if (rangeParts.size == 2) {
+                        currentQuestionRange = Pair(rangeParts[0], rangeParts[1])
+                    }
+                }
                 line.contains("Asked") -> {
                     asked = line.substringAfter("Asked:").trim()
                 }
@@ -529,17 +512,23 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                     parsedAnswers.add(ParsedAnswer(questionNumber = questionNumber, answer = answer))
                 }
                 else -> {
-                    // Handle word problem if all parts are detected
-                    if (asked != null && given != null && operation != null && numberSentence != null && solution != null) {
-                        parsedAnswers.add(ParsedAnswer(
-                            answer = "Word Problem",
-                            asked = asked,
-                            given = given,
-                            operation = operation,
-                            numberSentence = numberSentence,
-                            solution = solution
-                        ))
+                    // Process any complete word problem if all parts are detected
+                    if (currentQuestionRange  != null &&
+                        asked != null && given != null && operation != null &&
+                        numberSentence != null && solution != null
+                        ) {
+
+                        val (start, end) = currentQuestionRange
+                        val rangeQuestions = (start..end).toList()
+
+                        parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[0], answer = "$asked"))
+                        parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[1], answer = "$given"))
+                        parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[2], answer = "$operation"))
+                        parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[3], answer = "$numberSentence"))
+                        parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[4], answer = "$solution"))
+
                         // Reset variables for the next word problem
+                        currentQuestionRange = null
                         asked = null
                         given = null
                         operation = null
@@ -550,16 +539,19 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             }
         }
 
-        // In case there was a word problem without the final part but with the first parts collected
-        if (asked != null && given != null && operation != null && numberSentence != null && solution != null) {
-            parsedAnswers.add(ParsedAnswer(
-                answer = "Word Problem",
-                asked = asked,
-                given = given,
-                operation = operation,
-                numberSentence = numberSentence,
-                solution = solution
-            ))
+        // Handle leftover word problem if not already added
+        if (currentQuestionRange != null &&
+            asked != null && given != null && operation != null &&
+            numberSentence != null && solution != null
+        ) {
+            val (start, end) = currentQuestionRange
+            val rangeQuestions = (start..end).toList()
+
+            parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[0], answer = "$asked"))
+            parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[1], answer = "$given"))
+            parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[2], answer = "$operation"))
+            parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[3], answer = "$numberSentence"))
+            parsedAnswers.add(ParsedAnswer(questionNumber = rangeQuestions[4], answer = "$solution"))
         }
 
         return parsedAnswers
@@ -681,13 +673,6 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
                     val numberSentenceLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Number Sentence")
                     val solutionLayout = editAnswerKeyBinding.answerKeyContainer.findViewWithTag<TextInputLayout>("$prefix Solution/Answer")
 
-//                    // Log existence of each layout
-//                    Log.d("ViewTag", "Asked Layout found: ${askedLayout != null}")
-//                    Log.d("ViewTag", "Given Layout found: ${givenLayout != null}")
-//                    Log.d("ViewTag", "Operation Layout found: ${operationLayout != null}")
-//                    Log.d("ViewTag", "Number Sentence Layout found: ${numberSentenceLayout != null}")
-//                    Log.d("ViewTag", "Solution Layout found: ${solutionLayout != null}")
-
                     val answerParts = question.answer.split("\n").associate {
                         val parts = it.split(": ", limit = 2)
                         parts[0].trim() to (if (parts.size > 1) parts[1].trim() else "")
@@ -807,8 +792,16 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
             )
             visibility = View.VISIBLE
 
-            val textInputEditText = TextInputEditText(requireContext())
-            this.hint = hint
+            val textInputEditText = TextInputEditText(context).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(16, 16, 16, 16)
+                this.hint = hint
+                setHintTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+            }
             addView(textInputEditText)
         }
     }

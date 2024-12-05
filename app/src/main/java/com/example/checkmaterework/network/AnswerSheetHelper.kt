@@ -116,7 +116,7 @@ class AnswerSheetHelper {
                 If it is Identification, you will map the answers in the box to each number. 
                 If it is a Word Problem (clue: Asked, Given, Operation, Number Sentence, Solution/Answer) you will map it like this:
                 
-                1.
+                1-5.
                 Asked: HOW MANY KILOGRAMS OF POTATOES REMAIN?
                 Given: Potatoes = 850 and 320
                 Operation: SUBTRACTION
