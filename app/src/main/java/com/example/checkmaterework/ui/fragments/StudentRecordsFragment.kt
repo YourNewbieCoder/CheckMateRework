@@ -1,12 +1,17 @@
 package com.example.checkmaterework.ui.fragments
 
+import android.content.Intent
+import android.media.MediaScannerConnection
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,6 +23,8 @@ import com.example.checkmaterework.models.StudentRecordEntity
 import com.example.checkmaterework.models.StudentRecordViewModel
 import com.example.checkmaterework.models.StudentRecordViewModelFactory
 import com.example.checkmaterework.ui.adapters.StudentRecordAdapter
+import java.io.File
+import java.io.FileWriter
 
 class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
 
@@ -86,7 +93,98 @@ class StudentRecordsFragment() : Fragment(), ToolbarTitleProvider {
             val records = studentRecordViewModel.studentRecordList.value ?: emptyList()
             studentRecordAdapter.updateRecords(records.toMutableList(), namesMap)
         }
+
+        studentRecordsBinding.buttonExportCSV.setOnClickListener {
+            val records = studentRecordViewModel.studentRecordList.value ?: emptyList()
+            val studentNamesMap = studentRecordViewModel.studentNamesMap.value ?: emptyMap()
+
+            if (records.isEmpty()) {
+                Toast.makeText(requireContext(), "No records to export", Toast.LENGTH_SHORT).show()
+            } else {
+                exportRecordsToCSV(records, studentNamesMap)
+            }
+        }
     }
+
+    private fun exportRecordsToCSV(
+        records: List<StudentRecordEntity>,
+        studentNamesMap: Map<Int, String>
+    ) {
+        // Sanitize the class name and answer sheet name to make them file-system safe
+        val sanitizedClassName = className.replace("[^a-zA-Z0-9]".toRegex(), "_")
+        val sanitizedAnswerSheetName = answerSheetName.replace("[^a-zA-Z0-9]".toRegex(), "_")
+
+        // Construct the file name
+        val fileName = "${sanitizedClassName}_${sanitizedAnswerSheetName}_Records.csv"
+
+        // Get the file path
+//        val fileName = "StudentRecords.csv"
+        val fileDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val csvFile = File(fileDir, fileName)
+
+        try {
+            // Write data to the CSV file
+            FileWriter(csvFile).use { writer ->
+                writer.append("Student Name,Score\n") // CSV header
+
+                records.forEach { record ->
+                    val studentName = studentNamesMap[record.studentId] ?: "Unknown"
+                    writer.append("$studentName,${record.score}\n")
+                }
+            }
+
+            // Notify the Media Scanner to make the file visible
+            MediaScannerConnection.scanFile(
+                requireContext(),
+                arrayOf(csvFile.absolutePath),
+                null
+            ) { path, uri ->
+                Log.d("ExportCSV", "File is visible at: $path")
+            }
+
+            Toast.makeText(requireContext(), "CSV exported to Downloads: ${csvFile.absolutePath}", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Failed to export CSV: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+
+//        try {
+//            // Write the data to CSV
+//            FileWriter(csvFile).use { writer ->
+//                writer.append("Student Name,Score\n") // CSV header
+//
+//                records.forEach { record ->
+//                    val studentName = studentNamesMap[record.studentId] ?: "Unknown"
+//                    writer.append("$studentName,${record.score}\n")
+//                }
+//            }
+//
+//            // Notify user of success
+//            Toast.makeText(requireContext(), "CSV exported to ${csvFile.absolutePath}", Toast.LENGTH_SHORT).show()
+//
+////            // Optionally share the file
+////            shareCSVFile(csvFile)
+//
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            Toast.makeText(requireContext(), "Failed to export CSV: ${e.message}", Toast.LENGTH_SHORT).show()
+//        }
+    }
+
+//    private fun shareCSVFile(file: File) {
+//        val uri = FileProvider.getUriForFile(
+//            requireContext(),
+//            "${requireContext().packageName}.provider", // Use your app's provider authority
+//            file
+//        )
+//
+//        val intent = Intent(Intent.ACTION_SEND).apply {
+//            type = "text/csv"
+//            putExtra(Intent.EXTRA_STREAM, uri)
+//        }
+//
+//        startActivity(Intent.createChooser(intent, "Share CSV"))
+//    }
 
     private fun navigateToStudentAnalysisFragment(record: StudentRecordEntity) {
         val fragment = StudentAnalysisFragment.newInstance(record.recordId)

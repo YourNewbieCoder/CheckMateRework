@@ -15,17 +15,6 @@
         android:orientation="horizontal"
         android:padding="20dp">
 
-        <!--        <TextView-->
-        <!--            android:id="@+id/textLastNameHeader"-->
-        <!--            style="@style/TextAppearance.AppCompat.Title"-->
-        <!--            android:layout_width="0dp"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:layout_weight="2"-->
-        <!--            android:text="Last Name"-->
-        <!--            android:textColor="@color/black"-->
-        <!--            android:textSize="16sp"-->
-        <!--            android:textStyle="bold" />-->
-
         <TextView
             android:id="@+id/textStudentNameHeader"
             style="@style/TextAppearance.AppCompat.Title"
@@ -66,10 +55,21 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_below="@+id/headerLayout"
-        android:layout_alignParentBottom="true"
-        android:layout_marginVertical="16dp"
+        android:layout_above="@+id/buttonExportCSV"
+        android:layout_marginVertical="10dp"
         android:clipToPadding="false"
         android:paddingBottom="16dp"
         tools:listitem="@layout/layout_view_student_records" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/buttonExportCSV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="20dp"
+        android:backgroundTint="@color/blue"
+        android:text="Export as CSV"
+        android:textColor="@color/white" />
 
 </RelativeLayout>
