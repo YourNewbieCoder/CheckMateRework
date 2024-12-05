@@ -443,13 +443,8 @@ class EditAnswerKeyFragment(private val answerSheet: AnswerSheetEntity) : Fragme
 
             // Display the parsed answers in the UI (pass it to the ScannedKeyFragment)
             val parsedText = parsedAnswers.joinToString("\n") { parsedAnswer ->
-                when {
-
-                    else -> {
-                        // For multiple-choice or identification questions
-                        "${parsedAnswer.questionNumber}: ${parsedAnswer.answer}"
-                    }
-                }
+                // For multiple-choice or identification questions
+                "${parsedAnswer.questionNumber}: ${parsedAnswer.answer}"
             }
 
             // Pass the parsed text to the ScannedKeyFragment

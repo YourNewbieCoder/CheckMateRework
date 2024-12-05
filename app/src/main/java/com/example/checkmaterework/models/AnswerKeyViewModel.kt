@@ -29,6 +29,20 @@ class AnswerKeyViewModel(private val answerKeyDao: AnswerKeyDao) : ViewModel() {
     // Function to save parsed answers to the database
     fun saveParsedAnswersToDatabase(answerSheetId: Int, parsedAnswers: List<ParsedAnswer>) {
         viewModelScope.launch(Dispatchers.IO) {
+            // Clear all questions before inserting new ones (if necessary)
+//            answerKeyDao.clearAll() // Optional, only if you want to start fresh
+
+            // If answers already exist for this sheet, we update the existing answer key
+//            answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
+
+            // Check if the answer sheet already has answers saved
+            val existingAnswers = answerKeyDao.getQuestionsByAnswerSheetId(answerSheetId)
+
+            if (existingAnswers.isNotEmpty()) {
+                // If answers already exist for this sheet, we update the existing answer key
+                answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
+            }
+
             val questionEntities = parsedAnswers.map { parsedAnswer ->
                 QuestionEntity(
                     answerSheetId = answerSheetId,
@@ -92,11 +106,19 @@ class AnswerKeyViewModel(private val answerKeyDao: AnswerKeyDao) : ViewModel() {
     // Save answers manually to the database
     fun saveAnswersToDatabase(answerSheetId: Int, answers: List<Answer>) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Clear all questions before inserting new ones (if necessary)
+//            // Clear all questions before inserting new ones (if necessary)
 //            answerKeyDao.clearAll() // Optional, only if you want to start fresh
+//
+//            // If answers already exist for this sheet, we update the existing answer key
+//            answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
 
-            // Clear all questions for the specific answer sheet if necessary (optional)
-            answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
+            // Check if the answer sheet already has answers saved
+            val existingAnswers = answerKeyDao.getQuestionsByAnswerSheetId(answerSheetId)
+
+            if (existingAnswers.isNotEmpty()) {
+                // If answers already exist for this sheet, we update the existing answer key
+                answerKeyDao.clearQuestionsByAnswerSheetId(answerSheetId)
+            }
 
             // Map answers to QuestionEntity objects and save
             val questionEntities = answers.flatMap { answer ->

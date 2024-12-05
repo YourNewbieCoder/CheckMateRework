@@ -28,6 +28,7 @@ import com.example.checkmaterework.models.AnswerKeyViewModelFactory
 import com.example.checkmaterework.models.AnswerSheetDatabase
 import com.example.checkmaterework.models.ImageCaptureEntity
 import com.example.checkmaterework.models.ImageCaptureViewModel
+import com.example.checkmaterework.models.ParsedAnswer
 import com.example.checkmaterework.models.QuestionEntity
 import com.example.checkmaterework.models.ReviewImageViewModel
 import com.example.checkmaterework.models.ReviewImageViewModelFactory
@@ -149,9 +150,80 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
         val answersList = mutableListOf<ParsedAnswer>()
         val lines = recognizedText.split("\n") // Split lines
 
+        // Temporary variables for word problem parts
+        var currentQuestionRange: Pair<Int, Int>? = null
+        var asked: String? = null
+        var given: String? = null
+        var operation: String? = null
+        var numberSentence: String? = null
+        var solution: String? = null
+
+        // Iterate through the lines and parse the data based on patterns
+
         val pattern = Regex("""(\d+)\.\s*(.*)""") // Matches "1. answer"
 
         for (line in lines) {
+            when {
+                // Match question range (e.g., "1-5.")
+                line.matches(Regex("""\d+-\d+\.\s*""")) -> {
+                    val rangeParts = line.substringBefore(".").split("-").mapNotNull { it.toIntOrNull() }
+                    if (rangeParts.size == 2) {
+                        currentQuestionRange = Pair(rangeParts[0], rangeParts[1])
+                    }
+                }
+                line.contains("Asked") -> {
+                    asked = line.substringAfter("Asked:").trim()
+                }
+                line.contains("Given") -> {
+                    given = line.substringAfter("Given:").trim()
+                }
+                line.contains("Operation") -> {
+                    operation = line.substringAfter("Operation:").trim()
+                }
+                line.contains("Number Sentence") -> {
+                    numberSentence = line.substringAfter("Number Sentence:").trim()
+                }
+                line.contains("Solution/Answer") -> {
+                    solution = line.substringAfter("Solution/Answer:").trim()
+                }
+//                // Parsing Multiple Choice or Identification questions
+//                line.matches(Regex("""\d+\.\s*[A-D]""")) -> {
+//                    // This matches multiple choice answers like 1. A, 2. B
+//                    val (questionNumber, answer) = parseMultipleChoiceOrIdentification(line)
+//                    answersList.add(ParsedAnswer(questionNumber = questionNumber, answer = answer))
+//                }
+//                line.matches(Regex("""\d+\.\s*\w+""")) -> {
+//                    // This matches identification answers like "1. Answer"
+//                    val (questionNumber, answer) = parseMultipleChoiceOrIdentification(line)
+//                    answersList.add(ParsedAnswer(questionNumber = questionNumber, answer = answer))
+//                }
+                else -> {
+                    // Process any complete word problem if all parts are detected
+                    if (currentQuestionRange != null &&
+                        asked != null && given != null && operation != null &&
+                        numberSentence != null && solution != null) {
+
+                        val (start, end) = currentQuestionRange
+                        val rangeQuestions = (start..end).toList()
+
+                        // Add parsed answers for the word problem parts
+                        answersList.add(ParsedAnswer(questionNumber = rangeQuestions[0], answer = "Asked: $asked",false))
+                        answersList.add(ParsedAnswer(questionNumber = rangeQuestions[1], answer = "Given: $given",false))
+                        answersList.add(ParsedAnswer(questionNumber = rangeQuestions[2], answer = "Operation: $operation",false))
+                        answersList.add(ParsedAnswer(questionNumber = rangeQuestions[3], answer = "Number Sentence: $numberSentence",false))
+                        answersList.add(ParsedAnswer(questionNumber = rangeQuestions[4], answer = "Solution/Answer: $solution",false))
+
+                        // Reset variables for the next word problem
+                        currentQuestionRange = null
+                        asked = null
+                        given = null
+                        operation = null
+                        numberSentence = null
+                        solution = null
+                    }
+                }
+            }
+
             val match = pattern.find(line)
             if (match != null) {
                 val questionNumber = match.groupValues[1].toIntOrNull() ?: continue
@@ -160,8 +232,31 @@ class ReviewImageFragment : Fragment(), ToolbarTitleProvider {
             }
         }
 
+        // Handle leftover word problem if not already added
+        if (currentQuestionRange != null &&
+            asked != null && given != null && operation != null &&
+            numberSentence != null && solution != null) {
+
+            val (start, end) = currentQuestionRange
+            val rangeQuestions = (start..end).toList()
+
+            answersList.add(ParsedAnswer(questionNumber = rangeQuestions[0], answer = "Asked: $asked",false))
+            answersList.add(ParsedAnswer(questionNumber = rangeQuestions[1], answer = "Given: $given",false))
+            answersList.add(ParsedAnswer(questionNumber = rangeQuestions[2], answer = "Operation: $operation",false))
+            answersList.add(ParsedAnswer(questionNumber = rangeQuestions[3], answer = "Number Sentence: $numberSentence",false))
+            answersList.add(ParsedAnswer(questionNumber = rangeQuestions[4], answer = "Solution/Answer: $solution",false))
+        }
+
         return answersList
     }
+
+//    // Parse Multiple Choice or Identification answers
+//    private fun parseMultipleChoiceOrIdentification(line: String): Pair<Int, String> {
+//        val parts = line.split(".").map { it.trim() }
+//        val questionNumber = parts[0].toIntOrNull() ?: -1
+//        val answer = parts.getOrElse(1) { "" }
+//        return Pair(questionNumber, answer)
+//    }
 
     private fun parseNameAndSection(recognizedText: String): Pair<String?, String?> {
         var name: String? = null
