@@ -153,21 +153,42 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
             Triple(question, counts.first, counts.second)
         }
 
-        // Identify most and least correctly answered items
-        val maxCorrect = itemAnalysisList.maxOfOrNull { it.second } ?: 0
-        val minCorrect = itemAnalysisList.minOfOrNull { it.second } ?: 0
+        // Sort the items based on correct count
+        val sortedByCorrect = itemAnalysisList.sortedByDescending { it.second }
 
+        // Get top 3 most and least correctly answered items
+        val topMostCorrect = sortedByCorrect.take(3)
+        val topLeastCorrect = sortedByCorrect.takeLast(3)
+
+        // Highlight items
         val highlightedItems = itemAnalysisList.map {
             ViewAnalysisItem(
                 question = it.first,
                 correctCount = it.second,
                 incorrectCount = it.third,
-                isMostCorrect = it.second == maxCorrect,
-                isLeastCorrect = it.second == minCorrect
+                isMostCorrect = topMostCorrect.contains(it),
+                isLeastCorrect = topLeastCorrect.contains(it)
             )
         }
 
-        viewAnalysisAdapter.submitList(itemAnalysisList)
+//        // Identify most and least correctly answered items
+//        val maxCorrect = itemAnalysisList.maxOfOrNull { it.second } ?: 0
+//        val minCorrect = itemAnalysisList.minOfOrNull { it.second } ?: 0
+
+//        val highlightedItems = itemAnalysisList.map {
+//            ViewAnalysisItem(
+//                question = it.first,
+//                correctCount = it.second,
+//                incorrectCount = it.third,
+//                isMostCorrect = it.second == maxCorrect,
+//                isLeastCorrect = it.second == minCorrect
+//            )
+//        }
+
+        // Submit the highlighted list to the adapter
+        viewAnalysisAdapter.submitList(highlightedItems)
+
+//        viewAnalysisAdapter.submitList(itemAnalysisList)
 
     }
 
