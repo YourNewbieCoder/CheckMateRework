@@ -159,10 +159,6 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
                 .thenBy { it.third }
         )
 
-
-//        val topMostCorrect = sortedByCorrect.take(3)
-//        val topLeastCorrect = sortedByCorrect.takeLast(3)
-
         // Extract top 3 most correct items with ties
         val topMostCorrect = mutableListOf<Triple<String, Int, Int>>()
         for (item in sortedByCorrect) {
@@ -198,25 +194,8 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
             )
         }
 
-//        // Identify most and least correctly answered items
-//        val maxCorrect = itemAnalysisList.maxOfOrNull { it.second } ?: 0
-//        val minCorrect = itemAnalysisList.minOfOrNull { it.second } ?: 0
-
-//        val highlightedItems = itemAnalysisList.map {
-//            ViewAnalysisItem(
-//                question = it.first,
-//                correctCount = it.second,
-//                incorrectCount = it.third,
-//                isMostCorrect = it.second == maxCorrect,
-//                isLeastCorrect = it.second == minCorrect
-//            )
-//        }
-
         // Submit the highlighted list to the adapter
         viewAnalysisAdapter.submitList(highlightedItems)
-
-//        viewAnalysisAdapter.submitList(itemAnalysisList)
-
     }
 
     override fun getFragmentTitle(): String {
