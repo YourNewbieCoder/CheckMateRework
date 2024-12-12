@@ -18,6 +18,7 @@ import com.example.checkmaterework.models.ClassEntity
 import com.example.checkmaterework.models.StudentRecordEntity
 import com.example.checkmaterework.models.StudentRecordViewModel
 import com.example.checkmaterework.models.StudentRecordViewModelFactory
+import com.example.checkmaterework.models.ViewAnalysisItem
 import com.example.checkmaterework.ui.adapters.ViewAnalysisAdapter
 import com.example.checkmaterework.ui.fragments.StudentRecordsFragment.Companion
 import java.io.File
@@ -150,6 +151,20 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
 
         val itemAnalysisList = questionStats.map { (question, counts) ->
             Triple(question, counts.first, counts.second)
+        }
+
+        // Identify most and least correctly answered items
+        val maxCorrect = itemAnalysisList.maxOfOrNull { it.second } ?: 0
+        val minCorrect = itemAnalysisList.minOfOrNull { it.second } ?: 0
+
+        val highlightedItems = itemAnalysisList.map {
+            ViewAnalysisItem(
+                question = it.first,
+                correctCount = it.second,
+                incorrectCount = it.third,
+                isMostCorrect = it.second == maxCorrect,
+                isLeastCorrect = it.second == minCorrect
+            )
         }
 
         viewAnalysisAdapter.submitList(itemAnalysisList)
