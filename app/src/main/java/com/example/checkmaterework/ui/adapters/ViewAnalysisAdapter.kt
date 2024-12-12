@@ -19,8 +19,8 @@ class ViewAnalysisAdapter(
 //    private var mostCorrectIndex: Int = -1
 //    private var leastCorrectIndex: Int = -1
 
-    private val mostCorrectIndices = mutableSetOf<Int>()
-    private val leastCorrectIndices = mutableSetOf<Int>()
+//    private val mostCorrectIndices = mutableSetOf<Int>()
+//    private val leastCorrectIndices = mutableSetOf<Int>()
 
 
     class ViewAnalysisViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
@@ -40,32 +40,52 @@ class ViewAnalysisAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewAnalysisViewHolder, position: Int) {
-        val (question, correctCount, incorrectCount) = analysisList[position]
-        holder.textQuestionNumber.text = question
-        holder.textCorrectStudents.text = correctCount.toString()
-        holder.textIncorrectStudents.text = incorrectCount.toString()
+//        val (question, correctCount, incorrectCount) = analysisList[position]
+        val analysisItem = analysisList[position]
+        holder.textQuestionNumber.text = analysisItem.question
+        holder.textCorrectStudents.text = analysisItem.correctCount.toString()
+        holder.textIncorrectStudents.text = analysisItem.incorrectCount.toString()
 
-        // Apply styles for most and least correctly answered items
-        when {
-            mostCorrectIndices.contains(position) -> {
-                holder.textQuestionNumber.setTextColor(Color.GREEN)
-                holder.textCorrectStudents.setTextColor(Color.GREEN)
-                holder.textIncorrectStudents.setTextColor(Color.GREEN)
-                holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA"))
-            }
-            leastCorrectIndices.contains(position) -> {
-                holder.textQuestionNumber.setTextColor(Color.RED)
-                holder.textCorrectStudents.setTextColor(Color.RED)
-                holder.textIncorrectStudents.setTextColor(Color.RED)
-                holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE"))
-            }
-            else -> {
-                holder.textQuestionNumber.setTextColor(Color.BLACK)
-                holder.textCorrectStudents.setTextColor(Color.BLACK)
-                holder.textIncorrectStudents.setTextColor(Color.BLACK)
-                holder.itemView.setBackgroundColor(Color.WHITE)
-            }
+        // Reset the background and text colors to default
+        holder.itemView.setBackgroundColor(Color.WHITE)
+        holder.textQuestionNumber.setTextColor(Color.BLACK)
+        holder.textCorrectStudents.setTextColor(Color.BLACK)
+        holder.textIncorrectStudents.setTextColor(Color.BLACK)
+
+        // Highlight most and least correctly answered items
+        if (analysisItem.isMostCorrect) {
+            holder.textQuestionNumber.setTextColor(Color.GREEN)
+            holder.textCorrectStudents.setTextColor(Color.GREEN)
+            holder.textIncorrectStudents.setTextColor(Color.GREEN)
+            holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA")) // Light greenish background
         }
+
+        if (analysisItem.isLeastCorrect) {
+            holder.textQuestionNumber.setTextColor(Color.RED)
+            holder.textCorrectStudents.setTextColor(Color.RED)
+            holder.textIncorrectStudents.setTextColor(Color.RED)
+            holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE")) // Light reddish background
+        }
+//        when {
+//            mostCorrectIndices.contains(position) -> {
+//                holder.textQuestionNumber.setTextColor(Color.GREEN)
+//                holder.textCorrectStudents.setTextColor(Color.GREEN)
+//                holder.textIncorrectStudents.setTextColor(Color.GREEN)
+//                holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA"))
+//            }
+//            leastCorrectIndices.contains(position) -> {
+//                holder.textQuestionNumber.setTextColor(Color.RED)
+//                holder.textCorrectStudents.setTextColor(Color.RED)
+//                holder.textIncorrectStudents.setTextColor(Color.RED)
+//                holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE"))
+//            }
+//            else -> {
+//                holder.textQuestionNumber.setTextColor(Color.BLACK)
+//                holder.textCorrectStudents.setTextColor(Color.BLACK)
+//                holder.textIncorrectStudents.setTextColor(Color.BLACK)
+//                holder.itemView.setBackgroundColor(Color.WHITE)
+//            }
+//        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -73,17 +93,17 @@ class ViewAnalysisAdapter(
         analysisList.clear()
         analysisList.addAll(newList)
 
-        // Determine indices for highlighting
-        mostCorrectIndices.clear()
-        leastCorrectIndices.clear()
-        newList.forEachIndexed { index, item ->
-            if (item.isMostCorrect) {
-                mostCorrectIndices.add(index)
-            }
-            if (item.isLeastCorrect) {
-                leastCorrectIndices.add(index)
-            }
-        }
+//        // Determine indices for highlighting
+//        mostCorrectIndices.clear()
+//        leastCorrectIndices.clear()
+//        newList.forEachIndexed { index, item ->
+//            if (item.isMostCorrect) {
+//                mostCorrectIndices.add(index)
+//            }
+//            if (item.isLeastCorrect) {
+//                leastCorrectIndices.add(index)
+//            }
+//        }
 
 //        // Determine the most and least correctly answered questions
 //        var maxCorrect = Int.MIN_VALUE

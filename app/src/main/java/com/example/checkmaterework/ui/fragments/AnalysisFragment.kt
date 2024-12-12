@@ -153,14 +153,41 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
             Triple(question, counts.first, counts.second)
         }
 
-        // Sort the items based on correct count
-        val sortedByCorrect = itemAnalysisList.sortedByDescending { it.second }
+        // Sort items by correct count (descending) and incorrect count (ascending)
+        val sortedByCorrect = itemAnalysisList.sortedWith(
+            compareByDescending<Triple<String, Int, Int>> { it.second }
+                .thenBy { it.third }
+        )
 
-        // Get top 3 most and least correctly answered items
-        val topMostCorrect = sortedByCorrect.take(3)
-        val topLeastCorrect = sortedByCorrect.takeLast(3)
 
-        // Highlight items
+//        val topMostCorrect = sortedByCorrect.take(3)
+//        val topLeastCorrect = sortedByCorrect.takeLast(3)
+
+        // Extract top 3 most correct items with ties
+        val topMostCorrect = mutableListOf<Triple<String, Int, Int>>()
+        for (item in sortedByCorrect) {
+            if (topMostCorrect.size < 3 || item.second == topMostCorrect.last().second) {
+                topMostCorrect.add(item)
+            } else if (topMostCorrect.size >= 3) {
+                break
+            }
+        }
+
+        // Extract top 3 least correct items with ties
+        val sortedByIncorrect = itemAnalysisList.sortedWith(
+            compareByDescending<Triple<String, Int, Int>> { it.third }
+                .thenBy { it.second }
+        )
+        val topLeastCorrect = mutableListOf<Triple<String, Int, Int>>()
+        for (item in sortedByIncorrect) {
+            if (topLeastCorrect.size < 3 || item.third == topLeastCorrect.last().third) {
+                topLeastCorrect.add(item)
+            } else if (topLeastCorrect.size >= 3) {
+                break
+            }
+        }
+
+        // Highlight items based on their inclusion in top-most and top-least correct
         val highlightedItems = itemAnalysisList.map {
             ViewAnalysisItem(
                 question = it.first,
