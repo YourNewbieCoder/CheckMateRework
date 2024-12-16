@@ -40,42 +40,57 @@ class ViewAnalysisAdapter(
         holder.textIncorrectStudents.text = analysisItem.incorrectCount.toString()
         holder.textRemarks.text = analysisItem.remarks
 
-        // Reset the background and text colors to default
-        holder.itemView.setBackgroundColor(Color.WHITE)
-        holder.textQuestionNumber.setTextColor(Color.BLACK)
-        holder.textCorrectStudents.setTextColor(Color.BLACK)
-        holder.textIncorrectStudents.setTextColor(Color.BLACK)
-        holder.textRemarks.setTextColor(Color.BLACK)
-
-        // Highlight most and least correctly answered items
-        if (analysisItem.isMostCorrect) {
-            holder.textQuestionNumber.setTextColor(Color.GREEN)
-            holder.textCorrectStudents.setTextColor(Color.GREEN)
-            holder.textIncorrectStudents.setTextColor(Color.GREEN)
-            holder.textRemarks.setTextColor(Color.GREEN)
-            holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA")) // Light greenish background
-        }
-
-        if (analysisItem.isLeastCorrect) {
-            holder.textQuestionNumber.setTextColor(Color.RED)
-            holder.textCorrectStudents.setTextColor(Color.RED)
-            holder.textIncorrectStudents.setTextColor(Color.RED)
-            holder.textRemarks.setTextColor(Color.RED)
-            holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE")) // Light reddish background
-        }
-
-//        // Apply styles based on whether the item is most or least correct
-//        when {
-//            analysisItem.isMostCorrect -> {
-//                holder.textQuestionNumber.setTextColor(Color.GREEN)
-//            }
-//            analysisItem.isLeastCorrect -> {
-//                holder.textQuestionNumber.setTextColor(Color.RED)
-//            }
-//            else -> {
-//                holder.textQuestionNumber.setTextColor(Color.BLACK)
-//            }
+//        // Reset the background and text colors to default
+//        holder.itemView.setBackgroundColor(Color.WHITE)
+//        holder.textQuestionNumber.setTextColor(Color.BLACK)
+//        holder.textCorrectStudents.setTextColor(Color.BLACK)
+//        holder.textIncorrectStudents.setTextColor(Color.BLACK)
+//        holder.textRemarks.setTextColor(Color.BLACK)
+//
+//        // Highlight most and least correctly answered items
+//        if (analysisItem.isMostCorrect) {
+//            holder.textQuestionNumber.setTextColor(Color.GREEN)
+//            holder.textCorrectStudents.setTextColor(Color.GREEN)
+//            holder.textIncorrectStudents.setTextColor(Color.GREEN)
+//            holder.textRemarks.setTextColor(Color.GREEN)
+//            holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA")) // Light greenish background
 //        }
+//
+//        if (analysisItem.isLeastCorrect) {
+//            holder.textQuestionNumber.setTextColor(Color.RED)
+//            holder.textCorrectStudents.setTextColor(Color.RED)
+//            holder.textIncorrectStudents.setTextColor(Color.RED)
+//            holder.textRemarks.setTextColor(Color.RED)
+//            holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE")) // Light reddish background
+//        }
+
+        // Set background color based on remarks
+        when (analysisItem.remarks) {
+            "Excellent" -> {
+                holder.textQuestionNumber.setTextColor(Color.GREEN)
+                holder.textCorrectStudents.setTextColor(Color.GREEN)
+                holder.textIncorrectStudents.setTextColor(Color.GREEN)
+                holder.textRemarks.setTextColor(Color.GREEN)
+                holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA")) // Light greenish background
+//                holder.itemView.setBackgroundColor(Color.parseColor("#A5D6A7")) // Light Green background
+            }
+            "Needs Improvement" -> {
+                holder.textQuestionNumber.setTextColor(Color.RED)
+                holder.textCorrectStudents.setTextColor(Color.RED)
+                holder.textIncorrectStudents.setTextColor(Color.RED)
+                holder.textRemarks.setTextColor(Color.RED)
+                holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE")) // Light reddish background
+//                holder.itemView.setBackgroundColor(Color.parseColor("#EF9A9A")) // Light Red background
+            }
+            else -> {
+                // Reset to default colors for other cases
+                holder.textQuestionNumber.setTextColor(Color.BLACK)
+                holder.textCorrectStudents.setTextColor(Color.BLACK)
+                holder.textIncorrectStudents.setTextColor(Color.BLACK)
+                holder.textRemarks.setTextColor(Color.BLACK)
+                holder.itemView.setBackgroundColor(Color.TRANSPARENT) // Default background
+            }
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
