@@ -224,6 +224,18 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
 
         // Submit the highlighted list to the adapter
         viewAnalysisAdapter.submitList(highlightedItems)
+
+        // Calculate summary analysis
+        val totalQuestions = questionStats.size
+        val excellentQuestions = itemAnalysisList.count { it.remarks == "Excellent" }
+        val improvementNeededQuestions = itemAnalysisList.count { it.remarks == "Needs Improvement" }
+
+        val analysisSummary = "Total Questions: $totalQuestions\n" +
+                "Excellent Questions: $excellentQuestions (${(excellentQuestions * 100) / totalQuestions}%)\n" +
+                "Needs Improvement: $improvementNeededQuestions (${(improvementNeededQuestions * 100) / totalQuestions}%)"
+
+        // Update TextView with summary
+        analysisBinding.textViewAnalysisSummary.text = analysisSummary
     }
 
     override fun getFragmentTitle(): String {

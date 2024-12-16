@@ -77,11 +77,24 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_below="@+id/headerLayout"
-        android:layout_above="@+id/buttonExportCSV"
+        android:layout_above="@+id/textViewAnalysisSummary"
         android:layout_marginVertical="10dp"
         android:clipToPadding="false"
         android:paddingBottom="16dp"
         tools:listitem="@layout/layout_view_item_analysis" />
+
+    <!-- TextView for summary -->
+    <TextView
+        android:id="@+id/textViewAnalysisSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonExportCSV"
+        android:layout_marginBottom="10dp"
+        android:padding="8dp"
+        android:text="Summary of the analysis will appear here."
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="16sp" />
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/buttonExportCSV"
