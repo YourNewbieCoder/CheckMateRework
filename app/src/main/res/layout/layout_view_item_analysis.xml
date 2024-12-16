@@ -11,6 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="2"
+        android:text="Q1"
         android:textColor="@color/black"
         android:textSize="16sp" />
 
@@ -18,7 +19,8 @@
         android:id="@+id/textCorrectStudents"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="2"
+        android:text="10"
         android:textColor="@color/black"
         android:textSize="16sp" />
 
@@ -26,7 +28,17 @@
         android:id="@+id/textIncorrectStudents"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_weight="2"
+        android:text="5"
+        android:textColor="@color/black"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textRemarks"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:text="Average"
         android:textColor="@color/black"
         android:textSize="16sp" />
 

@@ -5,5 +5,6 @@ data class ViewAnalysisItem(
     val correctCount: Int,
     val incorrectCount: Int,
     val isMostCorrect: Boolean = false,
-    val isLeastCorrect: Boolean = false
+    val isLeastCorrect: Boolean = false,
+    val remarks: String // New field for remarks
 )

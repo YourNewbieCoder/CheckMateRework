@@ -19,6 +19,7 @@ class ViewAnalysisAdapter(
         val textQuestionNumber: TextView = itemView.findViewById(R.id.textQuestionNumber)
         val textCorrectStudents: TextView = itemView.findViewById(R.id.textCorrectStudents)
         val textIncorrectStudents: TextView = itemView.findViewById(R.id.textIncorrectStudents)
+        val textRemarks: TextView = itemView.findViewById(R.id.textRemarks)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewAnalysisViewHolder {
@@ -37,18 +38,21 @@ class ViewAnalysisAdapter(
         holder.textQuestionNumber.text = analysisItem.question
         holder.textCorrectStudents.text = analysisItem.correctCount.toString()
         holder.textIncorrectStudents.text = analysisItem.incorrectCount.toString()
+        holder.textRemarks.text = analysisItem.remarks
 
         // Reset the background and text colors to default
         holder.itemView.setBackgroundColor(Color.WHITE)
         holder.textQuestionNumber.setTextColor(Color.BLACK)
         holder.textCorrectStudents.setTextColor(Color.BLACK)
         holder.textIncorrectStudents.setTextColor(Color.BLACK)
+        holder.textRemarks.setTextColor(Color.BLACK)
 
         // Highlight most and least correctly answered items
         if (analysisItem.isMostCorrect) {
             holder.textQuestionNumber.setTextColor(Color.GREEN)
             holder.textCorrectStudents.setTextColor(Color.GREEN)
             holder.textIncorrectStudents.setTextColor(Color.GREEN)
+            holder.textRemarks.setTextColor(Color.GREEN)
             holder.itemView.setBackgroundColor(Color.parseColor("#E0F7FA")) // Light greenish background
         }
 
@@ -56,6 +60,7 @@ class ViewAnalysisAdapter(
             holder.textQuestionNumber.setTextColor(Color.RED)
             holder.textCorrectStudents.setTextColor(Color.RED)
             holder.textIncorrectStudents.setTextColor(Color.RED)
+            holder.textRemarks.setTextColor(Color.RED)
             holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE")) // Light reddish background
         }
 

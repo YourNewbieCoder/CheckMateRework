@@ -150,45 +150,73 @@ class AnalysisFragment : Fragment(), ToolbarTitleProvider {
         }
 
         val itemAnalysisList = questionStats.map { (question, counts) ->
-            Triple(question, counts.first, counts.second)
-        }
-
-        // Sort items by correct count (descending) and incorrect count (ascending)
-        val sortedByCorrect = itemAnalysisList.sortedWith(
-            compareByDescending<Triple<String, Int, Int>> { it.second }
-                .thenBy { it.third }
-        )
-
-        // Extract top 3 most correct items with ties
-        val topMostCorrect = mutableListOf<Triple<String, Int, Int>>()
-        for (item in sortedByCorrect) {
-            if (topMostCorrect.size < 3 || item.second == topMostCorrect.last().second) {
-                topMostCorrect.add(item)
-            } else if (topMostCorrect.size >= 3) {
-                break
+            val correctPercent = (counts.first * 100) / (counts.first + counts.second)
+            val remarks = when {
+                correctPercent >= 80 -> "Excellent"
+                correctPercent >= 50 -> "Average"
+                else -> "Needs Improvement"
             }
-        }
-
-        // Extract top 3 least correct items with ties
-        val sortedByIncorrect = itemAnalysisList.sortedWith(
-            compareByDescending<Triple<String, Int, Int>> { it.third }
-                .thenBy { it.second }
-        )
-        val topLeastCorrect = mutableListOf<Triple<String, Int, Int>>()
-        for (item in sortedByIncorrect) {
-            if (topLeastCorrect.size < 3 || item.third == topLeastCorrect.last().third) {
-                topLeastCorrect.add(item)
-            } else if (topLeastCorrect.size >= 3) {
-                break
-            }
-        }
-
-        // Highlight items based on their inclusion in top-most and top-least correct
-        val highlightedItems = itemAnalysisList.map {
             ViewAnalysisItem(
-                question = it.first,
-                correctCount = it.second,
-                incorrectCount = it.third,
+                question = question,
+                correctCount = counts.first,
+                incorrectCount = counts.second,
+                isMostCorrect = false,
+                isLeastCorrect = false,
+                remarks = remarks // Add remarks
+            )
+//            Triple(question, counts.first, counts.second)
+        }
+
+//        // Sort items by correct count (descending) and incorrect count (ascending)
+//        val sortedByCorrect = itemAnalysisList.sortedWith(
+//            compareByDescending<Triple<String, Int, Int>> { it.second }
+//                .thenBy { it.third }
+//        )
+        // Highlight top most/least correct items (existing logic)
+        val sortedByCorrect = itemAnalysisList.sortedWith(
+            compareByDescending<ViewAnalysisItem> { it.correctCount }.thenBy { it.incorrectCount }
+        )
+
+        val topMostCorrect = sortedByCorrect.take(3)
+        val topLeastCorrect = sortedByCorrect.sortedBy { it.correctCount }.take(3)
+
+//        // Extract top 3 most correct items with ties
+//        val topMostCorrect = mutableListOf<Triple<String, Int, Int>>()
+//        for (item in sortedByCorrect) {
+//            if (topMostCorrect.size < 3 || item.second == topMostCorrect.last().second) {
+//                topMostCorrect.add(item)
+//            } else if (topMostCorrect.size >= 3) {
+//                break
+//            }
+//        }
+//
+//        // Extract top 3 least correct items with ties
+//        val sortedByIncorrect = itemAnalysisList.sortedWith(
+//            compareByDescending<Triple<String, Int, Int>> { it.third }
+//                .thenBy { it.second }
+//        )
+//        val topLeastCorrect = mutableListOf<Triple<String, Int, Int>>()
+//        for (item in sortedByIncorrect) {
+//            if (topLeastCorrect.size < 3 || item.third == topLeastCorrect.last().third) {
+//                topLeastCorrect.add(item)
+//            } else if (topLeastCorrect.size >= 3) {
+//                break
+//            }
+//        }
+
+//        // Highlight items based on their inclusion in top-most and top-least correct
+//        val highlightedItems = itemAnalysisList.map {
+//            ViewAnalysisItem(
+//                question = it.first,
+//                correctCount = it.second,
+//                incorrectCount = it.third,
+//                isMostCorrect = topMostCorrect.contains(it),
+//                isLeastCorrect = topLeastCorrect.contains(it)
+//            )
+//        }
+
+        val highlightedItems = itemAnalysisList.map {
+            it.copy(
                 isMostCorrect = topMostCorrect.contains(it),
                 isLeastCorrect = topLeastCorrect.contains(it)
             )
