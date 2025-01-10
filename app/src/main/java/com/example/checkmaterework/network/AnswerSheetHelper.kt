@@ -37,7 +37,7 @@ class AnswerSheetHelper {
                 20. (No answer provided)
             """,
             """
-                Name: Chisato Araoshi
+                Name: Chisato Arashi
                 Class/Section: 6-Jade
             
                 1-5.
@@ -59,7 +59,6 @@ class AnswerSheetHelper {
             """
                 Name: Karin Asaka
                 Class/Section: Ilang-Ilang
-                Date: July 4, 1989
             
                 1.  (No answer provided)
                 2.  D
@@ -136,8 +135,8 @@ class AnswerSheetHelper {
         // Initial model response
         chatHistory.add(
             content("model") {
-                text("Please provide the images of the student answer sheets. I need to see the images to extract the answers, name, and section. I will then format the output as requested.")
-            }
+                text("Okay, I'm ready to check the grade 6 student answer sheets. Please provide the images of the answer sheets.  I will then analyze each image and provide the mapped answers in the format you specified.  I will need clear images for accurate analysis.\n")
+            },
         )
 
         // Loop through images and generate corresponding chat content

@@ -81,10 +81,10 @@ class CheckFragment : Fragment(), ToolbarTitleProvider {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         generativeModel = GenerativeModel(
-            "gemini-1.5-flash",
+            "gemini-2.0-flash-exp",
             BuildConfig.apiKey,
             generationConfig = generationConfig {
-                temperature = 0.4f
+                temperature = 1f
                 topK = 40
                 topP = 0.95f
                 maxOutputTokens = 8192
